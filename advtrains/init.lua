@@ -167,6 +167,7 @@ end
 --load/save
 
 advtrains.fpath=minetest.get_worldpath().."/advtrains"
+dofile(advtrains.modpath.."/log.lua")
 
 function advtrains.avt_load()
 	local file, err = io.open(advtrains.fpath, "r")
