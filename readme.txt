@@ -29,7 +29,7 @@ advtrains_crossing_bell     : Codesound
 advtrains_japan_horn        : Codesound
 advtrains_steam_whistle     : googol 
 advtrains_subway_horn       : https://freesound.org/people/Mullumbimby/sounds/385283/
-advtrains_subway_*          : Gabriel (gpcf, gbl08ma)
+advtrains_subway_*          : Gabriel (gbl08ma)
 
 If I forgot someone please punish me for that.
 
