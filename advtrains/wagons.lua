@@ -1123,13 +1123,8 @@ function wagon:safe_decouple(pname)
 		minetest.chat_send_player(pname, "Couple is locked (ask owner or admin to unlock it)")
 		return false
 	end
-<<<<<<< HEAD
-	advtrains.log("Discouple", pname, self.object:getpos(), self:train().text_outside)
-	atprint("wagon:discouple() Splitting train", selftrain_id)
-=======
 	atprint("wagon:discouple() Splitting train", self.train_id)
 	advtrains.log("Discouple", pname, self.object:getpos(), self:train().text_outside)
->>>>>>> 481f6218a8b377a0826b7e080046b5a890702e12
 	advtrains.split_train_at_wagon(self)--found in trainlogic.lua
 	return true
 end
