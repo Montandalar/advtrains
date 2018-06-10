@@ -1,6 +1,6 @@
 --all nodes that do not fit in any other category
 
-function advtrains.register_platform(preset)
+function advtrains.register_platform(modprefix, preset)
 	local ndef=minetest.registered_nodes[preset]
 	if not ndef then 
 		minetest.log("warning", " register_platform couldn't find preset node "..preset)
@@ -12,7 +12,7 @@ function advtrains.register_platform(preset)
 	end
 	local desc=ndef.description or ""
 	local nodename=string.match(preset, ":(.+)$")
-	minetest.register_node("advtrains:platform_low_"..nodename, {
+	minetest.register_node(modprefix .. ":platform_low_"..nodename, {
 		description = attrans("@1 Platform (low)", desc),
 		tiles = {btex.."^advtrains_platform.png", btex, btex, btex, btex, btex},
 		groups = {cracky = 1, not_blocking_trains = 1, platform=1},
@@ -29,7 +29,7 @@ function advtrains.register_platform(preset)
 		paramtype = "light",
 		sunlight_propagates = true,
 	})
-	minetest.register_node("advtrains:platform_high_"..nodename, {
+	minetest.register_node(modprefix .. ":platform_high_"..nodename, {
 		description = attrans("@1 Platform (high)", desc),
 		tiles = {btex.."^advtrains_platform.png", btex, btex, btex, btex, btex},
 		groups = {cracky = 1, not_blocking_trains = 1, platform=2},
@@ -48,14 +48,14 @@ function advtrains.register_platform(preset)
 	})
 	minetest.register_craft({
 		type="shapeless",
-		output = "advtrains:platform_high_"..nodename.." 4",
+		output = modprefix .. ":platform_high_"..nodename.." 4",
 		recipe = {
 			"dye:yellow", preset, preset
 		},
 	})
 	minetest.register_craft({
 		type="shapeless",
-		output = "advtrains:platform_low_"..nodename.." 4",
+		output = modprefix .. ":platform_low_"..nodename.." 4",
 		recipe = {
 			"dye:yellow", preset
 		},
@@ -63,5 +63,5 @@ function advtrains.register_platform(preset)
 end
 
 
-advtrains.register_platform("default:stonebrick")
-advtrains.register_platform("default:sandstonebrick")
+advtrains.register_platform("advtrains", "default:stonebrick")
+advtrains.register_platform("advtrains", "default:sandstonebrick")
