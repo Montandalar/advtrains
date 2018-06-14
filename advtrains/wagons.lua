@@ -58,6 +58,14 @@ function wagon:on_activate(sd_uid, dtime_s)
 	self.object:set_armor_groups({immortal=1})
 end
 
+local function invcallback(id, pname, rtallow, rtfail)
+	local data = advtrains.wagons[id]
+	if data and advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist) then
+		return rtallow
+	end
+	return rtfail
+end
+
 function wagon:set_id(wid)
 	self.id = wid
 	self.initialized = true
@@ -71,16 +79,16 @@ function wagon:set_id(wid)
 		--to be used later
 		local inv=minetest.create_detached_inventory("advtrains_wgn_"..self.id, {
 			allow_move = function(inv, from_list, from_index, to_list, to_index, count, player)
-				return count
+				return invcallback(wid, player:get_player_name(), count, 0)
 			end,
 			allow_put = function(inv, listname, index, stack, player)
-				return stack:get_count()
+				return invcallback(wid, player:get_player_name(), stack:get_count(), 0)
 			end,
 			allow_take = function(inv, listname, index, stack, player)
-				return stack:get_count()
+				return invcallback(wid, player:get_player_name(), stack:get_count(), 0)
 			end
 		})
-		if self.ser_inv then
+		if data.ser_inv then
 			advtrains.deserialize_inventory(data.ser_inv, inv)
 		end
 		if self.inventory_list_sizes then
@@ -540,7 +548,7 @@ function wagon:on_rightclick(clicker)
 						poss[#poss+1]={name=self.seat_groups[access].name, key="sgr_"..access}
 					end
 				end
-				if self.has_inventory and self.get_inventory_formspec then
+				if self.has_inventory and self.get_inventory_formspec and advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist) then
 					poss[#poss+1]={name=attrans("Show Inventory"), key="inv"}
 				end
 				if self.seat_groups[sgr].driving_ctrl_access and advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist) then
@@ -577,14 +585,14 @@ function wagon:on_rightclick(clicker)
 			if advtrains.player_to_train_mapping[pname] then return end
 			if self.seat_groups then
 				if #self.seats==0 then
-					if self.has_inventory and self.get_inventory_formspec then
+					if self.has_inventory and self.get_inventory_formspec and advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist) then
 						minetest.show_formspec(pname, "advtrains_inv_"..self.id, self:get_inventory_formspec(pname))
 					end
 					return
 				end
 				
 				local doors_open = self:train().door_open~=0 or clicker:get_player_control().sneak
-				local allow, rsn=false, "unknown reason"
+				local allow, rsn=false, "Wagon has no seats!"
 				for _,sgr in ipairs(self.assign_to_seat_group) do
 					allow, rsn = self:check_seat_group_access(pname, sgr)
 					if allow then
@@ -711,7 +719,7 @@ function wagon:show_get_on_form(pname)
 	
 	local data = advtrains.wagons[self.id]
 	if #self.seats==0 then
-		if self.has_inventory and self.get_inventory_formspec then
+		if self.has_inventory and self.get_inventory_formspec and advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist) then
 			minetest.show_formspec(pname, "advtrains_inv_"..self.id, self:get_inventory_formspec(pname))
 		end
 		return
@@ -1029,7 +1037,13 @@ end
 
 function advtrains.get_wagon_prototype(data)
 	local wt = data.type
-	if not data.type or not advtrains.wagon_prototypes[wt] then
+	if not wt then
+		-- LEGACY: Field was called "entity_name" in previous versions
+		wt = data.entity_name
+		data.type = data.entity_name
+		data.entity_name = nil
+	end
+	if not wt or not advtrains.wagon_prototypes[wt] then
 		atwarn("Unable to load wagon type",wt,", using placeholder")
 		wt="advtrains:wagon_placeholder"
 	end

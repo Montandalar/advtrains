@@ -277,6 +277,15 @@ advtrains.avt_save = function(remove_players_from_wagons)
 		end
 	end
 	
+	for id, wdata in pairs(advtrains.wagons) do
+		local _,proto = advtrains.get_wagon_prototype(wdata)
+		if proto.has_inventory then
+			local inv=minetest.get_inventory({type="detached", name="advtrains_wgn_"..id})
+			wdata.ser_inv=advtrains.serialize_inventory(inv)
+		end
+		-- TODO apply save-keys here too
+	end
+	
 	--versions:
 	-- 1 - Initial new save format.
 	local save_tbl={
