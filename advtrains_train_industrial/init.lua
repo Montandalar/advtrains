@@ -94,7 +94,7 @@ advtrains.register_wagon("wagon_tank", {
 	has_inventory = true,
 	get_inventory_formspec = function(self)
 		return "size[8,11]"..
-			"list[detached:advtrains_wgn_"..self.unique_id..";box;0,0;8,3;]"..
+			"list[detached:advtrains_wgn_"..self.id..";box;0,0;8,3;]"..
 			"list[current_player;main;0,5;8,4;]"..
 			"listring[]"
 	end,
@@ -116,7 +116,7 @@ advtrains.register_wagon("wagon_wood", {
 	has_inventory = true,
 	get_inventory_formspec = function(self)
 		return "size[8,11]"..
-			"list[detached:advtrains_wgn_"..self.unique_id..";box;0,0;8,3;]"..
+			"list[detached:advtrains_wgn_"..self.id..";box;0,0;8,3;]"..
 			"list[current_player;main;0,5;8,4;]"..
 			"listring[]"
 	end,
