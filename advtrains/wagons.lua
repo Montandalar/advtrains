@@ -1002,10 +1002,10 @@ function wagon:seating_from_key_helper(pname, fields, no)
 	if fields.inv and self.has_inventory and self.get_inventory_formspec then
 		minetest.show_formspec(player:get_player_name(), "advtrains_inv_"..self.id, self:get_inventory_formspec(player:get_player_name()))
 	end
-	if fields.prop and self.owner==pname then
+	if fields.prop and data.owner==pname then
 		self:show_wagon_properties(pname)
 	end
-	if fields.bordcom and self.seat_groups[sgr].driving_ctrl_access and advtrains.check_driving_couple_protection(pname, self.owner, self.whitelist) then
+	if fields.bordcom and self.seat_groups[sgr].driving_ctrl_access and advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist) then
 		self:show_bordcom(pname)
 	end
 	if fields.dcwarn then
