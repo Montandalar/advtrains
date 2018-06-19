@@ -173,9 +173,6 @@ dofile(advtrains.modpath.."/craft_items.lua")
 
 dofile(advtrains.modpath.."/log.lua")
 
-if minetest.global_exists("digtron") then
-	dofile(advtrains.modpath.."/digtron.lua")
-end
 
 --load/save
 
