@@ -77,23 +77,27 @@ function wagon:set_id(wid)
 	
 	if self.has_inventory then
 		--to be used later
-		local inv=minetest.create_detached_inventory("advtrains_wgn_"..self.id, {
-			allow_move = function(inv, from_list, from_index, to_list, to_index, count, player)
-				return invcallback(wid, player:get_player_name(), count, 0)
-			end,
-			allow_put = function(inv, listname, index, stack, player)
-				return invcallback(wid, player:get_player_name(), stack:get_count(), 0)
-			end,
-			allow_take = function(inv, listname, index, stack, player)
-				return invcallback(wid, player:get_player_name(), stack:get_count(), 0)
+		local inv=minetest.get_inventory({type="detached", name="advtrains_wgn_"..self.id})
+		-- create inventory, if not yet created
+		if not inv then	
+			inv=minetest.create_detached_inventory("advtrains_wgn_"..self.id, {
+				allow_move = function(inv, from_list, from_index, to_list, to_index, count, player)
+					return invcallback(wid, player:get_player_name(), count, 0)
+				end,
+				allow_put = function(inv, listname, index, stack, player)
+					return invcallback(wid, player:get_player_name(), stack:get_count(), 0)
+				end,
+				allow_take = function(inv, listname, index, stack, player)
+					return invcallback(wid, player:get_player_name(), stack:get_count(), 0)
+				end
+			})
+			if data.ser_inv then
+				advtrains.deserialize_inventory(data.ser_inv, inv)
 			end
-		})
-		if data.ser_inv then
-			advtrains.deserialize_inventory(data.ser_inv, inv)
-		end
-		if self.inventory_list_sizes then
-			for lst, siz in pairs(self.inventory_list_sizes) do
-				inv:set_size(lst, siz)
+			if self.inventory_list_sizes then
+				for lst, siz in pairs(self.inventory_list_sizes) do
+					inv:set_size(lst, siz)
+				end
 			end
 		end
 	end

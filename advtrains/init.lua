@@ -281,7 +281,10 @@ advtrains.avt_save = function(remove_players_from_wagons)
 		local _,proto = advtrains.get_wagon_prototype(wdata)
 		if proto.has_inventory then
 			local inv=minetest.get_inventory({type="detached", name="advtrains_wgn_"..id})
-			wdata.ser_inv=advtrains.serialize_inventory(inv)
+			if inv then -- inventory is not initialized when wagon was never loaded
+				-- TOOD: What happens with unloading rails when they don't find the inventory?
+				wdata.ser_inv=advtrains.serialize_inventory(inv)
+			end
 		end
 		-- TODO apply save-keys here too
 	end
