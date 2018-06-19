@@ -264,7 +264,7 @@ function tp.register_track_placer(nnprefix, imgprefix, dispname)
 		description = dispname,
 		inventory_image = imgprefix.."_placer.png",
 		wield_image = imgprefix.."_placer.png",
-		groups={advtrains_trackplacer=1},
+		groups={advtrains_trackplacer=1, digtron_on_place=1},
 		on_place = function(itemstack, placer, pointed_thing)
 			return advtrains.pcall(function()
 					local name = placer:get_player_name()
