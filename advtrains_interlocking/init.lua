@@ -6,5 +6,6 @@ advtrains.interlocking = {}
 local modpath = minetest.get_modpath(minetest.get_current_modname()) .. DIR_DELIM
 
 dofile(modpath.."database.lua")
+dofile(modpath.."tcb.lua")
 dofile(modpath.."signal_api.lua")
 dofile(modpath.."demosignals.lua")

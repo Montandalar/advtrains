@@ -334,4 +334,8 @@ function advtrains.random_id()
 	end
 	return idst
 end
+-- Shorthand for pos_to_string and round_vector_floor_y
+function advtrains.roundfloorpts(pos)
+	return minetest.pos_to_string(advtrains.round_vector_floor_y(pos))
+end
 
