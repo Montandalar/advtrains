@@ -200,6 +200,9 @@ function advtrains.avt_load()
 				advtrains.player_to_train_mapping = tbl.ptmap or {}
 				advtrains.ndb.load_data(tbl.ndb)
 				advtrains.atc.load_data(tbl.atc)
+				if advtrains.interlocking then
+					--advtrains.interlocking.db.load(tbl.interlocking)
+				end
 				--remove wagon_save entries that are not part of a train
 				local todel=advtrains.merge_tables(advtrains.wagon_save)
 				for tid, train in pairs(advtrains.trains) do
@@ -291,12 +294,17 @@ advtrains.avt_save = function(remove_players_from_wagons)
 	
 	--versions:
 	-- 1 - Initial new save format.
+	local il_save
+	if advtrains.interlocking then
+		il_save = advtrains.interlocking.db.save()
+	end
 	local save_tbl={
 		trains = tmp_trains,
 		wagon_save = advtrains.wagons,
 		ptmap = advtrains.player_to_train_mapping,
 		atc = advtrains.atc.save_data(),
 		ndb = advtrains.ndb.save_data(),
+		interlocking = il_save,
 		version = 1,
 	}
 	local datastr = minetest.serialize(save_tbl)

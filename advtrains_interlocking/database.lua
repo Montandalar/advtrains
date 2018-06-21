@@ -93,13 +93,20 @@ local TRAVERSER_LIMIT = 100
 local ildb = {}
 
 local track_circuit_breaks = {}
+local track_sections = {}
 
 function ildb.load(data)
-
+	if not data then return end
+	if data.tcbs then
+		track_circuit_breaks = data.tcbs
+	end
+	if data.ts then
+		track_sections = data.ts
+	end
 end
 
 function ildb.save()
-	return {}
+	return {tcbs = track_circuit_breaks, ts=track_sections}
 end
 
 --
@@ -107,17 +114,7 @@ end
 TCB data structure
 {
 [1] = { -- Variant: with adjacent TCs.
-	== Synchronized properties == Apply to the whole TC
-	adjacent = { <signal specifier>,... } -- Adjacent TCBs, forms a TC with these
-	conflict = { <signal specifier>,... } -- Conflicting TC's (chosen as a representative TCB member)
-	-- Used e.g. for crossing rails that do not have nodes in common (like it's currently done)
-	incomplete = <boolean> -- Set when the recursion counter hit during traverse. Probably needs to add
-	-- another tcb at some far-away place
-	route = {origin = <signal>, in_dir = <boolean>}
-	-- Set whenever a route has been set through this TC. It saves the origin tcb id and side
-	-- (=the origin signal). in_dir is set when the train will enter the TC from this side
-	
-	== Unsynchronized properties == Apply only to this side of the TC
+	ts_id = <id> -- ID of the assigned track section
 	signal = <pos> -- optional: when set, routes can be set from this tcb/direction and signal
 	-- aspect will be set accordingly.
 	routetar = <signal> -- Route set from this signal. This is the entry that is cleared once
@@ -128,12 +125,25 @@ TCB data structure
 	-- is set true, clearing the signal
 },
 [2] = { -- Variant: end of track-circuited area (initial state of TC)
-	end_of_interlocking = true,
+	ts_id = nil, -- this is the indication for end_of_interlocking
 	section_free = <boolean>, --this can be set by an exit node via mesecons or atlatc, 
 	-- or from the tc formspec.
 }
 }
-Signal specifier (a pair of TCB/Side):
+
+Track section
+[id] = {
+	name = "Some human-readable name"
+	tc_breaks = { <signal specifier>,... } -- Bounding TC's (signal specifiers)
+	-- Can be direct ends (auto-detected), conflicting routes or TCBs that are too far away from each other
+	route = {origin = <signal>, from_tcb = <index>}
+	-- Set whenever a route has been set through this TC. It saves the origin tcb id and side
+	-- (=the origin signal). index is the TCB of the route origin
+	trains = {<id>, ...} -- Set whenever a train (or more) reside in this TC
+}
+
+
+Signal specifier (sigd) (a pair of TCB/Side):
 {p = <pos>, s = <1/2>}
 ]]
 
@@ -141,8 +151,8 @@ Signal specifier (a pair of TCB/Side):
 --
 function ildb.create_tcb(pos)
 	local new_tcb = {
-		[1] = {end_of_interlocking = true},
-		[2] = {end_of_interlocking = true},
+		[1] = {},
+		[2] = {},
 	}
 	local pts = advtrains.roundfloorpts(pos)
 	track_circuit_breaks[pts] = new_tcb
@@ -152,6 +162,48 @@ function ildb.get_tcb(pos)
 	local pts = advtrains.roundfloorpts(pos)
 	return track_circuit_breaks[pts]
 end
+
+function ildb.get_tcbs(sigd)
+	local tcb = ildb.get_tcb(sigd.p)
+	if not tcb then return nil end
+	return tcb[sigd.s]
+end
+
+
+function ildb.create_ts(sigd)
+	local tcbs = ildb.get_tcbs(sigd)
+	local id = advtrains.random_id()
+	
+	while track_sections[id] do
+		id = advtrains.random_id()
+	end
+	
+	track_sections[id] = {
+		name = "Section "..id,
+		tc_breaks = { sigd }
+	}
+	tcbs.ts_id = id
+end
+
+function ildb.get_ts(id)
+	return track_sections[id]
+end
+
+
+
+-- various helper functions handling sigd's
+local function sigd_equal(sigd, cmp)
+	return vector.equals(sigd.p, cmp.p) and sigd.s==cmp.s
+end
+local function insert_sigd_nodouble(list, sigd)
+	for idx, cmp in pairs(list) do
+		if sigd_equal(sigd, cmp) then
+			return
+		end
+	end
+	table.insert(list, sigd)
+end
+
 
 -- This function will actually handle the node that is in connid direction from the node at pos
 -- so, this needs the conns of the node at pos, since these are already calculated
@@ -166,13 +218,14 @@ local function traverser(found_tcbs, pos, conns, connid, count)
 		local tcb = ildb.get_tcb(adj_pos)
 		if tcb then
 			-- done with this branch
-			table.insert(found_tcbs, {p=adj_pos, s=adj_connid})
+			atdebug("Traverser found tcb at",adj_pos, adj_connid)
+			insert_sigd_nodouble(found_tcbs, {p=adj_pos, s=adj_connid})
 			return
 		end
 	end
 	-- recursion abort condition
 	if count > TRAVERSER_LIMIT then
-		atdebug("Traverser hit counter at",adj_pos, adj_connid,"found tcb's:",found_tcbs)
+		atdebug("Traverser hit counter at",adj_pos, adj_connid)
 		return true
 	end
 	-- continue traversing
@@ -185,61 +238,121 @@ local function traverser(found_tcbs, pos, conns, connid, count)
 	return counter_hit
 end
 
-local function sigd_equal(sigd, cmp)
-	return vector.equals(sigd.p, cmp.p) and sigd.s==cmp.s
+
+
+-- Merges the TS with merge_id into root_id and then deletes merge_id
+local function merge_ts(root_id, merge_id)
+	local rts = ildb.get_ts(root_id)
+	local mts = ildb.get_ts(merge_id)
+	
+	-- cobble together the list of TCBs
+	for _, msigd in ipairs(mts.tc_breaks) do
+		local tcbs = ildb.get_tcbs(msigd)
+		if tcbs then
+			insert_sigd_nodouble(rts.tc_breaks, msigd)
+			tcbs.ts_id = root_id
+		end
+	end
+	-- done
+	track_sections[merge_id] = nil
 end
 
+-- TODO temporary
+local lntrans = { "A", "B" }
+local function sigd_to_string(sigd)
+	return minetest.pos_to_string(sigd.p).." / "..lntrans[sigd.s]
+end
 
-
-
-
--- Updates the neighbors of this TCB using the traverser function (see comments above)
--- returns true if the traverser hit the counter, which means that there could be another
--- TCB outside of the traversed range.
-function ildb.update_tcb_neighbors(pos, connid)
+-- Check for near TCBs and connect to their TS if they have one, and syncs their data.
+function ildb.sync_tcb_neighbors(pos, connid)
 	local found_tcbs = { {p = pos, s = connid} }
 	local node_ok, conns, rhe = advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
 	if not node_ok then
 		error("update_tcb_neighbors but node is NOK: "..minetest.pos_to_string(pos))
 	end
 	
+	atdebug("Traversing from ",pos, connid)
 	local counter_hit = traverser(found_tcbs, pos, conns, connid, 0, hit_counter)
 	
+	local ts_id
+	local list_eoi = {}
+	local list_ok = {}
+	local list_mismatch = {}
+	local ts_to_merge = {}
+	
 	for idx, sigd in pairs(found_tcbs) do
-		local tcb = ildb.get_tcb(sigd.p)
-		local tcbs = tcb[sigd.s]
-		
-		tcbs.end_of_interlocking = nil
-		tcbs.incomplete = counter_hit
-		tcbs.adjacent = {}
-		
-		for idx2, other_sigd in pairs(found_tcbs) do
-			if idx~=idx2 then
-				ildb.add_adjacent(tcbs, sigd.p, sigd.s, other_sigd)
+		local tcbs = ildb.get_tcbs(sigd)
+		if not tcbs.ts_id then
+			atdebug("Sync: put",sigd_to_string(sigd),"into list_eoi")
+			table.insert(list_eoi, sigd)
+		elseif not ts_id and tcbs.ts_id then
+			if not ildb.get_ts(tcbs.ts_id) then
+				atwarn("Track section database is inconsistent, there's no TS with ID=",tcbs.ts_id)
+				tcbs.ts_id = nil
+				table.insert(list_eoi, sigd)
+			else
+				atdebug("Sync: put",sigd_to_string(sigd),"into list_ok")
+				ts_id = tcbs.ts_id
+				table.insert(list_ok, sigd)
 			end
+		elseif ts_id and tcbs.ts_id and tcbs.ts_id ~= ts_id then
+			atwarn("Track section database is inconsistent, sections share track!")
+			atwarn("Merging",tcbs.ts_id,"into",ts_id,".")
+			table.insert(list_mismatch, sigd)
+			table.insert(ts_to_merge, tcbs.ts_id)
 		end
 	end
-	
-	return hit_counter
+	if ts_id then
+		local ts = ildb.get_ts(ts_id)
+		for _, sigd in ipairs(list_eoi) do
+			local tcbs = ildb.get_tcbs(sigd)
+			tcbs.ts_id = ts_id
+			table.insert(ts.tc_breaks, sigd)
+		end
+		for _, mts in ipairs(ts_to_merge) do
+			merge_ts(ts_id, mts)
+		end
+	end
 end
 
--- Add the adjacency entry into the tcbs, but without duplicating it
--- and without adding a self-reference
-function ildb.add_adjacent(tcbs, this_pos, this_connid, sigd)
-	if sigd_equal(sigd, {p=this_pos, s=this_connid}) then
+function ildb.link_track_sections(merge_id, root_id)
+	if merge_id == root_id then
 		return
 	end
-	tcbs.end_of_interlocking = nil
-	if not tcbs.adjacent then
-		tcbs.adjacent = {}
-	end
-	for idx, cmp in pairs(tcbs.adjacent) do
-		if sigd_equal(sigd, cmp) then
+	merge_ts(root_id, merge_id)
+end
+
+function ildb.remove_from_interlocking(sigd)
+	local tcbs = ildb.get_tcbs(sigd)
+	if tcbs.ts_id then
+		local tsid = tcbs.ts_id
+		local ts = ildb.get_ts(tsid)
+		if not ts then
+			tcbs.ts_id = nil
 			return
 		end
+		
+		-- remove entry from the list
+		local idx = 1
+		while idx <= #ts.tc_breaks do
+			local cmp = ts.tc_breaks[idx]
+			if sigd_equal(sigd, cmp) then
+				table.remove(ts.tc_breaks, idx)
+			else
+				idx = idx + 1
+			end
+		end
+		tcbs.ts_id = nil
+		
+		ildb.sync_tcb_neighbors(sigd.p, sigd.s)
+		
+		if #ts.tc_breaks == 0 then
+			track_sections[tsid] = nil
+		end
 	end
-	table.insert(tcbs.adjacent, sigd)
 end
+
+
 
 advtrains.interlocking.db = ildb
 
