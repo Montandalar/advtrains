@@ -155,7 +155,12 @@ function ildb.create_tcb(pos)
 		[2] = {},
 	}
 	local pts = advtrains.roundfloorpts(pos)
-	track_circuit_breaks[pts] = new_tcb
+	if not track_circuit_breaks[pts] then
+		track_circuit_breaks[pts] = new_tcb
+		return true
+	else
+		return false
+	end
 end
 
 function ildb.get_tcb(pos)
@@ -252,6 +257,7 @@ local function merge_ts(root_id, merge_id)
 			insert_sigd_nodouble(rts.tc_breaks, msigd)
 			tcbs.ts_id = root_id
 		end
+		advtrains.interlocking.show_tcb_marker(msigd.p)
 	end
 	-- done
 	track_sections[merge_id] = nil
@@ -308,6 +314,7 @@ function ildb.sync_tcb_neighbors(pos, connid)
 			local tcbs = ildb.get_tcbs(sigd)
 			tcbs.ts_id = ts_id
 			table.insert(ts.tc_breaks, sigd)
+			advtrains.interlocking.show_tcb_marker(sigd.p)
 		end
 		for _, mts in ipairs(ts_to_merge) do
 			merge_ts(ts_id, mts)
@@ -344,15 +351,31 @@ function ildb.remove_from_interlocking(sigd)
 		end
 		tcbs.ts_id = nil
 		
-		ildb.sync_tcb_neighbors(sigd.p, sigd.s)
+		--ildb.sync_tcb_neighbors(sigd.p, sigd.s)
 		
 		if #ts.tc_breaks == 0 then
 			track_sections[tsid] = nil
 		end
 	end
+	advtrains.interlocking.show_tcb_marker(sigd.p)
 end
 
+function ildb.remove_tcb(pos)
+	for connid=1,2 do
+		ildb.remove_from_interlocking({p=pos, s=connid})
+	end
+	local pts = advtrains.roundfloorpts(pos)
+	track_circuit_breaks[pts] = nil
+end
 
+function ildb.dissolve_ts(ts_id)
+	local ts = ildb.get_ts(ts_id)
+	local tcbr = advtrains.merge_tables(ts.tc_breaks)
+	for _,sigd in ipairs(tcbr) do
+		ildb.remove_from_interlocking(sigd)
+	end
+	-- Note: ts gets removed in the moment of the removal of the last TCB.
+end
 
 advtrains.interlocking.db = ildb
 

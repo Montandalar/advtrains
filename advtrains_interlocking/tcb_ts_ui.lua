@@ -16,7 +16,7 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 	walkable = true,
 	selection_box = {
 		type = "fixed",
-		fixed = {-1/4, -1/2, -1/4, 1/4, 1/2, 1/4},
+		fixed = {-1/6, -1/2, -1/6, 1/6, 1/4, 1/6},
 	},
 	mesh = "at_il_tcb_node.obj",
 	tiles = {"at_il_tcb_node.png"},
@@ -48,8 +48,36 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 	end,
 	on_punch = function(pos, node, player)
 		local meta = minetest.get_meta(pos)
-		atwarn("Would show tcb marker.")
-			-- TODO TCB-Marker anzeigen
+		local tcbpts = meta:get_string("tcb_pos")
+		if tcbpts ~= "" then
+			local tcbpos = minetest.string_to_pos(tcbpts)
+			advtrains.interlocking.show_tcb_marker(tcbpos)
+		end	
+	end,
+	can_dig = function(pos, player)
+		-- Those markers can only be dug when all adjacent TS's are set
+		-- as EOI.
+		local meta = minetest.get_meta(pos)
+		local tcbpts = meta:get_string("tcb_pos")
+		if tcbpts ~= "" then
+			local tcbpos = minetest.string_to_pos(tcbpts)
+			local tcb = advtrains.interlocking.db.get_tcb(tcbpos)
+			if not tcb then return true end
+			for connid=1,2 do
+				if tcb[connid].ts_id then
+					return false
+				end
+			end
+		end	
+		return true
+	end,
+	after_dig_node = function(pos, oldnode, oldmetadata, player)
+		if not oldmetadata or not oldmetadata.fields then return end
+		local tcbpts = oldmetadata.fields.tcb_pos
+		if tcbpts ~= "" then
+			local tcbpos = minetest.string_to_pos(tcbpts)
+			advtrains.interlocking.db.remove_tcb(tcbpos)
+		end
 	end,
 })
 
@@ -60,7 +88,11 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 		if vector.distance(pos, tcbnpos)<=20 then
 			local node_ok, conns, rhe = advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
 			if node_ok and #conns == 2 then
-				advtrains.interlocking.db.create_tcb(pos)
+				local ok = advtrains.interlocking.db.create_tcb(pos)
+				
+				if not ok then
+					minetest.chat_send_player(pname, "Configuring TCB: TCB already exists at this position. Aborted.")
+				end
 				
 				advtrains.interlocking.db.sync_tcb_neighbors(pos, 1)
 				advtrains.interlocking.db.sync_tcb_neighbors(pos, 2)
@@ -90,17 +122,17 @@ local function mktcbformspec(tcbs, btnpref, offset, pname)
 	end
 	if ts then
 		form = form.."label[0.5,"..offset..";Side "..btnpref..": "..ts.name.."]"
-		form = form.."button[0.5,"..(offset+1)..";5,1;"..btnpref.."_gotots;Show track section]"
-		form = form.."button[0.5,"..(offset+2)..";2.5,1;"..btnpref.."_update;Update near TCBs]"
-		form = form.."button[3  ,"..(offset+2)..";2.5,1;"..btnpref.."_remove;Remove from section]"
+		form = form.."button[0.5,"..(offset+0.5)..";5,1;"..btnpref.."_gotots;Show track section]"
+		form = form.."button[0.5,"..(offset+1.5)..";2.5,1;"..btnpref.."_update;Update near TCBs]"
+		form = form.."button[3  ,"..(offset+1.5)..";2.5,1;"..btnpref.."_remove;Remove from section]"
 	else
 		tcbs.ts_id = nil
 		form = form.."label[0.5,"..offset..";Side "..btnpref..": ".."End of interlocking]"
-		form = form.."button[0.5,"..(offset+1)..";5,1;"..btnpref.."_makeil;Create Interlocked Track Section]"
+		form = form.."button[0.5,"..(offset+0.5)..";5,1;"..btnpref.."_makeil;Create Interlocked Track Section]"
 		if tcbs.section_free then
-			form = form.."button[0.5,"..(offset+2)..";5,1;"..btnpref.."_setlocked;Section is free]"
+			form = form.."button[0.5,"..(offset+1.5)..";5,1;"..btnpref.."_setlocked;Section is free]"
 		else
-			form = form.."button[0.5,"..(offset+2)..";5,1;"..btnpref.."_setfree;Section is blocked]"		
+			form = form.."button[0.5,"..(offset+1.5)..";5,1;"..btnpref.."_setfree;Section is blocked]"		
 		end
 	end
 	return form
@@ -116,6 +148,7 @@ function advtrains.interlocking.show_tcb_form(pos, pname)
 	form = form .. mktcbformspec(tcb[2], "B", 4, pname)
 	
 	minetest.show_formspec(pname, "at_il_tcbconfig_"..minetest.pos_to_string(pos), form)
+	advtrains.interlocking.show_tcb_marker(pos)
 end
 
 --helper: length of nil table is 0
@@ -190,6 +223,7 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 	local strtab = {}
 	for idx, sigd in ipairs(ts.tc_breaks) do
 		strtab[#strtab+1] = minetest.formspec_escape(sigd_to_string(sigd))
+		advtrains.interlocking.show_tcb_marker(sigd.p)
 	end
 	
 	form = form.."textlist[0.5,3;5,3;tcblist;"..table.concat(strtab, ",").."]"
@@ -197,22 +231,24 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 		local other_id = players_link_ts[pname]
 		local other_ts = advtrains.interlocking.db.get_ts(other_id)
 		if other_ts then
-			form = form.."button[5.5,3.5;3.5,1;mklink;Join with "..other_ts.name.."]"
-			form = form.."button[9  ,3.5;0.5,1;cancellink;X]"
+			form = form.."button[5.5,3;3.5,1;mklink;Join with "..other_ts.name.."]"
+			form = form.."button[9  ,3;0.5,1;cancellink;X]"
 		end
 	else
-		form = form.."button[5.5,3.5;4,1;link;Join into other section]"
+		form = form.."button[5.5,3;4,1;link;Join into other section]"
 		hint = 1
 	end
+	form = form.."button[5.5,4;4,1;dissolve;Dissolve Section]"
+	form = form.."tooltip[dissolve;This will remove the track section and set all its end points to End Of Interlocking]"
 	if sel_tcb then
-		form = form.."button[5.5,4.5;4,1;del_tcb;Remove selected TCB]"
+		form = form.."button[5.5,5;4,1;del_tcb;Unlink selected TCB]"
 		hint = 2
 	end
 	if hint == 1 then
 		form = form.."label[0.5,0.75;Use the 'Join' button to designate rail crosses and link not listed far-away TCBs]"
 	elseif hint == 2 then
-		form = form.."label[0.5,0.75;Removing a TCB will set it to non-interlocked mode.]"
-		form = form.."label[0.5,1;Trying to remove a TCB directly connected to this track will not work.]"
+		form = form.."label[0.5,0.75;Unlinking a TCB will set it to non-interlocked mode.]"
+		--form = form.."label[0.5,1;Trying to unlink a TCB directly connected to this track will not work.]"
 	end
 	
 	minetest.show_formspec(pname, "at_il_tsconfig_"..ts_id, form)
@@ -238,6 +274,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				players_link_ts[pname] = nil
 			elseif fields.mklink then
 				advtrains.interlocking.db.link_track_sections(players_link_ts[pname], ts_id)
+				players_link_ts[pname] = nil
 			end
 		end
 		
@@ -248,6 +285,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		if fields.link then
 			players_link_ts[pname] = ts_id
 		end
+		if fields.dissolve then
+			advtrains.interlocking.db.dissolve_ts(ts_id)
+			minetest.close_formspec(pname, formname)
+			return
+		end
 		
 		if fields.setname then
 			ts.name = fields.name
@@ -255,11 +297,70 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				ts.name = "Section "..ts_id
 			end
 		end
-		
-		
 		advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 	end
 
 end)
 
+-- TCB marker entities
 
+-- table with objectRefs
+local markerent = {}
+
+minetest.register_entity("advtrains_interlocking:tcbmarker", {
+	visual = "mesh",
+	mesh = "trackplane.b3d",
+	textures = {"at_il_tcb_marker.png"},
+	collisionbox = {-1,-0.5,-1, 1,-0.4,1},
+	visual_size = {x=10, y=10},
+	on_punch = function(self)
+		self.object:remove()
+	end,
+	on_rightclick = function(self, player)
+		if self.tcbpos and player then
+			advtrains.interlocking.show_tcb_form(self.tcbpos, player:get_player_name())
+		end
+	end,
+	get_staticdata = function() return "STATIC" end,
+	on_activate = function(self, sdata) if sdata=="STATIC" then self.object:remove() end end,
+	static_save = false,
+})
+
+function advtrains.interlocking.show_tcb_marker(pos)
+	atdebug("showing tcb marker",pos)
+	local tcb = advtrains.interlocking.db.get_tcb(pos)
+	if not tcb then return end
+	local node_ok, conns, rhe = advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
+	if not node_ok then return end
+	local yaw = advtrains.conn_angle_median(conns[2].c, conns[1].c)
+	
+	local itex = {}
+	for connid=1,2 do
+		local tcbs = tcb[connid]
+		local ts
+		if tcbs.ts_id then
+			ts = advtrains.interlocking.db.get_ts(tcbs.ts_id)
+		end
+		if ts then
+			itex[connid] = ts.name
+		else
+			itex[connid] = "--EOI--"
+		end
+	end
+	
+	local pts = advtrains.roundfloorpts(pos)
+	if markerent[pts] then
+		markerent[pts]:remove()
+	end
+	
+	local obj = minetest.add_entity(pos, "advtrains_interlocking:tcbmarker")
+	if not obj then return end
+	obj:set_yaw(yaw)
+	obj:set_properties({
+		infotext = "A = "..itex[1].."\nB = "..itex[2]
+	})
+	local le = obj:get_luaentity()
+	if le then le.tcbpos = pos end
+	
+	markerent[pts] = obj
+end

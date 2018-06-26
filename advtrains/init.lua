@@ -201,7 +201,7 @@ function advtrains.avt_load()
 				advtrains.ndb.load_data(tbl.ndb)
 				advtrains.atc.load_data(tbl.atc)
 				if advtrains.interlocking then
-					--advtrains.interlocking.db.load(tbl.interlocking)
+					advtrains.interlocking.db.load(tbl.interlocking)
 				end
 				--remove wagon_save entries that are not part of a train
 				local todel=advtrains.merge_tables(advtrains.wagon_save)
