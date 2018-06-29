@@ -174,6 +174,7 @@ end
 
 -- Occupation Callback system
 -- see occupation.lua
+-- signature is advtrains.te_register_on_<?>(function(id, train) ... end)
 
 local function mkcallback(name)
 	local callt = {}
@@ -468,22 +469,48 @@ end
 -- (remember, train.end_index is set separately because callbacks are
 --  asserted to rely on this)
 
-local function tnc_call_enter_callback(pos, train_id)
+local function mknodecallback(name)
+	local callt = {}
+	advtrains["tnc_register_on_"..name] = function(func)
+		assertt(func, "function")
+		table.insert(callt, func)
+	end
+	return callt, function(pos, id, train, index)
+		for _,f in ipairs(callt) do
+			f(pos, id, train, index)
+		end
+	end
+end
+
+-- enter/leave-node callbacks
+-- signature is advtrains.tnc_register_on_enter/leave(function(pos, id, train, index) ... end)
+local callbacks_enter_node, run_callbacks_enter_node = mknodecallback("enter")
+local callbacks_leave_node, run_callbacks_leave_node = mknodecallback("leave")
+
+
+local function tnc_call_enter_callback(pos, train_id, train, index)
 	--atdebug("tnc enter",pos,train_id)
 	local node = advtrains.ndb.get_node(pos) --this spares the check if node is nil, it has a name in any case
 	local mregnode=minetest.registered_nodes[node.name]
 	if mregnode and mregnode.advtrains and mregnode.advtrains.on_train_enter then
-		mregnode.advtrains.on_train_enter(pos, train_id)
+		mregnode.advtrains.on_train_enter(pos, train_id, train, index)
 	end
+
+	-- call other registered callbacks
+	run_callbacks_enter_node(pos, train_id, train, index)
 end
-local function tnc_call_leave_callback(pos, train_id)
+local function tnc_call_leave_callback(pos, train_id, train, index)
 	--atdebug("tnc leave",pos,train_id)
 	local node = advtrains.ndb.get_node(pos) --this spares the check if node is nil, it has a name in any case
 	local mregnode=minetest.registered_nodes[node.name]
 	if mregnode and mregnode.advtrains and mregnode.advtrains.on_train_leave then
-		mregnode.advtrains.on_train_leave(pos, train_id)
-	end 
+		mregnode.advtrains.on_train_leave(pos, train_id, train, index)
+	end
+	
+	-- call other registered callbacks
+	run_callbacks_leave_node(pos, train_id, train, index)
 end
+
 
 advtrains.te_register_on_new_path(function(id, train)
 	train.tnc = {
@@ -501,11 +528,11 @@ advtrains.te_register_on_update(function(id, train)
 	while old_index < new_index do
 		old_index = old_index + 1
 		local pos = advtrains.round_vector_floor_y(advtrains.path_get(train,old_index))
-		tnc_call_enter_callback(pos, id)
+		tnc_call_enter_callback(pos, id, train, old_index)
 	end
 	while old_end_index < new_end_index do
 		local pos = advtrains.round_vector_floor_y(advtrains.path_get(train,old_end_index))
-		tnc_call_leave_callback(pos, id)
+		tnc_call_leave_callback(pos, id, train, old_end_index)
 		old_end_index = old_end_index + 1
 	end
 	train.tnc.old_index = new_index
@@ -517,7 +544,7 @@ advtrains.te_register_on_create(function(id, train)
 	local end_index = atround(train.end_index)
 	while end_index <= index do
 		local pos = advtrains.round_vector_floor_y(advtrains.path_get(train,end_index))
-		tnc_call_enter_callback(pos, id)
+		tnc_call_enter_callback(pos, id, train, end_index)
 		end_index = end_index + 1
 	end
 	--atdebug(id,"tnc create",train.index,train.end_index)
@@ -528,7 +555,7 @@ advtrains.te_register_on_remove(function(id, train)
 	local end_index = atround(train.end_index)
 	while end_index <= index do
 		local pos = advtrains.round_vector_floor_y(advtrains.path_get(train,end_index))
-		tnc_call_leave_callback(pos, id)
+		tnc_call_leave_callback(pos, id, train, end_index)
 		end_index = end_index + 1
 	end
 	--atdebug(id,"tnc remove",train.index,train.end_index)

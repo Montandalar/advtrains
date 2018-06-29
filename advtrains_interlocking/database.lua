@@ -382,7 +382,7 @@ end
 
 -- Utilize the traverser to find the track section at the specified position
 -- Returns:
--- ts_id - the first found ts
+-- ts_id, origin - the first found ts and the sigd of the found tcb
 -- nil - there were no TCBs in TRAVERSER_MAX range of the position, or track ends were reached
 -- false - the first found TCB stated End-Of-Interlocking
 function ildb.get_ts_at_pos(pos)
@@ -397,7 +397,7 @@ function ildb.get_ts_at_pos(pos)
 			local tcbs = ildb.get_tcbs(found_tcbs[1])
 			local ts
 			if tcbs.ts_id then
-				return tcbs.ts_id
+				return tcbs.ts_id, found_tcbs[1]
 			else
 				return false
 			end

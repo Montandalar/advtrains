@@ -244,6 +244,15 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 		form = form.."button[5.5,5;4,1;del_tcb;Unlink selected TCB]"
 		hint = 2
 	end
+	
+	-- occupying trains
+	if ts.trains and #ts.trains>0 then
+		form = form.."label[0.5,6.1;Trains on this section:]"
+		form = form.."textlist[0.5,6.7;3,2;trnlist;"..table.concat(ts.trains, ",").."]"
+	else
+		form = form.."label[0.5,6.1;No trains on this section.]"
+	end
+	
 	if hint == 1 then
 		form = form.."label[0.5,0.75;Use the 'Join' button to designate rail crosses and link not listed far-away TCBs]"
 	elseif hint == 2 then
@@ -327,7 +336,7 @@ minetest.register_entity("advtrains_interlocking:tcbmarker", {
 })
 
 function advtrains.interlocking.show_tcb_marker(pos)
-	atdebug("showing tcb marker",pos)
+	--atdebug("showing tcb marker",pos)
 	local tcb = advtrains.interlocking.db.get_tcb(pos)
 	if not tcb then return end
 	local node_ok, conns, rhe = advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)

@@ -69,6 +69,8 @@ function advtrains.print_concat_table(a)
 			if type(t)=="table" then
 				if t.x and t.y and t.z then
 					str=str..minetest.pos_to_string(t)
+				elseif t.p and t.s then -- interlocking sigd
+					str=str.."("..t.p.."/"..t.s..")"
 				else
 					str=str..dump(t)
 				end
@@ -270,7 +272,8 @@ advtrains.avt_save = function(remove_players_from_wagons)
 				"last_pos", "last_connid", "last_frac", "velocity", "tarvelocity",
 				"trainparts", "recently_collided_with_env",
 				"atc_brake_target", "atc_wait_finish", "atc_command", "atc_delay", "door_open",
-				"text_outside", "text_inside", "couple_lck_front", "couple_lck_back", "line"
+				"text_outside", "text_inside", "couple_lck_front", "couple_lck_back", "line",
+				"il_sections"
 			})
 			--then save it
 			tmp_trains[id]=v
