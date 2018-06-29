@@ -87,7 +87,7 @@ so the route is set to the signal at the right end. The train is taking the exit
 having touched the right TC.
 ]]--
 
-local TRAVERSER_LIMIT = 100
+local TRAVERSER_LIMIT = 1000
 
 
 local ildb = {}
@@ -212,10 +212,10 @@ end
 
 -- This function will actually handle the node that is in connid direction from the node at pos
 -- so, this needs the conns of the node at pos, since these are already calculated
-local function traverser(found_tcbs, pos, conns, connid, count)
+local function traverser(found_tcbs, pos, conns, connid, count, brk_when_found_n)
 	local adj_pos, adj_connid, conn_idx, nextrail_y, next_conns = advtrains.get_adjacent_rail(pos, conns, connid, advtrains.all_tracktypes)
 	if not adj_pos then
-		-- end of track
+		atdebug("Traverser found end-of-track at",pos, connid)
 		return
 	end
 	-- look whether there is a TCB here
@@ -237,7 +237,10 @@ local function traverser(found_tcbs, pos, conns, connid, count)
 	local counter_hit = false
 	for nconnid, nconn in ipairs(next_conns) do
 		if adj_connid ~= nconnid then
-			counter_hit = counter_hit or traverser(found_tcbs, adj_pos, next_conns, nconnid, count + 1, hit_counter)
+			counter_hit = counter_hit or traverser(found_tcbs, adj_pos, next_conns, nconnid, count + 1, brk_when_found_n)
+			if brk_when_found_n and #found_tcbs>=brk_when_found_n then
+				break
+			end
 		end
 	end
 	return counter_hit
@@ -375,6 +378,32 @@ function ildb.dissolve_ts(ts_id)
 		ildb.remove_from_interlocking(sigd)
 	end
 	-- Note: ts gets removed in the moment of the removal of the last TCB.
+end
+
+-- Utilize the traverser to find the track section at the specified position
+-- Returns:
+-- ts_id - the first found ts
+-- nil - there were no TCBs in TRAVERSER_MAX range of the position, or track ends were reached
+-- false - the first found TCB stated End-Of-Interlocking
+function ildb.get_ts_at_pos(pos)
+	local node_ok, conns, rhe = advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
+	if not node_ok then
+		error("get_ts_at_pos but node is NOK: "..minetest.pos_to_string(pos))
+	end
+	local found_tcbs = {}
+	for connid, conn in ipairs(conns) do -- Note: a breadth-first-search would be better for performance
+		traverser(found_tcbs, pos, conns, connid, 0, 1)
+		if #found_tcbs >= 1 then
+			local tcbs = ildb.get_tcbs(found_tcbs[1])
+			local ts
+			if tcbs.ts_id then
+				return tcbs.ts_id
+			else
+				return false
+			end
+		end
+	end
+	return nil
 end
 
 advtrains.interlocking.db = ildb

@@ -1,0 +1,2 @@
+-- train_related.lua
+-- Occupation of track sections - mainly implementation of train callbacks
