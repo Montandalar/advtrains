@@ -1,6 +1,7 @@
 -- Track Circuit Breaks and Track Sections - Player interaction
 
 local players_assign_tcb = {}
+local players_assign_signal = {}
 local players_link_ts = {}
 
 local lntrans = { "A", "B" }
@@ -26,6 +27,7 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 		cracky=3,
 		not_blocking_trains=1,
 		--save_in_at_nodedb=2,
+		at_il_track_circuit_break = 1,
 	},
 	after_place_node = function(pos, node, player)
 		local meta = minetest.get_meta(pos)
@@ -46,14 +48,14 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 			players_assign_tcb[pname] = pos
 		end	
 	end,
-	on_punch = function(pos, node, player)
-		local meta = minetest.get_meta(pos)
-		local tcbpts = meta:get_string("tcb_pos")
-		if tcbpts ~= "" then
-			local tcbpos = minetest.string_to_pos(tcbpts)
-			advtrains.interlocking.show_tcb_marker(tcbpos)
-		end	
-	end,
+	--on_punch = function(pos, node, player)
+	--	local meta = minetest.get_meta(pos)
+	--	local tcbpts = meta:get_string("tcb_pos")
+	--	if tcbpts ~= "" then
+	--		local tcbpos = minetest.string_to_pos(tcbpts)
+	--		advtrains.interlocking.show_tcb_marker(tcbpos)
+	--	end	
+	--end,
 	can_dig = function(pos, player)
 		-- Those markers can only be dug when all adjacent TS's are set
 		-- as EOI.
@@ -83,6 +85,7 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 
 minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 	local pname = player:get_player_name()
+	-- TCB assignment
 	local tcbnpos = players_assign_tcb[pname]
 	if tcbnpos then
 		if vector.distance(pos, tcbnpos)<=20 then
@@ -103,6 +106,29 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 				minetest.chat_send_player(pname, "Configuring TCB: Successfully configured TCB")
 			else
 				minetest.chat_send_player(pname, "Configuring TCB: This is not a normal two-connection rail! Aborted.")
+			end
+		else
+			minetest.chat_send_player(pname, "Configuring TCB: Node is too far away. Aborted.")
+		end
+		players_assign_tcb[pname] = nil
+	end
+	
+	-- Signal assignment
+	local sigd = players_assign_signal[pname]
+	if sigd then
+		if vector.distance(pos, sigd.p)<=50 then
+			local is_signal = minetest.get_item_group(node.name, "advtrains_signal") >= 2
+			if is_signal then
+				local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
+				if tcbs then
+					tcbs.signal = pos
+					advtrains.interlocking.db.set_sigd_for_signal(pos, sigd)
+					minetest.chat_send_player(pname, "Configuring TCB: Successfully assigned signal.")
+				else
+					minetest.chat_send_player(pname, "Configuring TCB: Internal error, TCBS doesn't exist. Aborted.")
+				end
+			else
+				minetest.chat_send_player(pname, "Configuring TCB: Not a compatible signal. Aborted.")
 			end
 		else
 			minetest.chat_send_player(pname, "Configuring TCB: Node is too far away. Aborted.")
@@ -135,6 +161,11 @@ local function mktcbformspec(tcbs, btnpref, offset, pname)
 			form = form.."button[0.5,"..(offset+1.5)..";5,1;"..btnpref.."_setfree;Section is blocked]"		
 		end
 	end
+	if tcbs.signal then
+		form = form.."button[0.5,"..(offset+2.5)..";5,1;"..btnpref.."_sigdia;Signalling]"	
+	else
+		form = form.."button[0.5,"..(offset+2.5)..";5,1;"..btnpref.."_asnsig;Assign a signal]"
+	end
 	return form
 end
 
@@ -143,9 +174,9 @@ function advtrains.interlocking.show_tcb_form(pos, pname)
 	local tcb = advtrains.interlocking.db.get_tcb(pos)
 	if not tcb then return end
 	
-	local form = "size[6,7] label[0.5,0.5;Track Circuit Break Configuration]"
+	local form = "size[6,9] label[0.5,0.5;Track Circuit Break Configuration]"
 	form = form .. mktcbformspec(tcb[1], "A", 1, pname)
-	form = form .. mktcbformspec(tcb[2], "B", 4, pname)
+	form = form .. mktcbformspec(tcb[2], "B", 5, pname)
 	
 	minetest.show_formspec(pname, "at_il_tcbconfig_"..minetest.pos_to_string(pos), form)
 	advtrains.interlocking.show_tcb_marker(pos)
@@ -174,6 +205,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		local f_makeil = {fields.A_makeil, fields.B_makeil}
 		local f_setlocked = {fields.A_setlocked, fields.B_setlocked}
 		local f_setfree = {fields.A_setfree, fields.B_setfree}
+		local f_asnsig = {fields.A_asnsig, fields.B_asnsig}
+		local f_sigdia = {fields.A_sigdia, fields.B_sigdia}
 		
 		for connid=1,2 do
 			local tcbs = tcb[connid]
@@ -201,6 +234,17 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 					tcbs.section_free = nil
 				end
 			end
+			if f_asnsig[connid] and not tcbs.signal then
+				minetest.chat_send_player(pname, "Configuring TCB: Please punch the signal to assign.")
+				players_assign_signal[pname] = {p=pos, s=connid}
+				minetest.close_formspec(pname, formname)
+				return
+			end
+			if f_sigdia[connid] and tcbs.signal then
+				advtrains.interlocking.show_signalling_form({p=pos, s=connid}, pname)
+				return
+			end
+
 		end
 		advtrains.interlocking.show_tcb_form(pos, pname)
 	end
@@ -373,3 +417,33 @@ function advtrains.interlocking.show_tcb_marker(pos)
 	
 	markerent[pts] = obj
 end
+
+-- Signalling formspec - set routes a.s.o
+
+function advtrains.interlocking.show_signalling_form(sigd, pname)
+	local form = "size[10,10]label[0.5,0.5;Track Section Detail - ]"
+	form = form.."field[0.8,2;5.2,1;name;Section name;]"
+	form = form.."button[5.5,1.7;1,1;setname;Set]"
+	
+	--minetest.show_formspec(pname, "at_il_signalling_"..sigd.p.."_"..sigd.s, form)
+	--TODO this is temporary
+	advtrains.interlocking.init_route_prog(pname, sigd)
+end
+
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	local pname = player:get_player_name()
+	local pts, connids = string.match(formname, "^at_il_signalling_([^_]+)_(%d)$")
+	local pts = string.match(formname, "^at_il_tcbconfig_(.+)$")
+	local pos, connid
+	if pts then
+		pos = minetest.string_to_pos(pts)
+		connid = tonumber(connids)
+		if not connid or connid<1 or connid>2 then return end
+	end
+	if pos and connid and not fields.quit then
+		
+		advtrains.interlocking.show_signalling_form(ts_id, pname, sel_tcb)
+	end
+
+end)

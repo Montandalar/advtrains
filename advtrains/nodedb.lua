@@ -133,7 +133,9 @@ end
 
 
 function ndb.swap_node(pos, node, no_inval)
-	minetest.swap_node(pos, node)
+	if minetest.get_node_or_nil(pos) then
+		minetest.swap_node(pos, node)
+	end
 	ndb.update(pos, node)
 end
 
@@ -294,6 +296,5 @@ minetest.register_chatcommand("at_sync_ndb",
 				return true, text
 			end)
         end,
-        privs = {train_operator=true}, -- Require the "privs" privilege to run
     })
 

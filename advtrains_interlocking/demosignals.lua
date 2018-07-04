@@ -1,13 +1,16 @@
 -- Demonstration signals
 -- Those can display the 3 main aspects of Ks signals
 
+-- Note that the group value of advtrains_signal is 2, which means "step 2 of signal capabilities"
+-- advtrains_signal=1 is meant for signals that do not implement set_aspect.
+
 
 minetest.register_node("advtrains_interlocking:ds_danger", {
 	description = "Demo signal at Danger",
 	tiles = {"at_il_signal_asp_danger.png"},
 	groups = {
 		cracky = 3,
-		advtrains_signal = 1,
+		advtrains_signal = 2,
 		save_in_at_nodedb = 1,
 	},
 	sounds = default.node_sound_stone_defaults(),
@@ -35,7 +38,7 @@ minetest.register_node("advtrains_interlocking:ds_free", {
 	tiles = {"at_il_signal_asp_free.png"},
 	groups = {
 		cracky = 3,
-		advtrains_signal = 1,
+		advtrains_signal = 2,
 		save_in_at_nodedb = 1,
 	},
 	sounds = default.node_sound_stone_defaults(),
@@ -63,7 +66,7 @@ minetest.register_node("advtrains_interlocking:ds_slow", {
 	tiles = {"at_il_signal_asp_slow.png"},
 	groups = {
 		cracky = 3,
-		advtrains_signal = 1,
+		advtrains_signal = 2,
 		save_in_at_nodedb = 1,
 	},
 	sounds = default.node_sound_stone_defaults(),

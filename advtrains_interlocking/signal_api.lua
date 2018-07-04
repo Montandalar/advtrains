@@ -33,6 +33,21 @@ on_rightclick = advtrains.interlocking.signal_rc_handler
 
 ]]--
 
+local DANGER = {
+	main = {
+		free = false,
+		speed = 0,
+	},
+	shunt = {
+		free = false,
+	},
+	dst = {
+		free = false,
+		speed = 0,
+	},
+	info = {}
+}
+
 function advtrains.interlocking.signal_set_aspect(pos, asp)
 	local node=advtrains.ndb.get_node(pos)
 	local ndef=minetest.registered_nodes[node.name]
@@ -43,7 +58,13 @@ end
 
 function advtrains.interlocking.signal_rc_handler(pos, node, player, itemstack, pointed_thing)
 	local pname = player:get_player_name()
-	minetest.show_formspec(pname, "at_il_sigasp_"..minetest.pos_to_string(pos), "field[aspect;Set Aspect (F/D)Speed(F/D)Speed(F/D);D0D0D]")
+	local sigd = advtrains.interlocking.db.get_sigd_for_signal(pos)
+	if sigd then
+		advtrains.interlocking.show_signalling_form(sigd, pname)
+	else
+		-- permit to set aspect manually
+		minetest.show_formspec(pname, "at_il_sigasp_"..minetest.pos_to_string(pos), "field[aspect;Set Aspect (F/D)Speed(F/D)Speed(F/D);D0D0D]")
+	end
 end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
@@ -73,3 +94,15 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		advtrains.interlocking.signal_set_aspect(pos, asp)
 	end
 end)
+
+-- Returns the aspect the signal at pos is supposed to show
+function advtrains.interlocking.signal_get_aspect(pos)
+	local sigd = advtrains.interlocking.db.get_sigd_for_signal(pos)
+	if sigd then
+		local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
+		if tcbs.aspect then
+			return tcbs.aspect
+		end
+	end
+	return DANGER;
+end

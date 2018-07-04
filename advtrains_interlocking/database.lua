@@ -95,6 +95,8 @@ local ildb = {}
 local track_circuit_breaks = {}
 local track_sections = {}
 
+local signal_assignments = {}
+
 function ildb.load(data)
 	if not data then return end
 	if data.tcbs then
@@ -103,10 +105,13 @@ function ildb.load(data)
 	if data.ts then
 		track_sections = data.ts
 	end
+	if data.signalass then
+		signal_assignments = data.signalass
+	end
 end
 
 function ildb.save()
-	return {tcbs = track_circuit_breaks, ts=track_sections}
+	return {tcbs = track_circuit_breaks, ts=track_sections, signalass = signal_assignments}
 end
 
 --
@@ -123,6 +128,7 @@ TCB data structure
 	-- while the signal still displays danger and nothing is written to the TCs
 	-- As soon as the route can actually be set, all relevant TCs and turnouts are set and this field
 	-- is set true, clearing the signal
+	aspect = <asp> -- The aspect the signal should show. If this is nil, should show the most restrictive aspect (red)
 },
 [2] = { -- Variant: end of track-circuited area (initial state of TC)
 	ts_id = nil, -- this is the indication for end_of_interlocking
@@ -145,6 +151,11 @@ Track section
 
 Signal specifier (sigd) (a pair of TCB/Side):
 {p = <pos>, s = <1/2>}
+
+Signal Assignments: reverse lookup of signals assigned to TCBs
+signal_assignments = {
+[<signal pts>] = <sigd>
+}
 ]]
 
 
@@ -405,6 +416,19 @@ function ildb.get_ts_at_pos(pos)
 	end
 	return nil
 end
+
+
+-- returns the sigd the signal at pos belongs to, if this is known
+function ildb.get_sigd_for_signal(pos)
+	local pts = advtrains.roundfloorpts(pos)
+	return signal_assignments[pts]
+end
+function ildb.set_sigd_for_signal(pos, sigd)
+	local pts = advtrains.roundfloorpts(pos)
+	signal_assignments[pts] = sigd
+end
+
+
 
 advtrains.interlocking.db = ildb
 
