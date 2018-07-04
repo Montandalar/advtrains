@@ -305,7 +305,7 @@ function wagon:on_step(dtime)
 		
 		local train=self:train()
 		--show off-track information in outside text instead of notifying the whole server about this
-		if not train.dirty and train.end_index < train.path_trk_b or train.index > train.path_trk_f then
+		if train.off_track then
 			outside = outside .."\n!!! Train off track !!!"
 		end
 		

@@ -283,7 +283,7 @@ function advtrains.train_step_b(id, train, dtime)
 	--apply off-track handling:
 	local front_off_track = train.index>train.path_trk_f
 	local back_off_track=train.end_index<train.path_trk_b
-	local pprint
+	train.off_track = front_off_track or back_off_track
 	
 	if front_off_track then
 		tarvel_cap=0

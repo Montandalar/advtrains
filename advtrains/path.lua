@@ -115,6 +115,8 @@ function advtrains.path_invalidate(train)
 	train.path_trk_b=0
 	train.path_req_f=0
 	train.path_req_b=0
+	
+	train.dirty = true
 end
 
 -- Prints a path using the passed print function
