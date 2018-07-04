@@ -126,6 +126,14 @@ end
 -- e.g. prog_<player> or vis<pts> for later visualizations
 function advtrains.interlocking.visualize_route(origin, route, context)
 	advtrains.interlocking.clear_visu_context(context)
+	
+	local oyaw = 0
+	local onode_ok, oconns, orhe = advtrains.get_rail_info_at(origin.p, advtrains.all_tracktypes)
+	if onode_ok then
+		oyaw = advtrains.dir_to_angle(oconns[origin.s].c)
+	end
+	routemarker(context, origin.p, "rte_origin", "at_il_route_start.png", oyaw, route.name)
+	
 	for k,sigd in ipairs(route.tcbpath) do
 		local yaw = 0
 		local node_ok, conns, rhe = advtrains.get_rail_info_at(sigd.p, advtrains.all_tracktypes)
@@ -154,7 +162,9 @@ function advtrains.interlocking.init_route_prog(pname, sigd)
 			pcfix = {},
 		}
 	}
+	advtrains.interlocking.visualize_route(sigd, player_rte_prog[pname].route, "prog_"..pname)
 	minetest.chat_send_player(pname, "Route programming mode active. Punch TCBs to add route segments, punch turnouts to lock them.")
+	minetest.chat_send_player(pname, "Type /at_rp_set <name> when you are done, /at_rp_discard to cancel route programming")
 end
 
 local function get_last_route_item(origin, route)
@@ -255,9 +265,16 @@ minetest.register_chatcommand("at_rp_set",
 						return false, "Cannot program route without a target"
 					end
 					rp.route.name = param
-					-- TODO save that route somewhere in origin
-					atdebug("ROUTE RESULT:",rp)
+					
+					local tcbs = advtrains.interlocking.db.get_tcbs(rp.origin)
+					if not tcbs then
+						return false, "The origin TCB of this route doesn't exist!"
+					end
+					
+					table.insert(tcbs.routes, rp.route)
+					
 					advtrains.interlocking.clear_visu_context("prog_"..pname)
+					player_rte_prog[pname] = nil
 					return true, "Successfully programmed route" 
 				end
 				return false, "You were not programming a route!" 

@@ -122,6 +122,8 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 				local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
 				if tcbs then
 					tcbs.signal = pos
+					tcbs.signal_name = "Signal at "..minetest.pos_to_string(sigd.p)
+					tcbs.routes = {}
 					advtrains.interlocking.db.set_sigd_for_signal(pos, sigd)
 					minetest.chat_send_player(pname, "Configuring TCB: Successfully assigned signal.")
 				else
@@ -133,7 +135,7 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 		else
 			minetest.chat_send_player(pname, "Configuring TCB: Node is too far away. Aborted.")
 		end
-		players_assign_tcb[pname] = nil
+		players_assign_signal[pname] = nil
 	end
 end)
 
@@ -223,8 +225,13 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				end
 			else
 				if f_makeil[connid] then
-					advtrains.interlocking.db.create_ts({p=pos, s=connid})
+					-- try sinc_tcb_neighbors first
 					advtrains.interlocking.db.sync_tcb_neighbors(pos, connid)
+					-- if that didn't work, create new section
+					if not tcbs.ts_id then
+						advtrains.interlocking.db.create_ts({p=pos, s=connid})
+						advtrains.interlocking.db.sync_tcb_neighbors(pos, connid)
+					end
 				end
 				-- non-interlocked
 				if f_setfree[connid] then
@@ -254,6 +261,9 @@ end)
 
 
 -- TS Formspec
+
+-- textlist selection temporary storage
+local ts_pselidx = {}
 
 function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 	local ts = advtrains.interlocking.db.get_ts(ts_id)
@@ -304,6 +314,7 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 		--form = form.."label[0.5,1;Trying to unlink a TCB directly connected to this track will not work.]"
 	end
 	
+	ts_pselidx[pname]=sel_tcb
 	minetest.show_formspec(pname, "at_il_tsconfig_"..ts_id, form)
 	
 end
@@ -311,6 +322,10 @@ end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local pname = player:get_player_name()
+	-- independent of the formspec, clear this whenever some formspec event happens
+	local tpsi = ts_pselidx[pname]
+	ts_pselidx[pname] = nil
+	
 	local ts_id = string.match(formname, "^at_il_tsconfig_(.+)$")
 	if ts_id and not fields.quit then
 		local ts = advtrains.interlocking.db.get_ts(ts_id)
@@ -320,6 +335,9 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		if fields.tcblist then
 			local tev = minetest.explode_textlist_event(fields.tcblist)
 			sel_tcb = tev.index
+			ts_pselidx[pname] = sel_tcb
+		elseif tpsi then
+			sel_tcb = tpsi
 		end
 		
 		if players_link_ts[pname] then
@@ -333,6 +351,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		
 		if fields.del_tcb and sel_tcb and sel_tcb > 0 and sel_tcb <= #ts.tc_breaks then
 			advtrains.interlocking.db.remove_from_interlocking(ts.tc_breaks[sel_tcb])
+			sel_tcb = nil
 		end
 		
 		if fields.link then
@@ -352,7 +371,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 	end
-
 end)
 
 -- TCB marker entities
@@ -420,21 +438,61 @@ end
 
 -- Signalling formspec - set routes a.s.o
 
-function advtrains.interlocking.show_signalling_form(sigd, pname)
-	local form = "size[10,10]label[0.5,0.5;Track Section Detail - ]"
-	form = form.."field[0.8,2;5.2,1;name;Section name;]"
-	form = form.."button[5.5,1.7;1,1;setname;Set]"
+-- textlist selection temporary storage
+local sig_pselidx = {}
+
+function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
+	local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
 	
-	--minetest.show_formspec(pname, "at_il_signalling_"..sigd.p.."_"..sigd.s, form)
-	--TODO this is temporary
-	advtrains.interlocking.init_route_prog(pname, sigd)
+	if not tcbs.signal then return end
+	if not tcbs.signal_name then tcbs.signal_name = "Signal at "..minetest.pos_to_string(sigd.p) end
+	if not tcbs.routes then tcbs.routes = {} end
+	
+	local form = "size[7,9]label[0.5,0.5;Signal at "..minetest.pos_to_string(sigd.p).."]"
+	form = form.."field[0.8,1.5;5.2,1;name;Signal name;"..tcbs.signal_name.."]"
+	form = form.."button[5.5,1.2;1,1;setname;Set]"
+	
+	if tcbs.routeset then
+		local rte = tcbs.routes[tcbs.routeset]
+		form = form.."label[0.5,2.5;A route is requested from this signal:]"
+		form = form.."label[0.5,3.0;"..rte.name.."]"
+		if tcbs.route_committed then
+			form = form.."label[0.5,2.5;Route has been set.]"
+		else
+			form = form.."label[0.5,2.5;Waiting for route to be set...]"
+		end
+		
+		form = form.."button[0.5,6.5;1,6;cancelroute;Cancel Route]"
+	else
+		local strtab = {}
+		for idx, route in ipairs(tcbs.routes) do
+			strtab[#strtab+1] = minetest.formspec_escape(route.name)
+		end
+		form = form.."label[0.5,2.5;Routes:]"
+		form = form.."textlist[0.5,3;5,3;rtelist;"..table.concat(strtab, ",").."]"
+		if sel_rte then
+			form = form.."button[0.5,6;  5,1;setroute;Set Route]"
+			form = form.."button[0.5,7;2,1;dsproute;Show]"
+			form = form.."button[2.5,7;1,1;delroute;Delete]"
+			form = form.."button[3.5,7;2,1;renroute;Rename]"
+		end
+		form = form.."button[0.5,8;2.5,1;newroute;New Route]"
+		form = form.."button[  3,8;2.5,1;unassign;Unassign Signal]"
+		
+	end	
+	sig_pselidx[pname] = sel_rte
+	minetest.show_formspec(pname, "at_il_signalling_"..minetest.pos_to_string(sigd.p).."_"..sigd.s, form)
 end
 
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local pname = player:get_player_name()
+	
+	-- independent of the formspec, clear this whenever some formspec event happens
+	local tpsi = sig_pselidx[pname]
+	sig_pselidx[pname] = nil
+	
 	local pts, connids = string.match(formname, "^at_il_signalling_([^_]+)_(%d)$")
-	local pts = string.match(formname, "^at_il_tcbconfig_(.+)$")
 	local pos, connid
 	if pts then
 		pos = minetest.string_to_pos(pts)
@@ -442,8 +500,69 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		if not connid or connid<1 or connid>2 then return end
 	end
 	if pos and connid and not fields.quit then
+		local sigd = {p=pos, s=connid}
+		local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
+		if not tcbs then return end
 		
-		advtrains.interlocking.show_signalling_form(ts_id, pname, sel_tcb)
+		local sel_rte
+		if fields.rtelist then
+			local tev = minetest.explode_textlist_event(fields.rtelist)
+			sel_rte = tev.index
+		elseif tpsi then
+			sel_rte = tpsi
+		end
+		if fields.setname and fields.name then
+			tcbs.signal_name = fields.name
+		end
+		if tcbs.routeset and fields.cancelroute then
+			--TODO
+		end
+		if not tcbs.routeset then
+			if fields.newroute then
+				advtrains.interlocking.init_route_prog(pname, sigd)
+				minetest.close_formspec(pname, formname)
+				return
+			end
+			if sel_rte and tcbs.routes[sel_rte] then
+				if fields.setroute then
+					--TODO
+				end
+				if fields.dsproute then
+					local t = os.clock()
+					advtrains.interlocking.visualize_route(sigd, tcbs.routes[sel_rte], "disp_"..t)
+					minetest.after(10, function() advtrains.interlocking.clear_visu_context("disp_"..t) end)
+				end
+				if fields.renroute then
+					local rte = tcbs.routes[sel_rte]
+					minetest.show_formspec(pname, formname.."_renroute_"..sel_rte, "field[name;Enter new route name;"..rte.name.."]")
+					return
+				end
+				if fields.delroute then
+					table.remove(tcbs.routes, sel_rte)
+					sel_rte = nil
+				end
+			end
+		end
+		
+		advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
+		return
 	end
-
+	
+	-- rename route
+	local rind, rte_id
+	pts, connids, rind = string.match(formname, "^at_il_signalling_([^_]+)_(%d)_renroute_(%d+)$")
+	if pts then
+		pos = minetest.string_to_pos(pts)
+		connid = tonumber(connids)
+		rte_id = tonumber(rind)
+		if not connid or connid<1 or connid>2 then return end
+	end
+	if pos and connid and rind and fields.name then
+		local sigd = {p=pos, s=connid}
+		local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
+		if tcbs.routes[rte_id] then
+			tcbs.routes[rte_id].name = fields.name
+			advtrains.interlocking.show_signalling_form(sigd, pname)
+		end
+	end
 end)

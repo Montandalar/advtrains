@@ -122,13 +122,15 @@ TCB data structure
 	ts_id = <id> -- ID of the assigned track section
 	signal = <pos> -- optional: when set, routes can be set from this tcb/direction and signal
 	-- aspect will be set accordingly.
-	routetar = <signal> -- Route set from this signal. This is the entry that is cleared once
+	routeset = <index in routes> -- Route set from this signal. This is the entry that is cleared once
 	-- train has passed the signal. (which will set the aspect to "danger" again)
 	route_committed = <boolean> -- When setting/requesting a route, routetar will be set accordingly,
 	-- while the signal still displays danger and nothing is written to the TCs
 	-- As soon as the route can actually be set, all relevant TCs and turnouts are set and this field
 	-- is set true, clearing the signal
 	aspect = <asp> -- The aspect the signal should show. If this is nil, should show the most restrictive aspect (red)
+	signal_name = <string> -- The human-readable name of the signal, only for documenting purposes
+	routes = { <route definition> } -- a collection of routes from this signal
 },
 [2] = { -- Variant: end of track-circuited area (initial state of TC)
 	ts_id = nil, -- this is the indication for end_of_interlocking
@@ -263,6 +265,8 @@ end
 local function merge_ts(root_id, merge_id)
 	local rts = ildb.get_ts(root_id)
 	local mts = ildb.get_ts(merge_id)
+	if not mts then return end -- This may be the case when sync_tcb_neighbors
+	-- inserts the same id twice. do nothing.
 	
 	-- cobble together the list of TCBs
 	for _, msigd in ipairs(mts.tc_breaks) do
@@ -292,7 +296,7 @@ function ildb.sync_tcb_neighbors(pos, connid)
 	end
 	
 	atdebug("Traversing from ",pos, connid)
-	local counter_hit = traverser(found_tcbs, pos, conns, connid, 0, hit_counter)
+	local counter_hit = traverser(found_tcbs, pos, conns, connid, 0)
 	
 	local ts_id
 	local list_eoi = {}
