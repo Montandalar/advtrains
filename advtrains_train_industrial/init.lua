@@ -29,9 +29,9 @@ advtrains.register_wagon("engine_industrial", {
 	},
 	seat_groups = {
 		dstand={
-            
 			name = "Driver Stand",
 			access_to = {},
+			driving_ctrl_access = true,
 		},
 	},
 	assign_to_seat_group = {"dstand"},
@@ -67,9 +67,9 @@ advtrains.register_wagon("engine_industrial_big", {
 	},
 	seat_groups = {
 		dstand={
-            
 			name = "Driver Stand",
 			access_to = {},
+			driving_ctrl_access = true,
 		},
 	},
 	assign_to_seat_group = {"dstand"},
