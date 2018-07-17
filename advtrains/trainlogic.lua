@@ -691,12 +691,12 @@ function advtrains.update_trainpart_properties(train_id, invert_flipstate)
 		
 		-- 1st: update wagon data (pos_in_train a.s.o)
 		if data then
-			local wagon = advtrains.wagon_prototypes[data.type]
+			local wagon = advtrains.wagon_prototypes[data.type or data.entity_name]
 			if not wagon then
 				atwarn("Wagon '",data.type,"' couldn't be found. Please check that all required modules are loaded!")
 				wagon = advtrains.wagon_prototypes["advtrains:wagon_placeholder"]
+
 			end
-			
 			rel_pos=rel_pos+wagon.wagon_span
 			data.train_id=train_id
 			data.pos_in_train=rel_pos
