@@ -67,6 +67,9 @@ minetest.register_entity("advtrains_interlocking:routesprite", {
 	collisionbox = {-0.2,-0.2,-0.2, 0.2,0.2,0.2},
 	visual_size = {x=1, y=1},
 	on_punch = function(self)
+		if self.callback then
+			self.callback()
+		end
 		self.object:remove()
 	end,
 	get_staticdata = function() return "STATIC" end,
@@ -79,7 +82,7 @@ minetest.register_entity("advtrains_interlocking:routesprite", {
 -- pos: position where this is going to be
 -- key: something unique to determine which entity to remove if this was set before
 -- img: texture
-local function routesprite(context, pos, key, img, itex)
+local function routesprite(context, pos, key, img, itex, callback)
 	if not markerent[context] then
 		markerent[context] = {}
 	end
@@ -94,6 +97,10 @@ local function routesprite(context, pos, key, img, itex)
 		textures = {img},
 	})
 	
+	if callback then
+		obj:get_luaentity().callback = callback
+	end
+	
 	markerent[context][key] = obj
 end
 
@@ -101,18 +108,26 @@ end
 Route definition:
 route = {
 	name = <string>
-	tcbpath = {
-		[n] = <sigd>
-	}
-	pcfix = {
-		[<pts>] = "state"
+	[n] = {
+		next = <sigd>, -- of the next (note: next) TCB on the route
+		locks = {<pts> = "state"} -- route locks of this route segment
 	}
 }
-The first item in the TCB path is always the start signal of this route,
+The first item in the TCB path (namely i=0) is always the start signal of this route,
 so this is left out.
-
+All subsequent entries, starting from 1, contain:
+- all route locks of the segment on TS between the (i-1). and the i. TCB
+- the next TCB signal describer in proceeding direction of the route.
 
 ]]--
+
+local function chat(pname, message)
+	minetest.chat_send_player(pname, "[Route programming] "..message)
+end
+local function clear_lock(locks, pname, pts)
+	locks[pts] = nil
+	chat(pname, pts.." is no longer affected when this route is set.")
+end
 
 function advtrains.interlocking.clear_visu_context(context)
 	if not markerent[context] then return end
@@ -123,8 +138,9 @@ function advtrains.interlocking.clear_visu_context(context)
 end
 
 -- visualize route. 'context' is a string that identifies the context of this visualization
--- e.g. prog_<player> or vis<pts> for later visualizations
-function advtrains.interlocking.visualize_route(origin, route, context)
+-- e.g. prog_<player> or vis_<pts> for later visualizations
+-- last 2 parameters are only to be used in the context of route programming!
+function advtrains.interlocking.visualize_route(origin, route, context, tmp_lcks, pname)
 	advtrains.interlocking.clear_visu_context(context)
 	
 	local oyaw = 0
@@ -134,19 +150,27 @@ function advtrains.interlocking.visualize_route(origin, route, context)
 	end
 	routemarker(context, origin.p, "rte_origin", "at_il_route_start.png", oyaw, route.name)
 	
-	for k,sigd in ipairs(route.tcbpath) do
+	for k,v in ipairs(route) do
+		local sigd = v.next
 		local yaw = 0
 		local node_ok, conns, rhe = advtrains.get_rail_info_at(sigd.p, advtrains.all_tracktypes)
 		if node_ok then
 			yaw = advtrains.dir_to_angle(conns[sigd.s].c)
 		end
 		local img = "at_il_route_set.png"
-		if k == #route.tcbpath then img = "at_il_route_end.png" end
+		if k == #route then img = "at_il_route_end.png" end
 		routemarker(context, sigd.p, "rte"..k, img, yaw, route.name.." #"..k)
+		for pts, state in pairs(v.locks) do
+			local pos = minetest.string_to_pos(pts)
+			routesprite(context, pos, "fix"..k..pts, "at_il_route_lock.png", "Fixed in state '"..state.."' by route "..route.name.." until segment #"..k.." is freed.")
+		end
 	end
-	for pts, state in pairs(route.pcfix) do
-		local pos = minetest.string_to_pos(pts)
-		routesprite(context, pos, "fix"..pts, "at_il_route_lock.png", "Fixed in state '"..state.."' by route "..route.name)
+	if tmp_lcks then
+		for pts, state in pairs(tmp_lcks) do
+			local pos = minetest.string_to_pos(pts)
+			routesprite(context, pos, "fixp"..pts, "at_il_route_lock_edit.png", "Fixed in state '"..state.."' by route "..route.name.." (punch to unfix)",
+				function() clear_lock(tmp_lcks, pname, pts) end)
+		end
 	end
 end
 
@@ -158,25 +182,21 @@ function advtrains.interlocking.init_route_prog(pname, sigd)
 		origin = sigd,
 		route = {
 			name = "PROG["..pname.."]",
-			tcbpath = {},
-			pcfix = {},
-		}
+		},
+		tmp_lcks = {},
 	}
-	advtrains.interlocking.visualize_route(sigd, player_rte_prog[pname].route, "prog_"..pname)
+	advtrains.interlocking.visualize_route(sigd, player_rte_prog[pname].route, "prog_"..pname, player_rte_prog[pname].tmp_lcks, pname)
 	minetest.chat_send_player(pname, "Route programming mode active. Punch TCBs to add route segments, punch turnouts to lock them.")
 	minetest.chat_send_player(pname, "Type /at_rp_set <name> when you are done, /at_rp_discard to cancel route programming")
 end
 
 local function get_last_route_item(origin, route)
-	if #route.tcbpath == 0 then
+	if #route == 0 then
 		return origin
 	end
-	return route.tcbpath[#route.tcbpath]
+	return route[#route].next
 end
 
-local function chat(pname, message)
-	minetest.chat_send_player(pname, "[Route programming] "..message)
-end
 local function otherside(s)
 	if s==1 then return 2 else return 1 end
 end
@@ -222,27 +242,29 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 				chat(pname, "Previous and this TCB belong to different track sections!")
 				return
 			end
+			-- TODO check the path: are all route turnouts locked to the right position?
+			
 			-- everything worked, just add the other side to the list
-			table.insert(rp.route.tcbpath, {p = tcbpos, s = found})
+			table.insert(rp.route, {next = {p = tcbpos, s = found}, locks = rp.tmp_lcks})
+			rp.tmp_lcks = {}
 			chat(pname, "Added track section '"..ts.name.."' to the route (revert with /at_rp_back)")
-			advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname)
+			advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname, rp.tmp_lcks, pname)
 			return
 		end
 		local ndef = minetest.registered_nodes[node.name]
 		if ndef and ndef.luaautomation and ndef.luaautomation.getstate then
 			local pts = advtrains.roundfloorpts(pos)
-			if rp.route.pcfix[pts] then
-				rp.route.pcfix[pts] = nil
-				chat(pname, pts.." is no longer affected when this route is set.")
+			if rp.tmp_lcks[pts] then
+				clear_lock(rp.tmp_lcks, pname, pts)
 			else
 				local state = ndef.luaautomation.getstate
 				if type(state)=="function" then
 					state = state(pos, node)
 				end
-				rp.route.pcfix[pts] = state
-				chat(pname, pts.." is held in "..state.." position when this route is set.")
+				rp.tmp_lcks[pts] = state
+				chat(pname, pts.." is held in "..state.." position when this route is set and freed ")
 			end
-			advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname)
+			advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname, rp.tmp_lcks, pname)
 			return
 		end
 		
@@ -261,7 +283,7 @@ minetest.register_chatcommand("at_rp_set",
 				end
 				local rp = player_rte_prog[pname]
 				if rp then
-					if #rp.route.tcbpath <= 0 then
+					if #rp.route <= 0 then
 						return false, "Cannot program route without a target"
 					end
 					rp.route.name = param
@@ -337,4 +359,3 @@ minetest.register_chatcommand("at_rp_discard",
 -- locked turnouts need to somehow know the TS they're associated to, which isn't possible with the current route programming and saving method
 -- unify luaautomation get/setstate interface to the core
 -- privileges for route programming
--- for now, that locking aspect will be ignored and turnouts just set when route gets commited.
