@@ -73,6 +73,19 @@ local function setsection(tid, train, ts_id, ts, origin)
 		table.insert(ts.trains, tid)
 	end
 	
+	-- route setting - clear route state
+	if ts.route then
+		if ts.route.first then
+			local tcbs = advtrains.interlocking.db.get_tcbs(ts.route.origin)
+			if tcbs then
+				--TODO callbacks
+				tcbs.routeset = nil
+				tcbs.route_committed = nil
+			end
+		end
+		ts.route = nil
+	end
+	
 end
 
 local function freesection(tid, train, ts_id, ts)
@@ -84,6 +97,15 @@ local function freesection(tid, train, ts_id, ts)
 	if not ts.trains then ts.trains = {} end
 	itremove(ts.trains, tid)
 	
+	if ts.route_post then
+		advtrains.interlocking.route.free_route_locks(ts_id, ts.route_post.locks)
+		if ts.route_post.next then
+			--this does nothing when the train went the right way, because
+			-- "route" info is already cleared.
+			advtrains.interlocking.route.cancel_route_from(ts.route_post.next)
+		end
+		ts.route_post = nil
+	end
 end
 
 

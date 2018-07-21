@@ -457,12 +457,12 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 		form = form.."label[0.5,2.5;A route is requested from this signal:]"
 		form = form.."label[0.5,3.0;"..rte.name.."]"
 		if tcbs.route_committed then
-			form = form.."label[0.5,2.5;Route has been set.]"
+			form = form.."label[0.5,3.5;Route has been set.]"
 		else
-			form = form.."label[0.5,2.5;Waiting for route to be set...]"
+			form = form.."label[0.5,3.5;Waiting for route to be set...]"
 		end
 		
-		form = form.."button[0.5,6.5;1,6;cancelroute;Cancel Route]"
+		form = form.."button[0.5,6;  5,1;cancelroute;Cancel Route]"
 	else
 		local strtab = {}
 		for idx, route in ipairs(tcbs.routes) do
@@ -515,7 +515,14 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			tcbs.signal_name = fields.name
 		end
 		if tcbs.routeset and fields.cancelroute then
-			--TODO
+			-- if route committed, cancel route ts info
+			if tcbs.route_committed then
+				advtrains.interlocking.route.cancel_route_from(sigd)
+			end
+			-- then clear own routeset state
+			--TODO callbacks
+			tcbs.routeset = nil
+			tcbs.route_committed = nil
 		end
 		if not tcbs.routeset then
 			if fields.newroute then
@@ -525,7 +532,15 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			end
 			if sel_rte and tcbs.routes[sel_rte] then
 				if fields.setroute then
-					--TODO
+					tcbs.routeset = sel_rte
+					local succ, rsn = advtrains.interlocking.route.set_route(sigd, tcbs.routes[sel_rte])
+					if not succ then
+						atwarn("Setting route failed:")
+						atwarn(rsn)
+						tcbs.routeset = nil
+					else
+						tcbs.route_committed = true
+					end
 				end
 				if fields.dsproute then
 					local t = os.clock()

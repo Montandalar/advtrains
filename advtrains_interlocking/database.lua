@@ -64,6 +64,7 @@ Whenever train leaves a TC
 -> Clearing any routes set from this TC outward recursively - see "Reversing problem"
 Whenever train enters a TC
 -> Clear route status from the just entered TC
+Note that this prohibits by design that the train clears the route ahead of it.
 == Reversing Problem ==
 Encountered at the Royston simulation in SimSig. It is solved there by imposing a time limit on the set route. Call-on routes can somehow be set anyway.
 Imagine this setup: (T=Train, R=Route, >=in_dir TCB)
@@ -108,10 +109,18 @@ function ildb.load(data)
 	if data.signalass then
 		signal_assignments = data.signalass
 	end
+	if data.rs_locks then
+		advtrains.interlocking.route.rte_locks = data.rs_locks
+	end
 end
 
 function ildb.save()
-	return {tcbs = track_circuit_breaks, ts=track_sections, signalass = signal_assignments}
+	return {
+		tcbs = track_circuit_breaks,
+		ts=track_sections,
+		signalass = signal_assignments,
+		rs_locks = advtrains.interlocking.route.rte_locks,
+	}
 end
 
 --
@@ -144,9 +153,21 @@ Track section
 	name = "Some human-readable name"
 	tc_breaks = { <signal specifier>,... } -- Bounding TC's (signal specifiers)
 	-- Can be direct ends (auto-detected), conflicting routes or TCBs that are too far away from each other
-	route = {origin = <signal>, from_tcb = <index>}
+	route = {
+		origin = <signal>,  -- route origin
+		entry = <sigd>,     -- supposed train entry point
+		rsn = <string>,
+		first = <bool>
+	}
+	route_post = {
+		locks = {[n] = <pts>}
+		next = <sigd>
+	}
 	-- Set whenever a route has been set through this TC. It saves the origin tcb id and side
-	-- (=the origin signal). index is the TCB of the route origin
+	-- (=the origin signal). rsn is some description to be shown to the user
+	-- first says whether to clear the routesetting status from the origin signal.
+	-- locks contains the positions where locks are held by this ts.
+	-- 'route' is cleared when train enters the section, while 'route_post' cleared when train leaves section.
 	trains = {<id>, ...} -- Set whenever a train (or more) reside in this TC
 }
 
@@ -379,10 +400,11 @@ function ildb.remove_from_interlocking(sigd)
 end
 
 function ildb.remove_tcb(pos)
+	local pts = advtrains.roundfloorpts(pos)
+	if not track_circuit_breaks[pts] then return end
 	for connid=1,2 do
 		ildb.remove_from_interlocking({p=pos, s=connid})
 	end
-	local pts = advtrains.roundfloorpts(pos)
 	track_circuit_breaks[pts] = nil
 end
 

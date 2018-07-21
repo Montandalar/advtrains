@@ -356,6 +356,6 @@ minetest.register_chatcommand("at_rp_discard",
 
 
 --TODO on route setting
--- locked turnouts need to somehow know the TS they're associated to, which isn't possible with the current route programming and saving method
 -- unify luaautomation get/setstate interface to the core
 -- privileges for route programming
+-- routes should end at signals. complete route setting by punching a signal, and command as exceptional route completion
