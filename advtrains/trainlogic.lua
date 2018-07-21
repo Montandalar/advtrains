@@ -46,6 +46,8 @@ local t_accel_eng={
 	[4] = 1.5,
 }
 
+tp_player_tmr = 0
+
 advtrains.mainloop_trainlogic=function(dtime)
 	--build a table of all players indexed by pts. used by damage and door system.
 	advtrains.playersbypts={}
@@ -55,6 +57,16 @@ advtrains.mainloop_trainlogic=function(dtime)
 			local ptspos=minetest.pos_to_string(vector.round(player:getpos()))
 			advtrains.playersbypts[ptspos]=player
 		end
+	end
+	
+	if tp_player_tmr<=0 then
+		-- teleport players to their train every 2 seconds
+		for _, player in pairs(minetest.get_connected_players()) do
+			advtrains.tp_player_to_train(player)
+		end
+		tp_player_tmr = 2
+	else
+		tp_player_tmr = tp_player_tmr - dtime
 	end
 	--regular train step
 	--[[ structure:
@@ -87,27 +99,30 @@ advtrains.mainloop_trainlogic=function(dtime)
 	endstep()
 end
 
-minetest.register_on_joinplayer(function(player)
+function advtrains.tp_player_to_train(player)
+	local pname = player:get_player_name()
+	local id=advtrains.player_to_train_mapping[pname]
+	if id then
+		local train=advtrains.trains[id]
+		if not train then advtrains.player_to_train_mapping[pname]=nil return end
+		--set the player to the train position.
+		--minetest will emerge the area and load the objects, which then will call reattach_all().
+		--because player is in mapping, it will not be subject to dying.
+		player:setpos(train.last_pos_prev)
+	end
+end
+minetest.register_on_joinplayer(function()
 	return advtrains.pcall(function()
-		local pname=player:get_player_name()
-		local id=advtrains.player_to_train_mapping[pname]
-		if id then
-			local train=advtrains.trains[id]
-			if not train then advtrains.player_to_train_mapping[pname]=nil return end
-			--set the player to the train position.
-			--minetest will emerge the area and load the objects, which then will call reattach_all().
-			--because player is in mapping, it will not be subject to dying.
-			player:setpos(train.last_pos_prev)
-			--independent of this, cause all wagons of the train which are loaded to reattach their players
-			--needed because already loaded wagons won't call reattach_all()
-			for _,wagon in pairs(minetest.luaentities) do
-				if wagon.is_wagon and wagon.initialized and wagon.train_id==id then
-					wagon:reattach_all()
-				end
+		--independent of this, cause all wagons of the train which are loaded to reattach their players
+		--needed because already loaded wagons won't call reattach_all()
+		for _,wagon in pairs(minetest.luaentities) do
+			if wagon.is_wagon and wagon.initialized and wagon.train_id==id then
+				wagon:reattach_all()
 			end
 		end
 	end)
 end)
+
 
 minetest.register_on_dieplayer(function(player)
 	return advtrains.pcall(function()
