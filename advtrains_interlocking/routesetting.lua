@@ -15,6 +15,10 @@ local ilrs = {}
 --		[n] = { [by = <ts_id>], rsn = <human-readable text>, [origin = <sigd>] }
 --	}
 ilrs.rte_locks = {}
+ilrs.rte_callbacks = {
+	ts = {},
+	lck = {}
+}
 
 -- Requests the given route
 -- This function will try to set the designated route.
@@ -28,7 +32,7 @@ end
 -- then (if "try" is not set) actually sets it
 -- returns:
 -- true - route can be/was successfully set
--- false, message - something went wrong, what is contained in the message.
+-- false, message, cbts, cblk - something went wrong, what is contained in the message.
 function ilrs.set_route(signal, route, try)
 	if not try then
 		atdebug("rteset real-run")
@@ -220,6 +224,33 @@ function ilrs.cancel_route_from(sigd)
 		end
 		c_ts.route_post = nil
 	end
+end
+
+
+-- TCBS Routesetting helper: generic update function for
+-- route setting
+
+function ilrs.update_route(sigd, tcbs, newrte, cancel)
+	if (newrte and tcbs.routeset and tcbs.routeset ~= newrte) or cancel then
+		if tcbs.route_committed then
+			atdebug("Cancelling:",tcbs.routeset)
+			advtrains.interlocking.route.cancel_route_from(sigd)
+		end
+		tcbs.route_committed = nil
+		tcbs.routeset = newrte
+	end
+	if newrte or tcbs.routeset then
+		if newrte then tcbs.routeset = newrte end
+		atdebug("Setting:",tcbs.routeset)
+		local succ, rsn, cbts, cblk = ilrs.set_route(sigd, tcbs.routes[tcbs.routeset])
+		if not succ then
+			tcbs.route_rsn = rsn
+			-- add cbts or cblk to callback table
+		else
+			tcbs.route_committed = true
+		end
+	end
+	--TODO callbacks
 end
 
 advtrains.interlocking.route = ilrs

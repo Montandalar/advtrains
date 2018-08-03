@@ -4,6 +4,9 @@ local players_assign_tcb = {}
 local players_assign_signal = {}
 local players_link_ts = {}
 
+local ildb = advtrains.interlocking.db
+local ilrs = advtrains.interlocking.route
+
 local lntrans = { "A", "B" }
 
 local function sigd_to_string(sigd)
@@ -63,7 +66,7 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 		local tcbpts = meta:get_string("tcb_pos")
 		if tcbpts ~= "" then
 			local tcbpos = minetest.string_to_pos(tcbpts)
-			local tcb = advtrains.interlocking.db.get_tcb(tcbpos)
+			local tcb = ildb.get_tcb(tcbpos)
 			if not tcb then return true end
 			for connid=1,2 do
 				if tcb[connid].ts_id then
@@ -78,7 +81,7 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 		local tcbpts = oldmetadata.fields.tcb_pos
 		if tcbpts ~= "" then
 			local tcbpos = minetest.string_to_pos(tcbpts)
-			advtrains.interlocking.db.remove_tcb(tcbpos)
+			ildb.remove_tcb(tcbpos)
 		end
 	end,
 })
@@ -91,14 +94,14 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 		if vector.distance(pos, tcbnpos)<=20 then
 			local node_ok, conns, rhe = advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
 			if node_ok and #conns == 2 then
-				local ok = advtrains.interlocking.db.create_tcb(pos)
+				local ok = ildb.create_tcb(pos)
 				
 				if not ok then
 					minetest.chat_send_player(pname, "Configuring TCB: TCB already exists at this position. Aborted.")
 				end
 				
-				advtrains.interlocking.db.sync_tcb_neighbors(pos, 1)
-				advtrains.interlocking.db.sync_tcb_neighbors(pos, 2)
+				ildb.sync_tcb_neighbors(pos, 1)
+				ildb.sync_tcb_neighbors(pos, 2)
 				
 				local meta = minetest.get_meta(tcbnpos)
 				meta:set_string("tcb_pos", minetest.pos_to_string(pos))
@@ -119,12 +122,12 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 		if vector.distance(pos, sigd.p)<=50 then
 			local is_signal = minetest.get_item_group(node.name, "advtrains_signal") >= 2
 			if is_signal then
-				local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
+				local tcbs = ildb.get_tcbs(sigd)
 				if tcbs then
 					tcbs.signal = pos
 					tcbs.signal_name = "Signal at "..minetest.pos_to_string(sigd.p)
 					tcbs.routes = {}
-					advtrains.interlocking.db.set_sigd_for_signal(pos, sigd)
+					ildb.set_sigd_for_signal(pos, sigd)
 					minetest.chat_send_player(pname, "Configuring TCB: Successfully assigned signal.")
 				else
 					minetest.chat_send_player(pname, "Configuring TCB: Internal error, TCBS doesn't exist. Aborted.")
@@ -146,7 +149,7 @@ local function mktcbformspec(tcbs, btnpref, offset, pname)
 	local form = ""
 	local ts
 	if tcbs.ts_id then
-		ts = advtrains.interlocking.db.get_ts(tcbs.ts_id)
+		ts = ildb.get_ts(tcbs.ts_id)
 	end
 	if ts then
 		form = form.."label[0.5,"..offset..";Side "..btnpref..": "..ts.name.."]"
@@ -173,7 +176,7 @@ end
 
 
 function advtrains.interlocking.show_tcb_form(pos, pname)
-	local tcb = advtrains.interlocking.db.get_tcb(pos)
+	local tcb = ildb.get_tcb(pos)
 	if not tcb then return end
 	
 	local form = "size[6,9] label[0.5,0.5;Track Circuit Break Configuration]"
@@ -199,7 +202,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		pos = minetest.string_to_pos(pts)
 	end
 	if pos and not fields.quit then
-		local tcb = advtrains.interlocking.db.get_tcb(pos)
+		local tcb = ildb.get_tcb(pos)
 		if not tcb then return end
 		local f_gotots = {fields.A_gotots, fields.B_gotots}
 		local f_update = {fields.A_update, fields.B_update}
@@ -218,19 +221,19 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 					return
 				end
 				if f_update[connid] then
-					advtrains.interlocking.db.sync_tcb_neighbors(pos, connid)
+					ildb.sync_tcb_neighbors(pos, connid)
 				end
 				if f_remove[connid] then
-					advtrains.interlocking.db.remove_from_interlocking({p=pos, s=connid})
+					ildb.remove_from_interlocking({p=pos, s=connid})
 				end
 			else
 				if f_makeil[connid] then
 					-- try sinc_tcb_neighbors first
-					advtrains.interlocking.db.sync_tcb_neighbors(pos, connid)
+					ildb.sync_tcb_neighbors(pos, connid)
 					-- if that didn't work, create new section
 					if not tcbs.ts_id then
-						advtrains.interlocking.db.create_ts({p=pos, s=connid})
-						advtrains.interlocking.db.sync_tcb_neighbors(pos, connid)
+						ildb.create_ts({p=pos, s=connid})
+						ildb.sync_tcb_neighbors(pos, connid)
 					end
 				end
 				-- non-interlocked
@@ -266,7 +269,7 @@ end)
 local ts_pselidx = {}
 
 function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
-	local ts = advtrains.interlocking.db.get_ts(ts_id)
+	local ts = ildb.get_ts(ts_id)
 	if not ts_id then return end
 	
 	local form = "size[10,10]label[0.5,0.5;Track Section Detail - "..ts_id.."]"
@@ -283,7 +286,7 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 	form = form.."textlist[0.5,3;5,3;tcblist;"..table.concat(strtab, ",").."]"
 	if players_link_ts[pname] then
 		local other_id = players_link_ts[pname]
-		local other_ts = advtrains.interlocking.db.get_ts(other_id)
+		local other_ts = ildb.get_ts(other_id)
 		if other_ts then
 			form = form.."button[5.5,3;3.5,1;mklink;Join with "..other_ts.name.."]"
 			form = form.."button[9  ,3;0.5,1;cancellink;X]"
@@ -328,7 +331,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	
 	local ts_id = string.match(formname, "^at_il_tsconfig_(.+)$")
 	if ts_id and not fields.quit then
-		local ts = advtrains.interlocking.db.get_ts(ts_id)
+		local ts = ildb.get_ts(ts_id)
 		if not ts then return end
 		
 		local sel_tcb
@@ -344,13 +347,13 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			if fields.cancellink then
 				players_link_ts[pname] = nil
 			elseif fields.mklink then
-				advtrains.interlocking.db.link_track_sections(players_link_ts[pname], ts_id)
+				ildb.link_track_sections(players_link_ts[pname], ts_id)
 				players_link_ts[pname] = nil
 			end
 		end
 		
 		if fields.del_tcb and sel_tcb and sel_tcb > 0 and sel_tcb <= #ts.tc_breaks then
-			advtrains.interlocking.db.remove_from_interlocking(ts.tc_breaks[sel_tcb])
+			ildb.remove_from_interlocking(ts.tc_breaks[sel_tcb])
 			sel_tcb = nil
 		end
 		
@@ -358,7 +361,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			players_link_ts[pname] = ts_id
 		end
 		if fields.dissolve then
-			advtrains.interlocking.db.dissolve_ts(ts_id)
+			ildb.dissolve_ts(ts_id)
 			minetest.close_formspec(pname, formname)
 			return
 		end
@@ -399,7 +402,7 @@ minetest.register_entity("advtrains_interlocking:tcbmarker", {
 
 function advtrains.interlocking.show_tcb_marker(pos)
 	--atdebug("showing tcb marker",pos)
-	local tcb = advtrains.interlocking.db.get_tcb(pos)
+	local tcb = ildb.get_tcb(pos)
 	if not tcb then return end
 	local node_ok, conns, rhe = advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
 	if not node_ok then return end
@@ -410,7 +413,7 @@ function advtrains.interlocking.show_tcb_marker(pos)
 		local tcbs = tcb[connid]
 		local ts
 		if tcbs.ts_id then
-			ts = advtrains.interlocking.db.get_ts(tcbs.ts_id)
+			ts = ildb.get_ts(tcbs.ts_id)
 		end
 		if ts then
 			itex[connid] = ts.name
@@ -442,7 +445,7 @@ end
 local sig_pselidx = {}
 
 function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
-	local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
+	local tcbs = ildb.get_tcbs(sigd)
 	
 	if not tcbs.signal then return end
 	if not tcbs.signal_name then tcbs.signal_name = "Signal at "..minetest.pos_to_string(sigd.p) end
@@ -460,6 +463,9 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 			form = form.."label[0.5,3.5;Route has been set.]"
 		else
 			form = form.."label[0.5,3.5;Waiting for route to be set...]"
+			if tcbs.route_rsn then
+				form = form.."label[0.5,4;"..tcbs.route_rsn.."]"
+			end
 		end
 		
 		form = form.."button[0.5,6;  5,1;cancelroute;Cancel Route]"
@@ -501,7 +507,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	end
 	if pos and connid and not fields.quit then
 		local sigd = {p=pos, s=connid}
-		local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
+		local tcbs = ildb.get_tcbs(sigd)
 		if not tcbs then return end
 		
 		local sel_rte
@@ -516,13 +522,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		if tcbs.routeset and fields.cancelroute then
 			-- if route committed, cancel route ts info
-			if tcbs.route_committed then
-				advtrains.interlocking.route.cancel_route_from(sigd)
-			end
-			-- then clear own routeset state
-			--TODO callbacks
-			tcbs.routeset = nil
-			tcbs.route_committed = nil
+			
+			ilrs.update_route(sigd, tcbs, nil, true)
 		end
 		if not tcbs.routeset then
 			if fields.newroute then
@@ -532,15 +533,9 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			end
 			if sel_rte and tcbs.routes[sel_rte] then
 				if fields.setroute then
-					tcbs.routeset = sel_rte
-					local succ, rsn = advtrains.interlocking.route.set_route(sigd, tcbs.routes[sel_rte])
-					if not succ then
-						atwarn("Setting route failed:")
-						atwarn(rsn)
-						tcbs.routeset = nil
-					else
-						tcbs.route_committed = true
-					end
+					ilrs.update_route(sigd, tcbs, sel_rte)
+					atwarn("routeset:",tcbs.routeset," committed:",tcbs.route_committed)
+					atwarn(tcbs.route_rsn)
 				end
 				if fields.dsproute then
 					local t = os.clock()
@@ -574,7 +569,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	end
 	if pos and connid and rind and fields.name then
 		local sigd = {p=pos, s=connid}
-		local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
+		local tcbs = ildb.get_tcbs(sigd)
 		if tcbs.routes[rte_id] then
 			tcbs.routes[rte_id].name = fields.name
 			advtrains.interlocking.show_signalling_form(sigd, pname)
