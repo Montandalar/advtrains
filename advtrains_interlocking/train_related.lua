@@ -106,6 +106,9 @@ local function freesection(tid, train, ts_id, ts)
 		end
 		ts.route_post = nil
 	end
+	-- This must be delayed, because this code is executed in-between a train step
+	-- TODO use luaautomation timers?
+	minetest.after(0, advtrains.interlocking.route.update_waiting, "ts", ts_id)
 end
 
 

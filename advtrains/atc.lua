@@ -194,7 +194,7 @@ local matchptn={
 		return #match+1
 	end,
 	["R"]=function(id, train)
-		if train.velocity<=0 then
+		if train.velocity<=0 then --TODO this code still uses movedir
 			train.movedir=train.movedir*-1
 			train.atc_arrow = not train.atc_arrow
 		else

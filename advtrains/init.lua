@@ -70,7 +70,7 @@ function advtrains.print_concat_table(a)
 				if t.x and t.y and t.z then
 					str=str..minetest.pos_to_string(t)
 				elseif t.p and t.s then -- interlocking sigd
-					str=str.."("..t.p.."/"..t.s..")"
+					str=str.."("..minetest.pos_to_string(t.p).."/"..t.s..")"
 				else
 					str=str..dump(t)
 				end

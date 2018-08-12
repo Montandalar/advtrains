@@ -33,16 +33,13 @@ end
 -- returns:
 -- true - route can be/was successfully set
 -- false, message, cbts, cblk - something went wrong, what is contained in the message.
+-- cbts: the ts id of the conflicting ts, cblk: the pts of the conflicting component
 function ilrs.set_route(signal, route, try)
 	if not try then
-		atdebug("rteset real-run")
-		local tsuc, trsn = ilrs.set_route(signal, route, true)
+		local tsuc, trsn, cbts, cblk = ilrs.set_route(signal, route, true)
 		if not tsuc then
-			return false, trsn
+			return false, trsn, cbts, cblk
 		end
-		atdebug("doing stuff")
-	else
-		atdebug("rteset try-run")
 	end
 	
 	-- we start at the tc designated by signal
@@ -57,19 +54,19 @@ function ilrs.set_route(signal, route, try)
 		c_ts_id = c_tcbs.ts_id
 		if not c_ts_id then
 			if not try then atwarn("Encountered End-Of-Interlocking while setting route",rtename,"of",signal) end
-			return false, "No track section adjacent to "..sigd_to_string(c_sigd).."!"
+			return false, "No track section adjacent to "..sigd_to_string(c_sigd)..". Please reconfigure route!"
 		end
 		c_ts = ildb.get_ts(c_ts_id)
 		c_rseg = route[i]
 		c_lckp = {}
 		
 		if c_ts.route then
-			if not try then atwarn("Encountered ts lock while a real run of routesetting routine, at ts=",c_ts_id,"while setting route",rtename,"of",signal) end
-			return false, "Section '"..c_ts.name.."' already has route set from "..sigd_to_string(c_ts.route.origin).."!"
+			if not try then atwarn("Encountered ts lock during a real run of routesetting routine, at ts=",c_ts_id,"while setting route",rtename,"of",signal) end
+			return false, "Section '"..c_ts.name.."' already has route set from "..sigd_to_string(c_ts.route.origin).."!", c_ts_id, nil
 		end
 		if c_ts.trains and #c_ts.trains>0 then
-			if not try then atwarn("Encountered ts occupied while a real run of routesetting routine, at ts=",c_ts_id,"while setting route",rtename,"of",signal) end
-			return false, "Section '"..c_ts.name.."' is occupied!"
+			if not try then atwarn("Encountered ts occupied during a real run of routesetting routine, at ts=",c_ts_id,"while setting route",rtename,"of",signal) end
+			return false, "Section '"..c_ts.name.."' is occupied!", c_ts_id, nil
 		end
 		
 		for pts, state in pairs(c_rseg.locks) do
@@ -85,7 +82,7 @@ function ilrs.set_route(signal, route, try)
 					local confl = ilrs.has_route_lock(pts)
 					if confl then
 						if not try then atwarn("Encountered route lock while a real run of routesetting routine, at position",pts,"while setting route",rtename,"of",signal) end
-						return false, "Lock conflict at "..pts..", Held locked by:\n"..confl
+						return false, "Lock conflict at "..pts..", Held locked by:\n"..confl, nil, pts
 					elseif not try then
 						ndef.luaautomation.setstate(pos, state)
 					end
@@ -96,7 +93,7 @@ function ilrs.set_route(signal, route, try)
 				end
 			else
 				if not try then atwarn("Encountered route lock misconfiguration (no passive component) while a real run of routesetting routine, at position",pts,"while setting route",rtename,"of",signal) end
-				return false, "Route misconfiguration: No passive component at "..pts..". Please reconfigure route!"
+				return false, "No passive component at "..pts..". Please reconfigure route!"
 			end
 		end
 		-- reserve ts and write locks
@@ -182,8 +179,9 @@ function ilrs.free_route_locks_indiv(pts, ts, nocallbacks)
 			i = i + 1
 		end
 	end
-	
-	--TODO callbacks
+	-- This must be delayed, because this code is executed in-between a train step
+	-- TODO use luaautomation timers?
+	minetest.after(0, ilrs.update_waiting, "lck", pts)
 end
 -- frees all route locks, even manual ones set with the tool, at a specific position
 function ilrs.remove_route_locks(pts, nocallbacks)
@@ -223,9 +221,9 @@ function ilrs.cancel_route_from(sigd)
 			c_sigd = nil
 		end
 		c_ts.route_post = nil
+		minetest.after(0, advtrains.interlocking.route.update_waiting, "ts", c_ts_id)
 	end
 end
-
 
 -- TCBS Routesetting helper: generic update function for
 -- route setting
@@ -245,12 +243,44 @@ function ilrs.update_route(sigd, tcbs, newrte, cancel)
 		local succ, rsn, cbts, cblk = ilrs.set_route(sigd, tcbs.routes[tcbs.routeset])
 		if not succ then
 			tcbs.route_rsn = rsn
+			atdebug("Routesetting failed:",rsn)
 			-- add cbts or cblk to callback table
+			if cbts then
+				atdebug("cbts =",cbts)
+				if not ilrs.rte_callbacks.ts[cbts] then ilrs.rte_callbacks.ts[cbts]={} end
+				advtrains.insert_once(ilrs.rte_callbacks.ts[cbts], sigd, sigd_equal)
+			end
+			if cblk then
+				atdebug("cblk =",cblk)
+				if not ilrs.rte_callbacks.lck[cblk] then ilrs.rte_callbacks.lck[cblk]={} end
+				advtrains.insert_once(ilrs.rte_callbacks.lck[cblk], sigd, sigd_equal)
+			end
 		else
+			atdebug("Committed Route:",tcbs.routeset)
 			tcbs.route_committed = true
+			tcbs.route_rsn = false
 		end
 	end
-	--TODO callbacks
+end
+
+-- Try to re-set routes that conflicted with this point
+-- sys can be one of "ts" and "lck"
+-- key is then ts_id or pts respectively
+function ilrs.update_waiting(sys, key)
+	atdebug("update_waiting:",sys,".",key)
+	local t = ilrs.rte_callbacks[sys][key]
+	ilrs.rte_callbacks[sys][key] = nil
+	if t then
+		for _,sigd in ipairs(t) do
+			atdebug("Updating", sigd)
+			-- While these are run, the table we cleared before may be populated again, which is in our interest.
+			-- (that's the reason we needed to copy it)
+			local tcbs = ildb.get_tcbs(sigd)
+			if tcbs then
+				ilrs.update_route(sigd, tcbs)
+			end
+		end
+	end
 end
 
 advtrains.interlocking.route = ilrs

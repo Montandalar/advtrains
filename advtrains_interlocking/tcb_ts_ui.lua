@@ -534,8 +534,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			if sel_rte and tcbs.routes[sel_rte] then
 				if fields.setroute then
 					ilrs.update_route(sigd, tcbs, sel_rte)
-					atwarn("routeset:",tcbs.routeset," committed:",tcbs.route_committed)
-					atwarn(tcbs.route_rsn)
 				end
 				if fields.dsproute then
 					local t = os.clock()

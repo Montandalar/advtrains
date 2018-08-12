@@ -339,3 +339,13 @@ function advtrains.roundfloorpts(pos)
 	return minetest.pos_to_string(advtrains.round_vector_floor_y(pos))
 end
 
+-- insert an element into a table if it does not yet exist there
+-- equalfunc is a function to compare equality, defaults to ==
+-- returns true if the element was inserted
+function advtrains.insert_once(tab, elem, equalfunc)
+	for _,e in pairs(tab) do
+		if equalfunc and equalfunc(elem, e) or e==elem then return false end
+	end
+	tab[#tab+1] = elem
+	return true
+end
