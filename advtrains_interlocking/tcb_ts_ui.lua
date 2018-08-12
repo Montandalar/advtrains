@@ -142,7 +142,6 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 	end
 end)
 
-
 -- TCB Form
 
 local function mktcbformspec(tcbs, btnpref, offset, pname)
@@ -457,6 +456,11 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 	
 	if tcbs.routeset then
 		local rte = tcbs.routes[tcbs.routeset]
+		if not rte then
+			atwarn("Unknown route set from signal!")
+			tcbs.routeset = nil
+			return
+		end
 		form = form.."label[0.5,2.5;A route is requested from this signal:]"
 		form = form.."label[0.5,3.0;"..rte.name.."]"
 		if tcbs.route_committed then
@@ -549,6 +553,23 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 					table.remove(tcbs.routes, sel_rte)
 					sel_rte = nil
 				end
+			end
+		end
+		
+		if fields.unassign then
+			-- unassigning the signal from the tcbs
+			-- only when no route is set.
+			-- Routes and name remain saved, in case the player wants to reassign a new signal
+			if not tcbs.routeset then
+				local signal_pos = tcbs.signal
+				ildb.set_sigd_for_signal(signal_pos, nil)
+				tcbs.signal = nil
+				tcbs.aspect = nil
+				minetest.close_formspec(pname, formname)
+				minetest.chat_send_player(pname, "Signal has been unassigned. Name and routes are kept for reuse.")
+				return
+			else
+				minetest.chat_send_player(pname, "Please cancel route first!")
 			end
 		end
 		

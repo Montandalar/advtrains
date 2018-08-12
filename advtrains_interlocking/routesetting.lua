@@ -225,10 +225,27 @@ function ilrs.cancel_route_from(sigd)
 	end
 end
 
+local asp_generic_free = {
+	main = {
+		free = true,
+		speed = 100,
+	},
+	shunt = {
+		free = false,
+	},
+	dst = {
+		free = true,
+		speed = 100,
+	},
+	info = {}
+}
+
 -- TCBS Routesetting helper: generic update function for
 -- route setting
 
 function ilrs.update_route(sigd, tcbs, newrte, cancel)
+	-- in general, always show danger signal
+	tcbs.aspect = nil
 	if (newrte and tcbs.routeset and tcbs.routeset ~= newrte) or cancel then
 		if tcbs.route_committed then
 			atdebug("Cancelling:",tcbs.routeset)
@@ -259,8 +276,10 @@ function ilrs.update_route(sigd, tcbs, newrte, cancel)
 			atdebug("Committed Route:",tcbs.routeset)
 			tcbs.route_committed = true
 			tcbs.route_rsn = false
+			tcbs.aspect = asp_generic_free
 		end
 	end
+	advtrains.interlocking.update_signal_aspect(tcbs)
 end
 
 -- Try to re-set routes that conflicted with this point

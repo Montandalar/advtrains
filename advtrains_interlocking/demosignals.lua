@@ -31,7 +31,8 @@ minetest.register_node("advtrains_interlocking:ds_danger", {
 			end
 		end
 	},
-	on_rightclick = advtrains.interlocking.signal_rc_handler
+	on_rightclick = advtrains.interlocking.signal_rc_handler,
+	can_dig = advtrains.interlocking.signal_can_dig,
 })
 minetest.register_node("advtrains_interlocking:ds_free", {
 	description = "Demo signal at Free",
@@ -59,7 +60,8 @@ minetest.register_node("advtrains_interlocking:ds_free", {
 			end
 		end
 	},
-	on_rightclick = advtrains.interlocking.signal_rc_handler
+	on_rightclick = advtrains.interlocking.signal_rc_handler,
+	can_dig = advtrains.interlocking.signal_can_dig,
 })
 minetest.register_node("advtrains_interlocking:ds_slow", {
 	description = "Demo signal at Slow",
@@ -87,6 +89,7 @@ minetest.register_node("advtrains_interlocking:ds_slow", {
 			end
 		end
 	},
-	on_rightclick = advtrains.interlocking.signal_rc_handler
+	on_rightclick = advtrains.interlocking.signal_rc_handler,
+	can_dig = advtrains.interlocking.signal_can_dig,
 })
 

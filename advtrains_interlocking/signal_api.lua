@@ -21,7 +21,7 @@ asp = {
 }
 Signals API:
 groups = {
-	advtrains_signal = 1,
+	advtrains_signal = 2,
 	save_in_at_nodedb = 1,
 }
 advtrains = {
@@ -30,6 +30,7 @@ advtrains = {
 	end
 }
 on_rightclick = advtrains.interlocking.signal_rc_handler
+can_dig =  advtrains.interlocking.signal_can_dig
 
 ]]--
 
@@ -47,6 +48,17 @@ local DANGER = {
 	},
 	info = {}
 }
+
+function advtrains.interlocking.update_signal_aspect(tcbs)
+	if tcbs.signal then
+		local asp = tcbs.aspect or DANGER
+		advtrains.interlocking.signal_set_aspect(tcbs.signal, asp)
+	end
+end
+
+function advtrains.interlocking.signal_can_dig(pos)
+	return not advtrains.interlocking.db.get_sigd_for_signal(pos)
+end
 
 function advtrains.interlocking.signal_set_aspect(pos, asp)
 	local node=advtrains.ndb.get_node(pos)

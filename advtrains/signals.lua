@@ -1,8 +1,14 @@
 --advtrains by orwell96
 --signals.lua
 
---this code /should/ work but does not.
 local mrules_wallsignal = advtrains.meseconrules
+
+local function can_dig_func(pos)
+	if advtrains.interlocking then
+		return advtrains.interlocking.signal_can_dig(pos)
+	end
+	return true
+end
 
 for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", als="green"}}) do
 
@@ -33,6 +39,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				not_blocking_trains=1,
 				not_in_creative_inventory=crea,
 				save_in_at_nodedb=1,
+				advtrains_signal = 2,
 			},
 			mesecons = {effector = {
 				rules=advtrains.meseconrules,
@@ -41,12 +48,28 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				end
 			}},
 			on_rightclick=function(pos, node, player)
-				if advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
+				local pname = player:get_player_name()
+				local sigd = advtrains.interlocking and advtrains.interlocking.db.get_sigd_for_signal(pos)
+				if sigd then
+					advtrains.interlocking.show_signalling_form(sigd, pname)
+				elseif advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
 					advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_"..f.as..rotation, param2 = node.param2}, true)
 				end
 			end,
+			-- new signal API
+			advtrains = {
+				set_aspect = function(pos, node, asp)
+					if asp.main.free then
+						advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_on_"..rotation, param2 = node.param2}, true)
+					else
+						advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_off_"..rotation, param2 = node.param2}, true)
+					end
+				end
+			},
+			can_dig = can_dig_func,
 		})
 		advtrains.trackplacer.add_worked("advtrains:retrosignal", r, rotation, nil)
+		
 		minetest.register_node("advtrains:signal_"..r..rotation, {
 			drawtype = "mesh",
 			paramtype="light",
@@ -66,6 +89,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				not_blocking_trains=1,
 				not_in_creative_inventory=crea,
 				save_in_at_nodedb=1,
+				advtrains_signal = 2,
 			},
 			light_source = 1,
 			sunlight_propagates=true,
@@ -84,10 +108,25 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				end,
 			},
 			on_rightclick=function(pos, node, player)
-				if advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
+				local pname = player:get_player_name()
+				local sigd = advtrains.interlocking and advtrains.interlocking.db.get_sigd_for_signal(pos)
+				if sigd then
+					advtrains.interlocking.show_signalling_form(sigd, pname)
+				elseif advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
 					advtrains.ndb.swap_node(pos, {name = "advtrains:signal_"..f.as..rotation, param2 = node.param2}, true)
 				end
 			end,
+			-- new signal API
+			advtrains = {
+				set_aspect = function(pos, node, asp)
+					if asp.main.free then
+						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_on_"..rotation, param2 = node.param2}, true)
+					else
+						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_off_"..rotation, param2 = node.param2}, true)
+					end
+				end
+			},
+			can_dig = can_dig_func,
 		})
 		advtrains.trackplacer.add_worked("advtrains:signal", r, rotation, nil)
 	end
@@ -115,6 +154,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				not_blocking_trains=1,
 				not_in_creative_inventory=crea,
 				save_in_at_nodedb=1,
+				advtrains_signal = 2,
 			},
 			light_source = 1,
 			sunlight_propagates=true,
@@ -133,10 +173,25 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				end,
 			},
 			on_rightclick=function(pos, node, player)
-				if advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
+				local pname = player:get_player_name()
+				local sigd = advtrains.interlocking and advtrains.interlocking.db.get_sigd_for_signal(pos)
+				if sigd then
+					advtrains.interlocking.show_signalling_form(sigd, pname)
+				elseif advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
 					advtrains.ndb.swap_node(pos, {name = "advtrains:signal_wall_"..loc.."_"..f.as, param2 = node.param2}, true)
 				end
 			end,
+			-- new signal API
+			advtrains = {
+				set_aspect = function(pos, node, asp)
+					if asp.main.free then
+						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_wall_"..loc.."_on", param2 = node.param2}, true)
+					else
+						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_wall_"..loc.."_off", param2 = node.param2}, true)
+					end
+				end
+			},
+			can_dig = can_dig_func,
 		})
 	end
 end

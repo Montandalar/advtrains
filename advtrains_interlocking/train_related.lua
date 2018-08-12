@@ -76,11 +76,13 @@ local function setsection(tid, train, ts_id, ts, origin)
 	-- route setting - clear route state
 	if ts.route then
 		if ts.route.first then
+			-- this is the first route section. clear route status from origin sigd
 			local tcbs = advtrains.interlocking.db.get_tcbs(ts.route.origin)
 			if tcbs then
-				--TODO callbacks
 				tcbs.routeset = nil
 				tcbs.route_committed = nil
+				tcbs.aspect = nil
+				advtrains.interlocking.update_signal_aspect(tcbs)
 			end
 		end
 		ts.route = nil
