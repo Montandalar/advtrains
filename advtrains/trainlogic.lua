@@ -956,6 +956,9 @@ function advtrains.invert_train(train_id)
 	if train.door_open then
 		train.door_open = - train.door_open
 	end
+	if train.atc_command then
+		train.atc_arrow = not train.atc_arrow
+	end
 	
 	advtrains.path_invalidate(train)
 	advtrains.couple_invalidate(train)

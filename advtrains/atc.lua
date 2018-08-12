@@ -194,9 +194,9 @@ local matchptn={
 		return #match+1
 	end,
 	["R"]=function(id, train)
-		if train.velocity<=0 then --TODO this code still uses movedir
-			train.movedir=train.movedir*-1
-			train.atc_arrow = not train.atc_arrow
+		if train.velocity<=0 then
+			advtrains.invert_train(id)
+			advtrains.train_ensure_init(id, train)
 		else
 			atwarn(sid(id), attrans("ATC Reverse command warning: didn't reverse train, train moving!"))
 		end
@@ -205,7 +205,7 @@ local matchptn={
 	["O([LRC])"]=function(id, train, match)
 		local tt={L=-1, R=1, C=0}
 		local arr=train.atc_arrow and 1 or -1
-		train.door_open = tt[match]*arr*train.movedir
+		train.door_open = tt[match]*arr
 		return 2
 	end,
 }
