@@ -471,6 +471,12 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 				form = form.."label[0.5,4;"..tcbs.route_rsn.."]"
 			end
 		end
+		if not tcbs.route_auto then
+			form = form.."button[0.5,4.5;  5,1;auto;Enable Automatic Working]"
+		else
+			form = form.."label[0.5,4.5;Automatic Working is active.]"
+			form = form.."label[0.5,4.8;Route is re-set when a train passed.]"
+		end
 		
 		form = form.."button[0.5,6;  5,1;cancelroute;Cancel Route]"
 	else
@@ -526,7 +532,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		if tcbs.routeset and fields.cancelroute then
 			-- if route committed, cancel route ts info
-			
 			ilrs.update_route(sigd, tcbs, nil, true)
 		end
 		if not tcbs.routeset then
@@ -571,6 +576,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			else
 				minetest.chat_send_player(pname, "Please cancel route first!")
 			end
+		end
+		
+		if fields.auto then
+			tcbs.route_auto = true
 		end
 		
 		advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)

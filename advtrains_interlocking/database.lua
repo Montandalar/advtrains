@@ -140,6 +140,7 @@ TCB data structure
 	aspect = <asp> -- The aspect the signal should show. If this is nil, should show the most restrictive aspect (red)
 	signal_name = <string> -- The human-readable name of the signal, only for documenting purposes
 	routes = { <route definition> } -- a collection of routes from this signal
+	route_auto = <boolean> -- When set, we will automatically re-set the route (designated by routeset)
 },
 [2] = { -- Variant: end of track-circuited area (initial state of TC)
 	ts_id = nil, -- this is the indication for end_of_interlocking

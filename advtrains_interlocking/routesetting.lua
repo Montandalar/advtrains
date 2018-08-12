@@ -253,6 +253,7 @@ function ilrs.update_route(sigd, tcbs, newrte, cancel)
 		end
 		tcbs.route_committed = nil
 		tcbs.routeset = newrte
+		tcbs.route_auto = nil
 	end
 	if newrte or tcbs.routeset then
 		if newrte then tcbs.routeset = newrte end
