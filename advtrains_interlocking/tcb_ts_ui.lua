@@ -79,7 +79,7 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 	after_dig_node = function(pos, oldnode, oldmetadata, player)
 		if not oldmetadata or not oldmetadata.fields then return end
 		local tcbpts = oldmetadata.fields.tcb_pos
-		if tcbpts ~= "" then
+		if tcbpts and tcbpts ~= "" then
 			local tcbpos = minetest.string_to_pos(tcbpts)
 			ildb.remove_tcb(tcbpos)
 		end
