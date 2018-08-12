@@ -178,6 +178,10 @@ end
 local player_rte_prog = {}
 
 function advtrains.interlocking.init_route_prog(pname, sigd)
+	if not minetest.check_player_privs(pname, "interlocking") then
+		minetest.chat_send_player(pname, "Insufficient privileges to use this!")
+		return
+	end
 	player_rte_prog[pname] = {
 		origin = sigd,
 		route = {
@@ -204,6 +208,9 @@ end
 -- Central route programming punch callback
 minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 	local pname = player:get_player_name()
+	if not minetest.check_player_privs(pname, "interlocking") then
+		return
+	end
 	local rp = player_rte_prog[pname]
 	if rp then
 		-- determine what the punched node is
@@ -275,7 +282,7 @@ minetest.register_chatcommand("at_rp_set",
 	{
         params = "<name>", -- Short parameter description
         description = "Completes route programming procedure", -- Full description
-        privs = {}, -- TODO
+        privs = {interlocking = true}, -- TODO
         func = function(pname, param)
 			return advtrains.pcall(function()
 				if param=="" then
@@ -299,7 +306,7 @@ minetest.register_chatcommand("at_rp_set",
 					player_rte_prog[pname] = nil
 					return true, "Successfully programmed route" 
 				end
-				return false, "You were not programming a route!" 
+				return false, "You are not programming a route!" 
 			end)
         end,
     })
@@ -308,7 +315,7 @@ minetest.register_chatcommand("at_rp_back",
 	{
         params = "", -- Short parameter description
         description = "Remove last route segment", -- Full description
-        privs = {}, -- Require the "privs" privilege to run
+        privs = {interlocking = true}, -- Require the "privs" privilege to run
         func = function(pname, param)
 			return advtrains.pcall(function()
 				local rp = player_rte_prog[pname]
@@ -320,7 +327,7 @@ minetest.register_chatcommand("at_rp_back",
 					advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname)
 					return true, "Route section "..(#rp.route.tcbpath+1).." removed." 
 				end
-				return false, "You were not programming a route!" 
+				return false, "You are not programming a route!" 
 			end)
         end,
     })
@@ -328,7 +335,7 @@ minetest.register_chatcommand("at_rp_mark",
 	{
         params = "", -- Short parameter description
         description = "Re-set route programming markers", -- Full description
-        privs = {}, -- TODO
+        privs = {interlocking = true}, -- TODO
         func = function(pname, param)
 			return advtrains.pcall(function()
 				local rp = player_rte_prog[pname]
@@ -336,7 +343,7 @@ minetest.register_chatcommand("at_rp_mark",
 					advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname)
 					return true, "Redrawn route markers" 
 				end
-				return false, "You were not programming a route!" 
+				return false, "You are not programming a route!" 
 			end)
         end,
     })
@@ -344,7 +351,7 @@ minetest.register_chatcommand("at_rp_discard",
 	{
         params = "", -- Short parameter description
         description = "Discards the currently programmed route", -- Full description
-        privs = {}, -- Require the "privs" privilege to run
+        privs = {interlocking = true}, -- Require the "privs" privilege to run
         func = function(pname, param)
 			return advtrains.pcall(function()
 				player_rte_prog[pname] = nil

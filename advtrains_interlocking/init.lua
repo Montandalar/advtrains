@@ -12,3 +12,5 @@ dofile(modpath.."train_related.lua")
 dofile(modpath.."route_prog.lua")
 dofile(modpath.."routesetting.lua")
 dofile(modpath.."tcb_ts_ui.lua")
+
+minetest.register_privilege("interlocking", {description = "Can set up track sections, routes and signals.", give_to_singleplayer = true})

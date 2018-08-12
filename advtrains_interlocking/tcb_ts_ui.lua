@@ -17,7 +17,7 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 	drawtype = "mesh",
 	paramtype="light",
 	paramtype2="facedir",
-	walkable = true,
+	walkable = false,
 	selection_box = {
 		type = "fixed",
 		fixed = {-1/6, -1/2, -1/6, 1/6, 1/4, 1/6},
@@ -37,9 +37,14 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 		meta:set_string("infotext", "Unconfigured Track Circuit Break, right-click to assign.")
 	end,
 	on_rightclick = function(pos, node, player)
+		local pname = player:get_player_name()
+		if not minetest.check_player_privs(pname, "interlocking") then
+			minetest.chat_send_player(pname, "Insufficient privileges to use this!")
+			return
+		end
+		
 		local meta = minetest.get_meta(pos)
 		local tcbpts = meta:get_string("tcb_pos")
-		local pname = player:get_player_name()
 		if tcbpts ~= "" then
 			local tcbpos = minetest.string_to_pos(tcbpts)
 			advtrains.interlocking.show_tcb_form(tcbpos, pname)
@@ -60,11 +65,17 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 	--	end	
 	--end,
 	can_dig = function(pos, player)
+		local pname = player:get_player_name()
+
 		-- Those markers can only be dug when all adjacent TS's are set
 		-- as EOI.
 		local meta = minetest.get_meta(pos)
 		local tcbpts = meta:get_string("tcb_pos")
 		if tcbpts ~= "" then
+			if not minetest.check_player_privs(pname, "interlocking") then
+				minetest.chat_send_player(pname, "Insufficient privileges to use this!")
+				return
+			end			
 			local tcbpos = minetest.string_to_pos(tcbpts)
 			local tcb = ildb.get_tcb(tcbpos)
 			if not tcb then return true end
@@ -88,6 +99,9 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 
 minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 	local pname = player:get_player_name()
+	if not minetest.check_player_privs(pname, "interlocking") then
+		return
+	end
 	-- TCB assignment
 	local tcbnpos = players_assign_tcb[pname]
 	if tcbnpos then
@@ -175,6 +189,10 @@ end
 
 
 function advtrains.interlocking.show_tcb_form(pos, pname)
+	if not minetest.check_player_privs(pname, "interlocking") then
+		minetest.chat_send_player(pname, "Insufficient privileges to use this!")
+		return
+	end
 	local tcb = ildb.get_tcb(pos)
 	if not tcb then return end
 	
@@ -195,6 +213,9 @@ end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local pname = player:get_player_name()
+	if not minetest.check_player_privs(pname, "interlocking") then
+		return
+	end
 	local pts = string.match(formname, "^at_il_tcbconfig_(.+)$")
 	local pos
 	if pts then
@@ -268,6 +289,10 @@ end)
 local ts_pselidx = {}
 
 function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
+	if not minetest.check_player_privs(pname, "interlocking") then
+		minetest.chat_send_player(pname, "Insufficient privileges to use this!")
+		return
+	end
 	local ts = ildb.get_ts(ts_id)
 	if not ts_id then return end
 	
@@ -324,6 +349,9 @@ end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local pname = player:get_player_name()
+	if not minetest.check_player_privs(pname, "interlocking") then
+		return
+	end
 	-- independent of the formspec, clear this whenever some formspec event happens
 	local tpsi = ts_pselidx[pname]
 	ts_pselidx[pname] = nil
@@ -444,6 +472,11 @@ end
 local sig_pselidx = {}
 
 function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
+	if not minetest.check_player_privs(pname, "train_operator") then
+		minetest.chat_send_player(pname, "Insufficient privileges to use this!")
+		return
+	end
+	local hasprivs = minetest.check_player_privs(pname, "interlocking")
 	local tcbs = ildb.get_tcbs(sigd)
 	
 	if not tcbs.signal then return end
@@ -489,12 +522,15 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 		if sel_rte then
 			form = form.."button[0.5,6;  5,1;setroute;Set Route]"
 			form = form.."button[0.5,7;2,1;dsproute;Show]"
-			form = form.."button[2.5,7;1,1;delroute;Delete]"
-			form = form.."button[3.5,7;2,1;renroute;Rename]"
+			if hasprivs then
+				form = form.."button[2.5,7;1,1;delroute;Delete]"
+				form = form.."button[3.5,7;2,1;renroute;Rename]"
+			end
 		end
-		form = form.."button[0.5,8;2.5,1;newroute;New Route]"
-		form = form.."button[  3,8;2.5,1;unassign;Unassign Signal]"
-		
+		if hasprivs then
+			form = form.."button[0.5,8;2.5,1;newroute;New Route]"
+			form = form.."button[  3,8;2.5,1;unassign;Unassign Signal]"
+		end
 	end	
 	sig_pselidx[pname] = sel_rte
 	minetest.show_formspec(pname, "at_il_signalling_"..minetest.pos_to_string(sigd.p).."_"..sigd.s, form)
@@ -503,6 +539,10 @@ end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local pname = player:get_player_name()
+	if not minetest.check_player_privs(pname, "train_operator") then
+		return
+	end
+	local hasprivs = minetest.check_player_privs(pname, "interlocking")
 	
 	-- independent of the formspec, clear this whenever some formspec event happens
 	local tpsi = sig_pselidx[pname]
@@ -527,7 +567,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		elseif tpsi then
 			sel_rte = tpsi
 		end
-		if fields.setname and fields.name then
+		if fields.setname and fields.name and hasprivs then
 			tcbs.signal_name = fields.name
 		end
 		if tcbs.routeset and fields.cancelroute then
@@ -535,7 +575,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			ilrs.update_route(sigd, tcbs, nil, true)
 		end
 		if not tcbs.routeset then
-			if fields.newroute then
+			if fields.newroute and hasprivs then
 				advtrains.interlocking.init_route_prog(pname, sigd)
 				minetest.close_formspec(pname, formname)
 				return
@@ -549,19 +589,19 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 					advtrains.interlocking.visualize_route(sigd, tcbs.routes[sel_rte], "disp_"..t)
 					minetest.after(10, function() advtrains.interlocking.clear_visu_context("disp_"..t) end)
 				end
-				if fields.renroute then
+				if fields.renroute and hasprivs then
 					local rte = tcbs.routes[sel_rte]
 					minetest.show_formspec(pname, formname.."_renroute_"..sel_rte, "field[name;Enter new route name;"..rte.name.."]")
 					return
 				end
-				if fields.delroute then
+				if fields.delroute and hasprivs then
 					table.remove(tcbs.routes, sel_rte)
 					sel_rte = nil
 				end
 			end
 		end
 		
-		if fields.unassign then
+		if fields.unassign and hasprivs then
 			-- unassigning the signal from the tcbs
 			-- only when no route is set.
 			-- Routes and name remain saved, in case the player wants to reassign a new signal
@@ -586,6 +626,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		return
 	end
 	
+	
+	if not hasprivs then return end
 	-- rename route
 	local rind, rte_id
 	pts, connids, rind = string.match(formname, "^at_il_signalling_([^_]+)_(%d)_renroute_(%d+)$")
