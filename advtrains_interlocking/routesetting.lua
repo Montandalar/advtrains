@@ -84,7 +84,7 @@ function ilrs.set_route(signal, route, try)
 						if not try then atwarn("Encountered route lock while a real run of routesetting routine, at position",pts,"while setting route",rtename,"of",signal) end
 						return false, "Lock conflict at "..pts..", Held locked by:\n"..confl, nil, pts
 					elseif not try then
-						ndef.luaautomation.setstate(pos, state)
+						ndef.luaautomation.setstate(pos, node, state)
 					end
 				end
 				if not try then
@@ -181,7 +181,9 @@ function ilrs.free_route_locks_indiv(pts, ts, nocallbacks)
 	end
 	-- This must be delayed, because this code is executed in-between a train step
 	-- TODO use luaautomation timers?
-	minetest.after(0, ilrs.update_waiting, "lck", pts)
+	if not nocallbacks then
+		minetest.after(0, ilrs.update_waiting, "lck", pts)
+	end
 end
 -- frees all route locks, even manual ones set with the tool, at a specific position
 function ilrs.remove_route_locks(pts, nocallbacks)

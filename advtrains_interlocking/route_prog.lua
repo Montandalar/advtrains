@@ -320,12 +320,13 @@ minetest.register_chatcommand("at_rp_back",
 			return advtrains.pcall(function()
 				local rp = player_rte_prog[pname]
 				if rp then
-					if #rp.route.tcbpath <= 0 then
+					if #rp.route <= 0 then
 						return false, "Cannot backtrack when there are no route elements"
 					end
-					rp.route.tcbpath[#rp.route.tcbpath] = nil
+					rp.tmp_locks = rp.route[#rp.route].locks
+					rp.route[#rp.route] = nil
 					advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname)
-					return true, "Route section "..(#rp.route.tcbpath+1).." removed." 
+					return true, "Route section "..(#rp.route+1).." removed." 
 				end
 				return false, "You are not programming a route!" 
 			end)

@@ -60,9 +60,9 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 			advtrains = {
 				set_aspect = function(pos, node, asp)
 					if asp.main.free then
-						advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_on_"..rotation, param2 = node.param2}, true)
+						advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_on"..rotation, param2 = node.param2}, true)
 					else
-						advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_off_"..rotation, param2 = node.param2}, true)
+						advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_off"..rotation, param2 = node.param2}, true)
 					end
 				end
 			},
@@ -120,9 +120,9 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 			advtrains = {
 				set_aspect = function(pos, node, asp)
 					if asp.main.free then
-						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_on_"..rotation, param2 = node.param2}, true)
+						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_on"..rotation, param2 = node.param2}, true)
 					else
-						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_off_"..rotation, param2 = node.param2}, true)
+						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_off"..rotation, param2 = node.param2}, true)
 					end
 				end
 			},
