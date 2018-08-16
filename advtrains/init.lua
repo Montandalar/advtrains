@@ -172,6 +172,7 @@ dofile(advtrains.modpath.."/crafting.lua")
 dofile(advtrains.modpath.."/craft_items.lua")
 
 dofile(advtrains.modpath.."/log.lua")
+dofile(advtrains.modpath.."/passive.lua")
 
 
 --load/save

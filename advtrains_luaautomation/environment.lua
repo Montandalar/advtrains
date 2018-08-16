@@ -86,7 +86,6 @@ local function safe_string_find(...)
 end
 
 local mp=minetest.get_modpath("advtrains_luaautomation")
-local p_api_getstate, p_api_setstate, p_api_is_passive = dofile(mp.."/passive.lua")
 
 local static_env = {
 	--core LUA functions
@@ -148,12 +147,13 @@ local static_env = {
 		date = safe_date,
 	},
 	POS = function(x,y,z) return {x=x, y=y, z=z} end,
-	getstate = p_api_getstate,
-	setstate = p_api_setstate,
-	is_passive = p_api_is_passive,
+	getstate = advtrains.getstate,
+	setstate = advtrains.setstate,
+	is_passive = advtrains.is_passive,
 	--interrupts are handled per node, position unknown. (same goes for digilines)
 	--however external interrupts can be set here.
-	interrupt_pos = function(pos, imesg)
+	interrupt_pos = function(parpos, imesg)
+		local pos=atlatc.pcnaming.resolve_pos(parpos)
 		if not type(pos)=="table" or not pos.x or not pos.y or not pos.z then
 			debug.sethook()
 			error("Invalid position supplied to interrupt_pos")

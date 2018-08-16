@@ -38,19 +38,15 @@ minetest.register_craftitem("advtrains_luaautomation:pcnaming",{
 				minetest.record_protection_violation(pos, pname)
 				return
 			end
-			local node=minetest.get_node(pos)
-			local ndef=minetest.registered_nodes[node.name]
-			if ndef then
-				if ndef.luaautomation then
-					--look if this one already has a name
-					local pn=""
-					for name, npos in pairs(atlatc.pcnaming.name_map) do
-						if vector.equals(npos, pos) then
-							pn=name
-						end
+			if advtrains.is_passive(pos) then
+				--look if this one already has a name
+				local pn=""
+				for name, npos in pairs(atlatc.pcnaming.name_map) do
+					if vector.equals(npos, pos) then
+						pn=name
 					end
-					minetest.show_formspec(pname, "atlatc_naming_"..minetest.pos_to_string(pos), "field[pn;Set name of component (empty to clear);"..pn.."]")
 				end
+				minetest.show_formspec(pname, "atlatc_naming_"..minetest.pos_to_string(pos), "field[pn;Set name of component (empty to clear);"..pn.."]")
 			end
 		end
 	end,

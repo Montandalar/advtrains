@@ -96,24 +96,16 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 			mesecons = {effector = {
 				rules=advtrains.meseconrules,
 				["action_"..f.as] = function (pos, node)
-					advtrains.ndb.swap_node(pos, {name = "advtrains:signal_"..f.as..rotation, param2 = node.param2}, true)
+					advtrains.setstate(pos, f.als, node)
 				end
 			}},
-			luaautomation = {
-				getstate = f.ls,
-				setstate = function(pos, node, newstate)
-					if newstate == f.als then
-						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_"..f.as..rotation, param2 = node.param2}, true)
-					end
-				end,
-			},
 			on_rightclick=function(pos, node, player)
 				local pname = player:get_player_name()
 				local sigd = advtrains.interlocking and advtrains.interlocking.db.get_sigd_for_signal(pos)
 				if sigd then
 					advtrains.interlocking.show_signalling_form(sigd, pname)
 				elseif advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
-					advtrains.ndb.swap_node(pos, {name = "advtrains:signal_"..f.as..rotation, param2 = node.param2}, true)
+					advtrains.setstate(pos, f.als, node)
 				end
 			end,
 			-- new signal API
@@ -124,7 +116,13 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 					else
 						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_off"..rotation, param2 = node.param2}, true)
 					end
-				end
+				end,
+				getstate = f.ls,
+				setstate = function(pos, node, newstate)
+					if newstate == f.als then
+						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_"..f.as..rotation, param2 = node.param2}, true)
+					end
+				end,
 			},
 			can_dig = can_dig_func,
 		})
@@ -161,24 +159,16 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 			mesecons = {effector = {
 				rules = mrules_wallsignal,
 				["action_"..f.as] = function (pos, node)
-					advtrains.ndb.swap_node(pos, {name = "advtrains:signal_wall_"..loc.."_"..f.as, param2 = node.param2}, true)
+					advtrains.setstate(pos, f.als, node)
 				end
 			}},
-			luaautomation = {
-				getstate = f.ls,
-				setstate = function(pos, node, newstate)
-					if newstate == f.als then
-						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_wall_"..loc.."_"..f.as, param2 = node.param2}, true)
-					end
-				end,
-			},
 			on_rightclick=function(pos, node, player)
 				local pname = player:get_player_name()
 				local sigd = advtrains.interlocking and advtrains.interlocking.db.get_sigd_for_signal(pos)
 				if sigd then
 					advtrains.interlocking.show_signalling_form(sigd, pname)
 				elseif advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
-					advtrains.ndb.swap_node(pos, {name = "advtrains:signal_wall_"..loc.."_"..f.as, param2 = node.param2}, true)
+					advtrains.setstate(pos, f.als, node)
 				end
 			end,
 			-- new signal API
@@ -189,7 +179,13 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 					else
 						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_wall_"..loc.."_off", param2 = node.param2}, true)
 					end
-				end
+				end,
+				getstate = f.ls,
+				setstate = function(pos, node, newstate)
+					if newstate == f.als then
+						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_wall_"..loc.."_"..f.as, param2 = node.param2}, true)
+					end
+				end,
 			},
 			can_dig = can_dig_func,
 		})
@@ -225,7 +221,7 @@ minetest.register_node("advtrains:across_off", {
 			advtrains.ndb.swap_node(pos, {name = "advtrains:across_on", param2 = node.param2}, true)
 		end
 	}},
-	luaautomation = {
+	advtrains = {
 		getstate = "off",
 		setstate = function(pos, node, newstate)
 			if newstate == "on" then
@@ -266,7 +262,7 @@ minetest.register_node("advtrains:across_on", {
 			advtrains.ndb.swap_node(pos, {name = "advtrains:across_off", param2 = node.param2}, true)
 		end
 	}},
-	luaautomation = {
+	advtrains = {
 		getstate = "on",
 		setstate = function(pos, node, newstate)
 			if newstate == "off" then

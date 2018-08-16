@@ -73,18 +73,15 @@ function ilrs.set_route(signal, route, try)
 			local confl = ilrs.has_route_lock(pts, state)
 			
 			local pos = minetest.string_to_pos(pts)
-			local node = advtrains.ndb.get_node(pos)
-			local ndef = minetest.registered_nodes[node.name]
-			if ndef and ndef.luaautomation and ndef.luaautomation.setstate and ndef.luaautomation.getstate then
-				local cstate = ndef.luaautomation.getstate
-				if type(cstate)=="function" then cstate = cstate(pos) end
+			if advtrains.is_passive(pos) then
+				local cstate = advtrains.getstate(pos)
 				if cstate ~= state then
 					local confl = ilrs.has_route_lock(pts)
 					if confl then
 						if not try then atwarn("Encountered route lock while a real run of routesetting routine, at position",pts,"while setting route",rtename,"of",signal) end
 						return false, "Lock conflict at "..pts..", Held locked by:\n"..confl, nil, pts
 					elseif not try then
-						ndef.luaautomation.setstate(pos, node, state)
+						advtrains.setstate(pos, state)
 					end
 				end
 				if not try then
@@ -188,7 +185,11 @@ end
 -- frees all route locks, even manual ones set with the tool, at a specific position
 function ilrs.remove_route_locks(pts, nocallbacks)
 	ilrs.rte_locks[pts] = nil
-	--TODO callbacks
+	-- This must be delayed, because this code is executed in-between a train step
+	-- TODO use luaautomation timers?
+	if not nocallbacks then
+		minetest.after(0, ilrs.update_waiting, "lck", pts)
+	end
 end
 
 local function sigd_equal(sigd, cmp)

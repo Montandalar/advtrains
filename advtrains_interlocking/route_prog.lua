@@ -282,7 +282,7 @@ minetest.register_chatcommand("at_rp_set",
 	{
         params = "<name>", -- Short parameter description
         description = "Completes route programming procedure", -- Full description
-        privs = {interlocking = true}, -- TODO
+        privs = {interlocking = true},
         func = function(pname, param)
 			return advtrains.pcall(function()
 				if param=="" then
@@ -315,7 +315,7 @@ minetest.register_chatcommand("at_rp_back",
 	{
         params = "", -- Short parameter description
         description = "Remove last route segment", -- Full description
-        privs = {interlocking = true}, -- Require the "privs" privilege to run
+        privs = {interlocking = true},
         func = function(pname, param)
 			return advtrains.pcall(function()
 				local rp = player_rte_prog[pname]
@@ -336,7 +336,7 @@ minetest.register_chatcommand("at_rp_mark",
 	{
         params = "", -- Short parameter description
         description = "Re-set route programming markers", -- Full description
-        privs = {interlocking = true}, -- TODO
+        privs = {interlocking = true},
         func = function(pname, param)
 			return advtrains.pcall(function()
 				local rp = player_rte_prog[pname]
@@ -352,7 +352,7 @@ minetest.register_chatcommand("at_rp_discard",
 	{
         params = "", -- Short parameter description
         description = "Discards the currently programmed route", -- Full description
-        privs = {interlocking = true}, -- Require the "privs" privilege to run
+        privs = {interlocking = true},
         func = function(pname, param)
 			return advtrains.pcall(function()
 				player_rte_prog[pname] = nil
@@ -365,5 +365,4 @@ minetest.register_chatcommand("at_rp_discard",
 
 --TODO on route setting
 -- unify luaautomation get/setstate interface to the core
--- privileges for route programming
 -- routes should end at signals. complete route setting by punching a signal, and command as exceptional route completion

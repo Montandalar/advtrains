@@ -302,27 +302,32 @@ function advtrains.register_tracks(tracktype, def, preset)
 				--connections
 				ndef.at_conns = advtrains.rotate_conn_by(var.conns, (rotid-1)*preset.regstep)
 				
+				local ndef_avt_table
+				
 				if var.switchalt and var.switchst then
 					local switchfunc=function(pos, node, newstate)
-						if newstate~=var.switchst and not advtrains.get_train_at_pos(pos)
-								and not (advtrains.interlocking and advtrains.interlocking.route.has_route_lock(advtrains.roundfloorpts(pos)) ) then --TODO schöner machen
+						-- this code is only called from the internal setstate function, which
+						-- ensures that it is safe to switch the turnout
+						if newstate~=var.switchst then
 							advtrains.ndb.swap_node(pos, {name=def.nodename_prefix.."_"..var.switchalt..rotation, param2=node.param2})
 							advtrains.invalidate_all_paths(pos)
 						end
 					end
 					ndef.on_rightclick = function(pos, node, player)
 						if advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
-							switchfunc(pos, node)
+							advtrains.setstate(pos, newstate, node)
 							advtrains.log("Switch", player:get_player_name(), pos)
 						end
 					end
 					if var.switchmc then
 						ndef.mesecons = {effector = {
-							["action_"..var.switchmc] = switchfunc,
+							["action_"..var.switchmc] = function(pos, node) 
+								advtrains.setstate(pos, nil, node)
+							end,
 							rules=advtrains.meseconrules
 						}}
 					end
-					ndef.luaautomation = { 
+					ndef_avt_table = {
 						getstate = var.switchst,
 						setstate = switchfunc,
 					}
@@ -333,6 +338,11 @@ function advtrains.register_tracks(tracktype, def, preset)
 					adef=def.get_additional_definiton(def, preset, suffix, rotation)
 				end
 				ndef = advtrains.merge_tables(ndef, adef)
+				
+				-- insert getstate/setstate functions after merging the additional definitions
+				if ndef_avt_table then
+					ndef.advtrains = advtrains.merge_tables(ndef.advtrains or {}, ndef_avt_table)
+				end
 
 				minetest.register_node(":"..def.nodename_prefix.."_"..suffix..rotation, ndef)
 				--trackplacer

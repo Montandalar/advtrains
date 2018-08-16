@@ -303,7 +303,6 @@ local function merge_ts(root_id, merge_id)
 	track_sections[merge_id] = nil
 end
 
--- TODO temporary
 local lntrans = { "A", "B" }
 local function sigd_to_string(sigd)
 	return minetest.pos_to_string(sigd.p).." / "..lntrans[sigd.s]

@@ -5,10 +5,11 @@ Switches
 Signals
 Displays
 Mesecon Transmitter
+Those passive components can also be used inside interlocking systems.
 
-All passive components have a table called 'luaautomation' in their node definition and have the group 'save_in_nodedb' set, so they work in unloaded chunks.
+All passive components have a table called 'advtrains' in their node definition and have the group 'save_in_nodedb' set, so they work in unloaded chunks.
 Example for a switch:
-luaautomation = {
+advtrains = {
 	getstate = function(pos, node)
 		return "st"
 	end,
