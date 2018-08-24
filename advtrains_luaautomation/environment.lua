@@ -154,13 +154,64 @@ local static_env = {
 	--however external interrupts can be set here.
 	interrupt_pos = function(parpos, imesg)
 		local pos=atlatc.pcnaming.resolve_pos(parpos)
-		if not type(pos)=="table" or not pos.x or not pos.y or not pos.z then
-			debug.sethook()
-			error("Invalid position supplied to interrupt_pos")
-		end
 		atlatc.interrupt.add(0, pos, {type="ext_int", ext_int=true, message=imesg})
 	end,
 }
+
+-- If interlocking is present, enable route setting functions
+if advtrains.interlocking then
+	local function gen_checks(signal, route_name, noroutesearch)
+		assertt(route_name, "string")
+		local pos = atlatc.pcnaming.resolve_pos(signal)
+		local sigd = advtrains.interlocking.db.get_sigd_for_signal(pos)
+		if not sigd then
+			error("There's no signal at "..minetest.pos_to_string(pos))
+		end
+		local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
+		if not tcbs then
+			error("Inconsistent configuration, no tcbs for signal at "..minetest.pos_to_string(pos))
+		end
+		
+		local routeid, route
+		if not noroutesearch then
+			for routeidt, routet in ipairs(tcbs.routes) do
+				if routet.name == route_name then
+					routeid = routeidt
+					route = routet
+					break
+				end
+			end
+			if not route then
+				error("No route called "..route_name.." at "..minetest.pos_to_string(pos))
+			end
+		end
+		return pos, sigd, tcbs, routeid, route
+	end
+
+
+	static_env.can_set_route = function(signal, route_name)
+		local pos, sigd, tcbs, routeid, route = gen_checks(signal, route_name)
+		-- if route is already set on signal, return whether it's committed
+		if tcbs.routeset == routeid then
+			return tcbs.route_committed
+		end
+		-- actually try setting route (parameter 'true' designates try-run
+		local ok = advtrains.interlocking.route.set_route(sigd, route, true)
+		return ok
+	end
+	static_env.set_route = function(signal, route_name)
+		local pos, sigd, tcbs, routeid, route = gen_checks(signal, route_name)
+		return advtrains.interlocking.route.update_route(sigd, tcbs, routeid)
+	end
+	static_env.cancel_route = function(signal)
+		local pos, sigd, tcbs, routeid, route = gen_checks(signal, "", true)
+		return advtrains.interlocking.route.update_route(sigd, tcbs, nil, true)
+	end
+	static_env.get_aspect = function(signal)
+		local pos = atlatc.pcnaming.resolve_pos(signal)
+		return advtrains.interlocking.signal_get_aspect(pos)
+	end
+end
 
 for _, name in pairs(safe_globals) do
 	static_env[name] = _G[name]

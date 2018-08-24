@@ -20,13 +20,6 @@ ilrs.rte_callbacks = {
 	lck = {}
 }
 
--- Requests the given route
--- This function will try to set the designated route.
--- If this is not possible, route is inserted in the subscriber list for
--- the problematic lock points
-function ilrs.request_route(signal, tcbs, routeid)
-	
-end
 
 -- main route setting. First checks if everything can be set as designated,
 -- then (if "try" is not set) actually sets it

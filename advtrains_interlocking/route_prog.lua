@@ -364,5 +364,5 @@ minetest.register_chatcommand("at_rp_discard",
 
 
 --TODO on route setting
--- unify luaautomation get/setstate interface to the core
 -- routes should end at signals. complete route setting by punching a signal, and command as exceptional route completion
+-- Create simpler way to advance a route to the next tcb/signal on simple sections without turnouts

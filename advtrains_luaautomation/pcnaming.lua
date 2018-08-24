@@ -12,9 +12,14 @@ function atlatc.pcnaming.save()
 	return atlatc.pcnaming.name_map
 end
 
-function atlatc.pcnaming.resolve_pos(posorname)
-	if type(posorname)=="table" then return posorname end
-	return atlatc.pcnaming.name_map[posorname]
+function atlatc.pcnaming.resolve_pos(pos, func_name)
+	if type(pos)=="string" then
+		local e = atlatc.pcnaming.name_map[pos]
+		if e then return e end
+	elseif type(pos)=="table" and pos.x and pos.y and pos.z then
+		return pos
+	end
+	error("Invalid position supplied to " .. (func_name or "???")..": " .. dump(pos))
 end
 
 minetest.register_craftitem("advtrains_luaautomation:pcnaming",{

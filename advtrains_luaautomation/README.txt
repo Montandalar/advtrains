@@ -55,17 +55,20 @@ Every attempt to overwrite any of the predefined values results in an error.
 POS(x,y,z)
 Shorthand function to create a position vector {x=?, y=?, z=?} with less characters
 
+In the following functions, all parameters named 'pos' designate a position. You can use either:
+- a default Minetest position vector (like {x=34, y=2, z=-18})
+- the POS(34,2,-18) shorthand
+- A string, the passive component name. See 'passive component naming'.
+
 getstate(pos)
 Get the state of the passive component at position 'pos'. See section on passive components for more info.
 pos can be either a position vector (created by POS()) or a string, the name of this passive component.
 
 setstate(pos, newstate)
 Set the state of the passive component at position 'pos'.
-pos can be either a position vector (created by POS()) or a string, the name of this passive component.
 
 is_passive(pos)
 Checks whether there is a passive component at the position pos (and/or whether a passive component with this name exists)
-pos can be either a position vector (created by POS()) or a string, the name of this passive component.
 
 interrupt(time, message)
 Cause LuaAutomation to trigger an 'int' event on this component after the given time in seconds with the specified 'message' field. 'message' can be of any Lua data type.
@@ -78,6 +81,38 @@ USE WITH CARE, or better don't use! Incorrect use can result in expotential grow
 digiline_send(channel, message)
 Make this active component send a digiline message on the specified channel.
 Not available in init code!
+
+-- The next 4 functions are available when advtrains_interlocking is enabled: --
+
+can_set_route(pos, route_name)
+Returns whether it is possible to set the route designated by route_name from the signal at pos.
+
+set_route(pos, route_name)
+Requests the given route from the signal at pos. Has the same effect as clicking "Set Route" in the signalling dialog.
+
+cancel_route(pos)
+Cancels the route that is set from the signal at pos. Has the same effect as clicking "Cancel Route" in the signalling dialog.
+
+get_aspect(pos)
+Returns the signal aspect of the signal at pos. A signal aspect has the following format:
+aspect = {
+	main = { -- the next track section in line. Shows blocked for shunt routes
+		free = <boolean>,
+		speed = <int km/h>,
+	},
+	shunt = { -- whether a "shunting allowed" aspect should be shown
+		free = <boolean>,
+	}
+	dst = { -- the aspect of the next main signal on (at end of) route
+		free = <boolean>,
+		speed = <int km/h>,
+	}
+	info = {
+		call_on = <boolean>, -- Call-on route, expect train in track ahead
+		dead_end = <boolean>, -- Route ends on a dead end (e.g. bumper)
+	}
+}
+As of August 2018, only the aspect.main.free field is ever used by the interlocking system.
 
 ## Components and events
 
