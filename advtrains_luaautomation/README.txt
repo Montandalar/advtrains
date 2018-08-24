@@ -176,3 +176,4 @@ Once you set a name for any component, you can reference it by that name in the 
 setstate("Stn_P1_out", "green") instead of setstate(POS(1,2,3), "green")
 This way, you don't need to memorize positions.
 
+--TODO: Ein paar mehr Codebeispiele wären schön, insbesondere mit os.date und so...
