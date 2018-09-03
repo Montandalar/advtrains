@@ -70,7 +70,7 @@ advtrains.register_wagon("newlocomotive", {
 			attached = self.object,
 		})
 	end,
-	drops={"default:steelblock 4"},
+	drops={"default:steelblock 1"},
 	horn_sound = "advtrains_steam_whistle",
 	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
 }, S("Steam Engine"), "advtrains_engine_steam_inv.png")
@@ -147,7 +147,7 @@ advtrains.register_wagon("detailed_steam_engine", {
 			attached = self.object,
 		})
 	end,
-	drops={"default:steelblock 4"},
+	drops={"default:steelblock 1"},
 	horn_sound = "advtrains_steam_whistle",
 	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
 
@@ -195,7 +195,7 @@ advtrains.register_wagon("wagon_default", {
 	visual_size = {x=1, y=1},
 	wagon_span=2.634,
 	collisionbox = {-1.0,-0.5,-1.0, 1.0,2.5,1.0},
-	drops={"default:steelblock 4"},
+	drops={"default:steelblock 1"},
 	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
 }, S("Passenger Wagon"), "advtrains_wagon_inv.png")
 
@@ -209,7 +209,7 @@ advtrains.register_wagon("wagon_box", {
 	visual_size = {x=1, y=1},
 	wagon_span=2,
 	collisionbox = {-1.0,-0.5,-1.0, 1.0,2.5,1.0},
-	drops={"default:steelblock 4"},
+	drops={"default:steelblock 1"},
 	has_inventory = true,
 	get_inventory_formspec = function(self)
 		return "size[8,11]"..
