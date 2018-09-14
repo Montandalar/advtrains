@@ -108,9 +108,9 @@ sid=function(id) if id then return string.sub(id, -6) end end
 
 --ONLY use this function for temporary debugging. for consistent debug prints use atprint
 atdebug=function(t, ...)
-	local text=advtrains.print_concat_table({t, ...})
-	minetest.log("action", "[advtrains]"..text)
-	minetest.chat_send_all("[advtrains]"..text)
+--	local text=advtrains.print_concat_table({t, ...})
+--	minetest.log("action", "[advtrains]"..text)
+--	minetest.chat_send_all("[advtrains]"..text)
 end
 
 if minetest.settings:get_bool("advtrains_enable_debugging") then
