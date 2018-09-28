@@ -258,16 +258,12 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 			advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname, rp.tmp_lcks, pname)
 			return
 		end
-		local ndef = minetest.registered_nodes[node.name]
-		if ndef and ndef.luaautomation and ndef.luaautomation.getstate then
+		if advtrains.is_passive(pos) then
 			local pts = advtrains.roundfloorpts(pos)
 			if rp.tmp_lcks[pts] then
 				clear_lock(rp.tmp_lcks, pname, pts)
 			else
-				local state = ndef.luaautomation.getstate
-				if type(state)=="function" then
-					state = state(pos, node)
-				end
+				local state = advtrains.getstate(pos)
 				rp.tmp_lcks[pts] = state
 				chat(pname, pts.." is held in "..state.." position when this route is set and freed ")
 			end
