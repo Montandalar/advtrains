@@ -163,7 +163,7 @@ function ilrs.free_route_locks_indiv(pts, ts, nocallbacks)
 	local i = 1
 	while i <= #e do
 		if e[i].by == ts then
-			atdebug("free_route_locks_indiv",pts,"clearing entry",e[i].by,e[i].rsn)
+			--atdebug("free_route_locks_indiv",pts,"clearing entry",e[i].by,e[i].rsn)
 			table.remove(e,i)
 		else
 			i = i + 1
@@ -244,7 +244,7 @@ function ilrs.update_route(sigd, tcbs, newrte, cancel)
 	tcbs.aspect = nil
 	if (newrte and tcbs.routeset and tcbs.routeset ~= newrte) or cancel then
 		if tcbs.route_committed then
-			atdebug("Cancelling:",tcbs.routeset)
+			--atdebug("Cancelling:",tcbs.routeset)
 			advtrains.interlocking.route.cancel_route_from(sigd)
 		end
 		tcbs.route_committed = nil
@@ -253,24 +253,24 @@ function ilrs.update_route(sigd, tcbs, newrte, cancel)
 	end
 	if newrte or tcbs.routeset then
 		if newrte then tcbs.routeset = newrte end
-		atdebug("Setting:",tcbs.routeset)
+		--atdebug("Setting:",tcbs.routeset)
 		local succ, rsn, cbts, cblk = ilrs.set_route(sigd, tcbs.routes[tcbs.routeset])
 		if not succ then
 			tcbs.route_rsn = rsn
-			atdebug("Routesetting failed:",rsn)
+			--atdebug("Routesetting failed:",rsn)
 			-- add cbts or cblk to callback table
 			if cbts then
-				atdebug("cbts =",cbts)
+				--atdebug("cbts =",cbts)
 				if not ilrs.rte_callbacks.ts[cbts] then ilrs.rte_callbacks.ts[cbts]={} end
 				advtrains.insert_once(ilrs.rte_callbacks.ts[cbts], sigd, sigd_equal)
 			end
 			if cblk then
-				atdebug("cblk =",cblk)
+				--atdebug("cblk =",cblk)
 				if not ilrs.rte_callbacks.lck[cblk] then ilrs.rte_callbacks.lck[cblk]={} end
 				advtrains.insert_once(ilrs.rte_callbacks.lck[cblk], sigd, sigd_equal)
 			end
 		else
-			atdebug("Committed Route:",tcbs.routeset)
+			--atdebug("Committed Route:",tcbs.routeset)
 			tcbs.route_committed = true
 			tcbs.route_rsn = false
 			tcbs.aspect = asp_generic_free
@@ -283,12 +283,12 @@ end
 -- sys can be one of "ts" and "lck"
 -- key is then ts_id or pts respectively
 function ilrs.update_waiting(sys, key)
-	atdebug("update_waiting:",sys,".",key)
+	--atdebug("update_waiting:",sys,".",key)
 	local t = ilrs.rte_callbacks[sys][key]
 	ilrs.rte_callbacks[sys][key] = nil
 	if t then
 		for _,sigd in ipairs(t) do
-			atdebug("Updating", sigd)
+			--atdebug("Updating", sigd)
 			-- While these are run, the table we cleared before may be populated again, which is in our interest.
 			-- (that's the reason we needed to copy it)
 			local tcbs = ildb.get_tcbs(sigd)

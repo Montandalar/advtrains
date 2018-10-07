@@ -112,13 +112,16 @@ route = {
 		next = <sigd>, -- of the next (note: next) TCB on the route
 		locks = {<pts> = "state"} -- route locks of this route segment
 	}
+	terminal = 
 }
 The first item in the TCB path (namely i=0) is always the start signal of this route,
 so this is left out.
 All subsequent entries, starting from 1, contain:
 - all route locks of the segment on TS between the (i-1). and the i. TCB
 - the next TCB signal describer in proceeding direction of the route.
-
+'Terminal' once again repeats the "next" entry of the last route segment.
+It is needed for distant signal aspect determination. If it is not set,
+the distant signal aspect is determined as DANGER.
 ]]--
 
 local function chat(pname, message)
@@ -127,6 +130,10 @@ end
 local function clear_lock(locks, pname, pts)
 	locks[pts] = nil
 	chat(pname, pts.." is no longer affected when this route is set.")
+end
+
+local function otherside(s)
+	if s==1 then return 2 else return 1 end
 end
 
 function advtrains.interlocking.clear_visu_context(context)
@@ -150,22 +157,51 @@ function advtrains.interlocking.visualize_route(origin, route, context, tmp_lcks
 	end
 	routemarker(context, origin.p, "rte_origin", "at_il_route_start.png", oyaw, route.name)
 	
+	local c_sigd = origin
 	for k,v in ipairs(route) do
-		local sigd = v.next
-		local yaw = 0
-		local node_ok, conns, rhe = advtrains.get_rail_info_at(sigd.p, advtrains.all_tracktypes)
-		if node_ok then
-			yaw = advtrains.dir_to_angle(conns[sigd.s].c)
+		c_sigd = v.next
+		-- display route path
+		-- Final "next" marker can be EOI, thus undefined. This is legitimate.
+		if c_sigd then
+			local yaw = 0
+			local node_ok, conns, rhe = advtrains.get_rail_info_at(c_sigd.p, advtrains.all_tracktypes)
+			if node_ok then
+				yaw = advtrains.dir_to_angle(conns[c_sigd.s].c)
+			end
+			local img = "at_il_route_set.png"
+			if k==#route and not tmp_lcks then
+				img = "at_il_route_end.png"
+			end
+			routemarker(context, c_sigd.p, "rte"..k, img, yaw, route.name.." #"..k)
 		end
-		local img = "at_il_route_set.png"
-		if k == #route then img = "at_il_route_end.png" end
-		routemarker(context, sigd.p, "rte"..k, img, yaw, route.name.." #"..k)
+		-- display locks
 		for pts, state in pairs(v.locks) do
 			local pos = minetest.string_to_pos(pts)
 			routesprite(context, pos, "fix"..k..pts, "at_il_route_lock.png", "Fixed in state '"..state.."' by route "..route.name.." until segment #"..k.." is freed.")
 		end
 	end
+	
+	-- The presence of tmp_lcks tells us that we are displaying during route programming.
 	if tmp_lcks then
+		-- display route end markers at appropriate places (check next TS, if it exists)
+		local terminal = c_sigd
+		if terminal then
+			local term_tcbs = advtrains.interlocking.db.get_tcbs(terminal)
+			if term_tcbs.ts_id then
+				local over_ts = advtrains.interlocking.db.get_ts(term_tcbs.ts_id)
+				for i, sigd in ipairs(over_ts.tc_breaks) do
+					if not vector.equals(sigd.p, terminal.p) then
+						local yaw = 0
+						local node_ok, conns, rhe = advtrains.get_rail_info_at(sigd.p, advtrains.all_tracktypes)
+						if node_ok then
+							yaw = advtrains.dir_to_angle(conns[otherside(sigd.s)].c)
+						end
+						routemarker(context, sigd.p, "rteterm"..i, "at_il_route_end.png", yaw, route.name.." Terminal "..i)
+					end
+				end
+			end
+		end
+	-- display locks set by player		
 		for pts, state in pairs(tmp_lcks) do
 			local pos = minetest.string_to_pos(pts)
 			routesprite(context, pos, "fixp"..pts, "at_il_route_lock_edit.png", "Fixed in state '"..state.."' by route "..route.name.." (punch to unfix)",
@@ -201,9 +237,266 @@ local function get_last_route_item(origin, route)
 	return route[#route].next
 end
 
-local function otherside(s)
-	if s==1 then return 2 else return 1 end
+local function do_advance_route(pname, rp, sigd, tsname)
+	table.insert(rp.route, {next = sigd, locks = rp.tmp_lcks})
+	rp.tmp_lcks = {}
+	chat(pname, "Added track section '"..tsname.."' to the route (revert with /at_rp_back)")
 end
+
+local function finishrpform(pname)
+	local rp = player_rte_prog[pname]
+	if not rp then return end
+	
+	local form = "size[7,6]label[0.5,0.5;Finish programming route]"
+	local terminal = get_last_route_item(rp.origin, rp.route)
+	if terminal then
+		local term_tcbs = advtrains.interlocking.db.get_tcbs(terminal)
+		
+		if term_tcbs.signal then
+			form = form .. "label[0.5,1.5;Route ends at signal:]"
+			form = form .. "label[0.5,2  ;"..term_tcbs.signal_name.."]"
+		else
+			form = form .. "label[0.5,1.5;WARNING: Route does not end at a signal.]"
+			form = form .. "label[0.5,2  ;Routes should in most cases end at signals.]"
+			form = form .. "label[0.5,2.5;Cancel if you are unsure!]"
+		end
+	else
+		form = form .. "label[0.5,1.5;Route leads into]"
+		form = form .. "label[0.5,2  ;non-interlocked area]"
+	end
+	form = form.."field[0.8,3.5;5.2,1;name;Enter Route Name;]"
+	form = form.."button_exit[0.5,4.5;  5,1;save;Save Route]"
+	
+	
+	minetest.show_formspec(pname, "at_il_routepf", form)
+end
+
+
+local function check_advance_valid(tcbpos, rp)
+	-- track circuit break, try to advance route over it
+	local lri = get_last_route_item(rp.origin, rp.route)
+	if not lri then
+		return false, false
+	end
+	
+	local is_endpoint = false
+	
+	local this_sigd, this_ts, adv_side
+	
+	if vector.equals(lri.p, tcbpos) then
+		-- If the player just punched the last TCB again, it's of course possible to
+		-- finish the route here (although it can't be advanced by here.
+		-- Fun fact: you can now program routes that end exactly where they begin :)
+		is_endpoint = true
+		this_sigd = lri
+	else
+		-- else, we need to check whether this TS actually borders
+		local start_tcbs = advtrains.interlocking.db.get_tcbs(lri)
+		if not start_tcbs.ts_id then
+			return false, false
+		end
+		
+		this_ts = advtrains.interlocking.db.get_ts(start_tcbs.ts_id)
+		for _,sigd in ipairs(this_ts.tc_breaks) do
+			if vector.equals(sigd.p, tcbpos) then
+				adv_side = otherside(sigd.s)
+			end
+		end
+		if not adv_side then
+			-- this TCB is not bordering to the section
+			return false, false
+		end
+		this_sigd = {p=tcbpos, s=adv_side}
+	end
+	
+	-- check whether the ts at the other end is capable of "end over"
+	local adv_tcbs = advtrains.interlocking.db.get_tcbs(this_sigd)
+	local next_tsid = adv_tcbs.ts_id
+	local can_over, over_ts, next_tc_bs = false, nil, nil
+	local cannotover_rsn = "Next section is diverging (>2 TCBs)"
+	if next_tsid then
+		-- you may not advance over EOI. While this is technically possible,
+		-- in practise this just enters an unnecessary extra empty route item.
+		over_ts = advtrains.interlocking.db.get_ts(adv_tcbs.ts_id)
+		next_tc_bs = over_ts.tc_breaks
+		can_over = #next_tc_bs <= 2
+	else
+		cannotover_rsn = "End of interlocking"
+	end
+	
+	local over_sigd = nil
+	if can_over then
+		if next_tc_bs and #next_tc_bs == 2 then
+			local sdt
+			if vector.equals(next_tc_bs[1].p, tcbpos) then
+				sdt = next_tc_bs[2]
+			end
+			if vector.equals(next_tc_bs[2].p, tcbpos) then
+				sdt = next_tc_bs[1]
+			end
+			if not sdt then
+				error("Inconsistency: "..dump(next_ts))
+			end
+			-- swap TCB direction
+			over_sigd = {p = sdt.p, s = otherside(sdt.s) }
+		end
+	end
+	
+	return is_endpoint, true, this_sigd, this_ts, can_over, over_ts, over_sigd, cannotover_rsn
+end
+
+local function show_routing_form(pname, tcbpos, message)
+
+	local rp = player_rte_prog[pname]
+	
+	if not rp then return end
+	
+	local is_endpoint, advance_valid, this_sigd, this_ts, can_over, over_ts, over_sigd, cannotover_rsn = check_advance_valid(tcbpos, rp)
+	
+	-- at this place, advance_valid shows whether the current route can be advanced
+	-- over this TCB.
+	-- If it can: 
+	--  Advance over (continue programming)
+	--  End here
+	--  Advance and end (only <=2 TCBs, terminal signal needs to be known)
+	-- if not:
+	--  show nothing at all
+	-- In all cases, Discard and Backtrack buttons needed.
+	
+	local form = "size[7,9.5]label[0.5,0.5;Advance/Complete Route]"
+	if message then
+		form = form .. "label[0.5,1;"..message.."]"
+	end
+	
+	if advance_valid and not is_endpoint then
+		form = form.. "label[0.5,1.8;Advance to next route section]"
+		form = form.."image_button[0.5,2.2;  5,1;at_il_routep_advance.png;advance;]"
+		
+		form = form.. "label[0.5,3.5;-------------------------]"
+	else
+		form = form.. "label[0.5,2.3;This TCB is not suitable as]"
+		form = form.. "label[0.5,2.8;route continuation.]"
+	end
+	if advance_valid or is_endpoint then
+		form = form.. "label[0.5,3.8;Finish route HERE]"
+		form = form.."image_button[0.5,  4.2;  5,1;at_il_routep_end_here.png;endhere;]"
+		if can_over then
+			form = form.. "label[0.5,5.3;Finish route at end of NEXT section]"
+			form = form.."image_button[0.5,5.7;  5,1;at_il_routep_end_over.png;endover;]"
+		else
+			form = form.. "label[0.5,5.3;Advancing over next section is]"
+			form = form.. "label[0.5,5.8;impossible at this place.]"
+			if cannotover_rsn then
+				form = form.. "label[0.5,6.3;"..cannotover_rsn.."]"
+			end
+		end
+	end
+	
+	form = form.. "label[0.5,7;-------------------------]"
+	if #rp.route > 0 then
+		form = form.."button[0.5,7.4;  5,1;retract;Step back one section]"
+	end
+	form = form.."button[0.5,8.4;  5,1;cancel;Cancel route programming]"
+	
+	minetest.show_formspec(pname, "at_il_rprog_"..minetest.pos_to_string(tcbpos), form)
+end
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	local pname = player:get_player_name()
+	
+	local tcbpts = string.match(formname, "^at_il_rprog_([^_]+)$")
+	local tcbpos
+	if tcbpts then
+		tcbpos = minetest.string_to_pos(tcbpts)
+	end
+	if tcbpos then
+		-- RPROG form
+		local rp = player_rte_prog[pname]
+		if not rp then
+			minetest.close_formspec(pname, formname)
+			return
+		end
+		
+		local is_endpoint, advance_valid, this_sigd, this_ts, can_over, over_ts, over_sigd = check_advance_valid(tcbpos, rp)
+		
+		if advance_valid then
+			if fields.advance then
+				-- advance route
+				if not is_endpoint then
+					do_advance_route(pname, rp, this_sigd, this_ts.name)
+				end
+			end
+			if fields.endhere then
+				if not is_endpoint then
+					do_advance_route(pname, rp, this_sigd, this_ts.name)
+				end
+				finishrpform(pname)
+			end
+			if can_over and fields.endover then
+				if not is_endpoint then
+					do_advance_route(pname, rp, this_sigd, this_ts.name)
+				end
+				do_advance_route(pname, rp, over_sigd, over_ts and over_ts.name or "--EOI--")
+				finishrpform(pname)
+			end
+		end
+		if fields.retract then
+			if #rp.route <= 0 then
+				minetest.close_formspec(pname, formname)
+				return
+			end
+			rp.tmp_locks = rp.route[#rp.route].locks
+			rp.route[#rp.route] = nil
+			chat(pname, "Route section "..(#rp.route+1).." removed.") 
+		end
+		if fields.cancel then
+			player_rte_prog[pname] = nil
+			advtrains.interlocking.clear_visu_context("prog_"..pname)
+			chat(pname, "Route discarded.")
+			minetest.close_formspec(pname, formname)
+			return
+		end
+		
+		advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname, rp.tmp_lcks, pname)
+		minetest.close_formspec(pname, formname)
+		return
+	end
+	
+	if formname == "at_il_routepf" then
+		if not fields.save or not fields.name then return end
+		if fields.name == "" then
+			-- show form again
+			finishrpform(pname)
+			return
+		end
+		
+		local rp = player_rte_prog[pname]
+		if rp then
+			if #rp.route <= 0 then
+				chat(pname, "Cannot program route without a target")
+				return
+			end
+			
+			local tcbs = advtrains.interlocking.db.get_tcbs(rp.origin)
+			if not tcbs then
+				chat(pname, "The origin TCB has become unknown during programming. Try again.")
+				return
+			end
+			
+			local terminal = get_last_route_item(rp.origin, rp.route)
+			rp.route.terminal = terminal
+			rp.route.name = fields.name
+			
+			table.insert(tcbs.routes, rp.route)
+			
+			advtrains.interlocking.clear_visu_context("prog_"..pname)
+			player_rte_prog[pname] = nil
+			chat(pname, "Successfully programmed route.")
+			return
+		end
+	end 
+end)
+
 
 -- Central route programming punch callback
 minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
@@ -224,38 +517,12 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 			end
 			local tcbpos = minetest.string_to_pos(tcbpts)
 			
-			-- track circuit break, try to advance route over it
-			local lri = get_last_route_item(rp.origin, rp.route)
-			if vector.equals(lri.p, tcbpos) then
-				chat(pname, "You cannot continue the route to where you came from!")
-				return
-			end
+			-- show formspec
 			
-			local start_tcbs = advtrains.interlocking.db.get_tcbs(lri)
-			if not start_tcbs.ts_id then
-				chat(pname, "The previous TCB was End of Interlocking. Please complete route programming using '/at_rp_set <name>'")
-				return
-			end
+			show_routing_form(pname, tcbpos)
 			
-			local ts = advtrains.interlocking.db.get_ts(start_tcbs.ts_id)
-			if not ts then atwarn("Internal error, ts inexistant for id!") return end
-			local found = nil
-			for _,sigd in ipairs(ts.tc_breaks) do
-				if vector.equals(sigd.p, tcbpos) then
-					found = otherside(sigd.s)
-				end
-			end
-			if not found then
-				chat(pname, "Previous and this TCB belong to different track sections!")
-				return
-			end
-			-- TODO check the path: are all route turnouts locked to the right position?
-			
-			-- everything worked, just add the other side to the list
-			table.insert(rp.route, {next = {p = tcbpos, s = found}, locks = rp.tmp_lcks})
-			rp.tmp_lcks = {}
-			chat(pname, "Added track section '"..ts.name.."' to the route (revert with /at_rp_back)")
 			advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname, rp.tmp_lcks, pname)
+			
 			return
 		end
 		if advtrains.is_passive(pos) then
@@ -273,90 +540,6 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 		
 	end
 end)
-
-minetest.register_chatcommand("at_rp_set",
-	{
-        params = "<name>", -- Short parameter description
-        description = "Completes route programming procedure", -- Full description
-        privs = {interlocking = true},
-        func = function(pname, param)
-			return advtrains.pcall(function()
-				if param=="" then
-					return false, "Missing name parameter!" 
-				end
-				local rp = player_rte_prog[pname]
-				if rp then
-					if #rp.route <= 0 then
-						return false, "Cannot program route without a target"
-					end
-					rp.route.name = param
-					
-					local tcbs = advtrains.interlocking.db.get_tcbs(rp.origin)
-					if not tcbs then
-						return false, "The origin TCB of this route doesn't exist!"
-					end
-					
-					table.insert(tcbs.routes, rp.route)
-					
-					advtrains.interlocking.clear_visu_context("prog_"..pname)
-					player_rte_prog[pname] = nil
-					return true, "Successfully programmed route" 
-				end
-				return false, "You are not programming a route!" 
-			end)
-        end,
-    })
-    
-minetest.register_chatcommand("at_rp_back",
-	{
-        params = "", -- Short parameter description
-        description = "Remove last route segment", -- Full description
-        privs = {interlocking = true},
-        func = function(pname, param)
-			return advtrains.pcall(function()
-				local rp = player_rte_prog[pname]
-				if rp then
-					if #rp.route <= 0 then
-						return false, "Cannot backtrack when there are no route elements"
-					end
-					rp.tmp_locks = rp.route[#rp.route].locks
-					rp.route[#rp.route] = nil
-					advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname)
-					return true, "Route section "..(#rp.route+1).." removed." 
-				end
-				return false, "You are not programming a route!" 
-			end)
-        end,
-    })
-minetest.register_chatcommand("at_rp_mark",
-	{
-        params = "", -- Short parameter description
-        description = "Re-set route programming markers", -- Full description
-        privs = {interlocking = true},
-        func = function(pname, param)
-			return advtrains.pcall(function()
-				local rp = player_rte_prog[pname]
-				if rp then
-					advtrains.interlocking.visualize_route(rp.origin, rp.route, "prog_"..pname)
-					return true, "Redrawn route markers" 
-				end
-				return false, "You are not programming a route!" 
-			end)
-        end,
-    })
-minetest.register_chatcommand("at_rp_discard",
-	{
-        params = "", -- Short parameter description
-        description = "Discards the currently programmed route", -- Full description
-        privs = {interlocking = true},
-        func = function(pname, param)
-			return advtrains.pcall(function()
-				player_rte_prog[pname] = nil
-				advtrains.interlocking.clear_visu_context("prog_"..pname)
-				return true, "Route discarded" 
-			end)
-        end,
-    })
 
 
 --TODO on route setting

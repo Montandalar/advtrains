@@ -164,7 +164,7 @@ advtrains.te_register_on_create(function(id, train)
 	elseif ts_id==nil then
 		atwarn("Train",id,": Unable to determine whether to block a track section!")
 	else
-		atdebug("Train",id,": Outside of interlocked area!")
+		--atdebug("Train",id,": Outside of interlocked area!")
 	end
 end)
 

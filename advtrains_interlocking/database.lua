@@ -250,7 +250,7 @@ end
 local function traverser(found_tcbs, pos, conns, connid, count, brk_when_found_n)
 	local adj_pos, adj_connid, conn_idx, nextrail_y, next_conns = advtrains.get_adjacent_rail(pos, conns, connid, advtrains.all_tracktypes)
 	if not adj_pos then
-		atdebug("Traverser found end-of-track at",pos, connid)
+		--atdebug("Traverser found end-of-track at",pos, connid)
 		return
 	end
 	-- look whether there is a TCB here
@@ -258,14 +258,14 @@ local function traverser(found_tcbs, pos, conns, connid, count, brk_when_found_n
 		local tcb = ildb.get_tcb(adj_pos)
 		if tcb then
 			-- done with this branch
-			atdebug("Traverser found tcb at",adj_pos, adj_connid)
+			--atdebug("Traverser found tcb at",adj_pos, adj_connid)
 			insert_sigd_nodouble(found_tcbs, {p=adj_pos, s=adj_connid})
 			return
 		end
 	end
 	-- recursion abort condition
 	if count > TRAVERSER_LIMIT then
-		atdebug("Traverser hit counter at",adj_pos, adj_connid)
+		--atdebug("Traverser hit counter at",adj_pos, adj_connid)
 		return true
 	end
 	-- continue traversing
@@ -316,7 +316,7 @@ function ildb.sync_tcb_neighbors(pos, connid)
 		error("update_tcb_neighbors but node is NOK: "..minetest.pos_to_string(pos))
 	end
 	
-	atdebug("Traversing from ",pos, connid)
+	--atdebug("Traversing from ",pos, connid)
 	local counter_hit = traverser(found_tcbs, pos, conns, connid, 0)
 	
 	local ts_id
@@ -328,7 +328,7 @@ function ildb.sync_tcb_neighbors(pos, connid)
 	for idx, sigd in pairs(found_tcbs) do
 		local tcbs = ildb.get_tcbs(sigd)
 		if not tcbs.ts_id then
-			atdebug("Sync: put",sigd_to_string(sigd),"into list_eoi")
+			--atdebug("Sync: put",sigd_to_string(sigd),"into list_eoi")
 			table.insert(list_eoi, sigd)
 		elseif not ts_id and tcbs.ts_id then
 			if not ildb.get_ts(tcbs.ts_id) then
@@ -336,7 +336,7 @@ function ildb.sync_tcb_neighbors(pos, connid)
 				tcbs.ts_id = nil
 				table.insert(list_eoi, sigd)
 			else
-				atdebug("Sync: put",sigd_to_string(sigd),"into list_ok")
+				--atdebug("Sync: put",sigd_to_string(sigd),"into list_ok")
 				ts_id = tcbs.ts_id
 				table.insert(list_ok, sigd)
 			end

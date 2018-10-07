@@ -11,6 +11,8 @@ end
 
 --advtrains
 
+DUMP_DEBUG_SAVE = false
+
 --Constant for maximum connection value/division of the circle
 AT_CMAX = 16
 
@@ -108,9 +110,9 @@ sid=function(id) if id then return string.sub(id, -6) end end
 
 --ONLY use this function for temporary debugging. for consistent debug prints use atprint
 atdebug=function(t, ...)
---	local text=advtrains.print_concat_table({t, ...})
---	minetest.log("action", "[advtrains]"..text)
---	minetest.chat_send_all("[advtrains]"..text)
+	local text=advtrains.print_concat_table({t, ...})
+	minetest.log("action", "[advtrains]"..text)
+	minetest.chat_send_all("[advtrains]"..text)
 end
 
 if minetest.settings:get_bool("advtrains_enable_debugging") then
@@ -320,6 +322,15 @@ advtrains.avt_save = function(remove_players_from_wagons)
 	end
 	file:write(datastr)
 	file:close()
+	
+	if DUMP_DEBUG_SAVE then
+		local file, err = io.open(advtrains.fpath.."_DUMP", "w")
+		if err then
+			return
+		end
+		file:write(dump(save_tbl))
+		file:close()
+	end
 end
 
 --## MAIN LOOP ##--

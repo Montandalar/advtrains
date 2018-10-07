@@ -933,15 +933,7 @@ Put any turnouts you need to lock in the correct position (e.g.
 
 \begin_layout Itemize
 Punch them.
- This makes a marker saying 
-\begin_inset Quotes eld
-\end_inset
-
-Route Lock Editing
-\begin_inset Quotes erd
-\end_inset
-
- appear.
+ This makes a marker with a blue lock symbol appear.
 \end_layout
 
 \begin_layout Itemize
@@ -956,24 +948,75 @@ When you've locked all turnouts in the current section, go to and punch
 \end_layout
 
 \begin_layout Standard
-Once you've done this, the lock markers change to 
+Depending on the situation, you are now offered some possibilities to proceed:
+\end_layout
+
+\begin_layout Itemize
+Click the 
 \begin_inset Quotes eld
 \end_inset
 
-Route Lock
+Advance to next section
 \begin_inset Quotes erd
 \end_inset
 
-, telling they can't be changed anymore.
- Repeat the above procedure until you have punched the final TCB, at which
- the route should end.
- As mentioned before, there should be a signal at this place, however this
- is not enforced.
- Now, run the chat command 
-\family typewriter
-/at_rp_set <name of route>
-\family default
- to complete programming the route.
+ button if your route consists of more sections with turnouts to lock, and
+ you need to continue programming.
+ Follow the above steps to set locks for the next section.
+\end_layout
+
+\begin_layout Standard
+Once you've clicked the 
+\begin_inset Quotes eld
+\end_inset
+
+Advance
+\begin_inset Quotes erd
+\end_inset
+
+ button, the lock markers change to a red lock symbol, telling they can't
+ be changed anymore.
+ Repeat the above procedure until you are ready to complete the programming
+ procedure:
+\end_layout
+
+\begin_layout Itemize
+Click the 
+\begin_inset Quotes eld
+\end_inset
+
+Finish route HERE
+\begin_inset Quotes erd
+\end_inset
+
+ button when you've set up the locks for the last track section of the route
+ and punched the final TCB (the one with the next signal).
+ You will be asked for a route name and your route will be saved.
+\end_layout
+
+\begin_layout Itemize
+The 
+\begin_inset Quotes eld
+\end_inset
+
+Finish route at end of NEXT section
+\begin_inset Quotes erd
+\end_inset
+
+ button (third button) is an useful quickhand to make the route proceed
+ one more section.
+ Using this button is equivalent to first clicking the 
+\begin_inset Quotes eld
+\end_inset
+
+Advance
+\begin_inset Quotes erd
+\end_inset
+
+ button, then flying to the end of the next track section and finishing
+ the route there.
+ You can not (officially) set turnout locks in the final section using this
+ method.
 \end_layout
 
 \begin_layout Standard
@@ -994,19 +1037,51 @@ last
 \end_layout
 
 \begin_layout Itemize
-If you accidentally punched a TCB, you can run 
-\family typewriter
-/at_rp_back
-\family default
- to undo this and return to the previous section.
- Due to a bug, you have to re-set all locks of this section.
+If you accidentally advanced the route wrongly, you can use the 
+\begin_inset Quotes eld
+\end_inset
+
+Step back one section
+\begin_inset Quotes erd
+\end_inset
+
+ button to undo this.
 \end_layout
 
 \begin_layout Itemize
-If you want to stop programming the entire route without saving it, run
- 
-\family typewriter
-/at_rp_discard
+If you want to stop programming the entire route without saving it, use
+ the 
+\begin_inset Quotes eld
+\end_inset
+
+Cancel route programming
+\begin_inset Quotes erd
+\end_inset
+
+ button.
+\end_layout
+
+\begin_layout Itemize
+The third button is especially useful for programming simple block sections
+ on a main running line, since you can stay at the starting signal (punch
+ starting TCB and select third button).
+\end_layout
+
+\begin_layout Itemize
+If a route should end in a dead end, you MUST use the 
+\begin_inset Quotes eld
+\end_inset
+
+Finish in NEXT section
+\begin_inset Quotes erd
+\end_inset
+
+ button, because there is no final TCB that you could punch.
+\end_layout
+
+\begin_layout Itemize
+The third button does NOT work on sections with more than 2 exits, because
+ the system won't be able to determine the final TCB of the route then.
 \end_layout
 
 \begin_layout Section

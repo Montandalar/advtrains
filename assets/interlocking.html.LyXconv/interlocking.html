@@ -443,33 +443,47 @@ of the route. Now:
      <ul class="itemize1">
      <li class="itemize">Put any turnouts you need to lock in the correct position (e.g. by right-clicking them). This includes flank protection.
      </li>
-     <li class="itemize">Punch them. This makes a marker saying &#8220;Route Lock Editing&#8221; appear.
+     <li class="itemize">Punch them. This makes a marker with a blue lock symbol appear.
      </li>
      <li class="itemize">If you punch a turnout again, or punch the marker, you can remove the lock again.
      </li>
      <li class="itemize">When you&#8217;ve locked all turnouts in the current section, go to and punch the TCB that is the border to the next track
      section the train proceeds into.</li></ul>
-<!--l. 364--><p class="noindent" >Once you&#8217;ve done this, the lock markers change to &#8220;Route Lock&#8221;, telling they can&#8217;t be changed anymore. Repeat the above procedure until
-you have punched the final TCB, at which the route should end. As mentioned before, there should be a signal at this place,
-however this is not enforced. Now, run the chat command <span 
-class="ectt-1000">/at_rp_set &#x003C;name of route&#x003E; </span>to complete programming the
-route.
-<!--l. 371--><p class="noindent" >A few hints:
+<!--l. 364--><p class="noindent" >Depending on the situation, you are now offered some possibilities to proceed:
+     <ul class="itemize1">
+     <li class="itemize">Click the &#8220;Advance to next section&#8221; button if your route consists of more sections with turnouts to lock, and you need to
+     continue programming. Follow the above steps to set locks for the next section.</li></ul>
+<!--l. 371--><p class="noindent" >Once you&#8217;ve clicked the &#8220;Advance&#8221; button, the lock markers change to a red lock symbol, telling they can&#8217;t be changed anymore. Repeat
+the above procedure until you are ready to complete the programming procedure:
+     <ul class="itemize1">
+     <li class="itemize">Click the &#8220;Finish route HERE&#8221; button when you&#8217;ve set up the locks for the last track section of the route and punched the
+     final TCB (the one with the next signal). You will be asked for a route name and your route will be saved.
+     </li>
+     <li class="itemize">The &#8220;Finish route at end of NEXT section&#8221; button (third button) is an useful quickhand to make the route proceed one
+     more section. Using this button is equivalent to first clicking the &#8220;Advance&#8221; button, then flying to the end of the next track
+     section and finishing the route there. You can not (officially) set turnout locks in the final section using this method.</li></ul>
+<!--l. 387--><p class="noindent" >A few hints:
      <ul class="itemize1">
      <li class="itemize">If one turnout should be locked by more than one section, set the lock only in the <span 
 class="ectt-1000">last </span>of those sections. Locking the same
      turnout in multiple sections of a single route results in undefined behavior!
      </li>
-     <li class="itemize">If you accidentally punched a TCB, you can run <span 
-class="ectt-1000">/at_rp_back </span>to undo this and return to the previous section. Due to a
-     bug, you have to re-set all locks of this section.
+     <li class="itemize">If you accidentally advanced the route wrongly, you can use the &#8220;Step back one section&#8221; button to undo this.
      </li>
-     <li class="itemize">If you want to stop programming the entire route without saving it, run <span 
-class="ectt-1000">/at_rp_discard</span></li></ul>
-<!--l. 384--><p class="noindent" >
+     <li class="itemize">If you want to stop programming the entire route without saving it, use the &#8220;Cancel route programming&#8221; button.
+     </li>
+     <li class="itemize">The third button is especially useful for programming simple block sections on a main running line, since you can stay at
+     the starting signal (punch starting TCB and select third button).
+     </li>
+     <li class="itemize">If a route should end in a dead end, you MUST use the &#8220;Finish in NEXT section&#8221; button, because there is no final TCB
+     that you could punch.
+     </li>
+     <li class="itemize">The third button does NOT work on sections with more than 2 exits, because the system won&#8217;t be able to determine the
+     final TCB of the route then.</li></ul>
+<!--l. 408--><p class="noindent" >
 <a 
  id="x1-47r4"></a>
-    <!--l. 384--><p class="noindent" ><span 
+    <!--l. 408--><p class="noindent" ><span 
 class="ecsx-1200">4</span>   <span 
 class="ecsx-1200">Interlocking</span>
     <span 
@@ -478,15 +492,15 @@ class="ecsx-1200">system</span>
 class="ecsx-1200">operation</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 386--><p class="noindent" >Setting up the interlocking for a portion of a railway network requires some time, experience and planning, but once done, there&#8217;s not
+<!--l. 410--><p class="noindent" >Setting up the interlocking for a portion of a railway network requires some time, experience and planning, but once done, there&#8217;s not
 much to do anymore to make trains run on your, now safer, railway. This section covers some useful practices to route trains across your
 network.
-<!--l. 391--><p class="noindent" >At the moment, routes can only be set by clicking the signal or via LuaATC, except if you use automatic working. It is planned to control
+<!--l. 415--><p class="noindent" >At the moment, routes can only be set by clicking the signal or via LuaATC, except if you use automatic working. It is planned to control
 this via the onboard computer and via a &#8220;signal box&#8221; view based on the currently broken itrainmap.
-<!--l. 396--><p class="noindent" >
+<!--l. 420--><p class="noindent" >
 <a 
  id="x1-48r1"></a>
-      <!--l. 396--><p class="noindent" ><span 
+      <!--l. 420--><p class="noindent" ><span 
 class="ecsx-1200">4.1</span>   <span 
 class="ecsx-1200">Simple</span>
       <span 
@@ -499,44 +513,44 @@ class="ecsx-1200">and</span>
 class="ecsx-1200">cancelling</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 398--><p class="noindent" >To set a route, simply right-click the signal, select a route and click &#8220;set route&#8221;. If there are no conflicts, the signal turns green and the
+<!--l. 422--><p class="noindent" >To set a route, simply right-click the signal, select a route and click &#8220;set route&#8221;. If there are no conflicts, the signal turns green and the
 train is allowed to proceed.
-<!--l. 402--><p class="noindent" >It may be possible that the route can not be set, because one or more other routes conflict with the current one, or a section is blocked. In
+<!--l. 426--><p class="noindent" >It may be possible that the route can not be set, because one or more other routes conflict with the current one, or a section is blocked. In
 this case, the signal stays red, and the conflicting item is shown in the formspec. As soon as the conflict is resolved (by cancellation
 or release of the conflicting route, or the section becoming free), the requested route will be set and the signal turns
 green.
-<!--l. 409--><p class="noindent" >If a route is either requested or set, it can be cancelled from the signalling formspec. This means that all turnouts and sections are
+<!--l. 433--><p class="noindent" >If a route is either requested or set, it can be cancelled from the signalling formspec. This means that all turnouts and sections are
 released, and the signal reverts back to red. This of course only works when the train has not passed the signal yet. There is no
 mechanism for Approach Locking.
-<!--l. 415--><p class="noindent" >
+<!--l. 439--><p class="noindent" >
 <a 
  id="x1-49r2"></a>
-      <!--l. 415--><p class="noindent" ><span 
+      <!--l. 439--><p class="noindent" ><span 
 class="ecsx-1200">4.2</span>   <span 
 class="ecsx-1200">Automatic</span>
       <span 
 class="ecsx-1200">Working</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 417--><p class="noindent" >Block signals on main running lines usually only have a single route to set, the one proceeding along the main line. Their purpose is only
+<!--l. 441--><p class="noindent" >Block signals on main running lines usually only have a single route to set, the one proceeding along the main line. Their purpose is only
 to show whether there are trains in the next section. So, it would be convenient if this only route would set itself again after a train
 passed.
-<!--l. 423--><p class="noindent" >This is what Automatic Working is for. Set a route, click &#8220;Enable Automatic Working&#8221;, and as soon as a train passes, the route is
+<!--l. 447--><p class="noindent" >This is what Automatic Working is for. Set a route, click &#8220;Enable Automatic Working&#8221;, and as soon as a train passes, the route is
 automatically re-set.
-<!--l. 427--><p class="noindent" >This function is nearly identical to SimSig automatic signals. It can also be useful on a line with high traffic, when there&#8217;s a
+<!--l. 451--><p class="noindent" >This function is nearly identical to SimSig automatic signals. It can also be useful on a line with high traffic, when there&#8217;s a
 low-frequented access to a siding. You&#8217;d enable automatic working for the main route and cancel it only when you need a train to go into
 the siding.
-<!--l. 432--><p class="noindent" >
+<!--l. 456--><p class="noindent" >
 <a 
  id="x1-50r5"></a>
-    <!--l. 432--><p class="noindent" ><span 
+    <!--l. 456--><p class="noindent" ><span 
 class="ecsx-1200">5</span>   <span 
 class="ecsx-1200">Final</span>
     <span 
 class="ecsx-1200">notes</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 434--><p class="noindent" >The interlocking system is mainly finished, though there are still some plans and ideas. They include:
+<!--l. 458--><p class="noindent" >The interlocking system is mainly finished, though there are still some plans and ideas. They include:
      <ul class="itemize1">
      <li class="itemize">Setting routes from inside a train (via onboard computer)
      </li>
@@ -547,11 +561,11 @@ class="ecsx-1200">notes</span>
      <li class="itemize">Distant signals
      </li>
      <li class="itemize">On-Train head-up display for oncoming signals (they have something like this in Czech Republic, I forgot how it&#8217;s called.)</li></ul>
-<!--l. 444--><p class="noindent" >Apart from this, there&#8217;s the large oncoming project of a new timetable-based train automation system, but this will take some time to
+<!--l. 468--><p class="noindent" >Apart from this, there&#8217;s the large oncoming project of a new timetable-based train automation system, but this will take some time to
 evolve and is out of the scope of this document.
-<!--l. 448--><p class="noindent" >If you have any suggestions, corrections, improvements, criticism or cute kittens and stuff, you can always contact me by various means
+<!--l. 472--><p class="noindent" >If you have any suggestions, corrections, improvements, criticism or cute kittens and stuff, you can always contact me by various means
 (Forum PM, E-Mail (orwell@bleipb.de), Linuxworks server chat a.s.o.). Have fun!
-<!--l. 453--><p class="noindent" >- orwell  
+<!--l. 477--><p class="noindent" >- orwell  
 </body></html> 
 
 
