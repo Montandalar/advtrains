@@ -1,6 +1,9 @@
 -- interlocking/database.lua
 -- saving the location of TCB's, their neighbors and their state
 --[[
+
+== THIS COMMENT IS PARTIALLY INCORRECT AND OUTDATED! ==
+
 The interlocking system is based on track circuits.
 Track circuit breaks must be manually set by the user. Signals must be assigned to track circuit breaks and to a direction(connid).
 To simplify the whole system, there is no overlap.
@@ -96,7 +99,11 @@ local ildb = {}
 local track_circuit_breaks = {}
 local track_sections = {}
 
+-- Assignment of signals to TCBs
 local signal_assignments = {}
+
+-- track+direction -> signal position
+local influence_points = {}
 
 function ildb.load(data)
 	if not data then return end
@@ -112,6 +119,9 @@ function ildb.load(data)
 	if data.rs_locks then
 		advtrains.interlocking.route.rte_locks = data.rs_locks
 	end
+	if data.influence_points then
+		influence_points = data.influence_points
+	end
 end
 
 function ildb.save()
@@ -120,6 +130,7 @@ function ildb.save()
 		ts=track_sections,
 		signalass = signal_assignments,
 		rs_locks = advtrains.interlocking.route.rte_locks,
+		influence_points = influence_points,
 	}
 end
 
@@ -454,6 +465,61 @@ function ildb.set_sigd_for_signal(pos, sigd)
 	signal_assignments[pts] = sigd
 end
 
+
+-- checks if a signal is influencing here
+function ildb.get_ip_signal(pts, connid)
+	if influence_points[pts] then
+		return influence_points[pts][connid]
+	end
+end
+
+-- Tries to get aspect to obey here, if there
+-- is a signal ip at this location
+-- auto-clears invalid assignments
+function ildb.get_ip_signal_asp(pts, connid)
+	local p = ildb.get_ip_signal(pts, connid)
+	if p then
+		local asp = advtrains.interlocking.signal_get_aspect(p)
+		if not asp then
+			atlog("Clearing orphaned signal influence point", pts, "/", connid)
+			ildb.clear_ip_signal(pts, connid)
+			return nil
+		end
+		return asp
+	end
+	return nil
+end
+
+-- set signal assignment.
+function ildb.set_ip_signal(pts, connid, spos)
+	if not influence_points[pts] then
+		influence_points[pts] = {}
+	end
+	influence_points[pts][connid] = spos
+end
+-- clear signal assignment.
+function ildb.clear_ip_signal(pts, connid)
+	influence_points[pts][connid] = nil
+	for _,_ in pairs(influence_points[pts]) do
+		return
+	end
+	influence_points[pts] = nil
+end
+
+function ildb.get_ip_by_signalpos(spos)
+	for pts,tab in pairs(influence_points) do
+		for connid,pos in pairs(tab) do
+			if vector.equals(pos, spos) then
+				return pts, connid
+			end
+		end
+	end
+end
+-- clear signal assignment given the signal position
+function ildb.clear_ip_by_signalpos(spos)
+	local pts, connid = ildb.get_ip_by_signalpos(spos)
+	if pts then ildb.clear_ip_signal(pts, connid) end
+end
 
 
 advtrains.interlocking.db = ildb

@@ -10,6 +10,23 @@ local function can_dig_func(pos)
 	return true
 end
 
+local function aspect(b)
+return {
+	main = {
+		free = b,
+		speed = -1,
+	},
+	shunt = {
+		free = false,
+	},
+	dst = {
+		free = true,
+		speed = -1,
+	},
+	info = {}
+}
+end
+
 for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", als="green"}}) do
 
 	advtrains.trackplacer.register_tracktype("advtrains:retrosignal", "")
@@ -64,6 +81,9 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 					else
 						advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_off"..rotation, param2 = node.param2}, true)
 					end
+				end,
+				get_aspect = function(pos, node)
+					return aspect(r=="on")
 				end
 			},
 			can_dig = can_dig_func,
@@ -116,6 +136,9 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 					else
 						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_off"..rotation, param2 = node.param2}, true)
 					end
+				end,
+				get_aspect = function(pos, node)
+					return aspect(r=="on")
 				end,
 				getstate = f.ls,
 				setstate = function(pos, node, newstate)
@@ -179,6 +202,9 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 					else
 						advtrains.ndb.swap_node(pos, {name = "advtrains:signal_wall_"..loc.."_off", param2 = node.param2}, true)
 					end
+				end,
+				get_aspect = function(pos, node)
+					return aspect(r=="on")
 				end,
 				getstate = f.ls,
 				setstate = function(pos, node, newstate)

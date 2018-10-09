@@ -227,7 +227,6 @@ function advtrains.interlocking.init_route_prog(pname, sigd)
 	}
 	advtrains.interlocking.visualize_route(sigd, player_rte_prog[pname].route, "prog_"..pname, player_rte_prog[pname].tmp_lcks, pname)
 	minetest.chat_send_player(pname, "Route programming mode active. Punch TCBs to add route segments, punch turnouts to lock them.")
-	minetest.chat_send_player(pname, "Type /at_rp_set <name> when you are done, /at_rp_discard to cancel route programming")
 end
 
 local function get_last_route_item(origin, route)
