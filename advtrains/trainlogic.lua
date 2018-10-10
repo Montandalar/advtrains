@@ -1037,26 +1037,23 @@ function advtrains.get_train_at_pos(pos)
 	end
 end
 
+
+-- ehm... I never adapted this function to the new path system ?!
 function advtrains.invalidate_all_paths(pos)
-	--if a position is given, only invalidate inside a radius to save performance
-	local inv_radius=50
-	atprint("invalidating all paths")
-	for k,v in pairs(advtrains.trains) do
-		local exec=true
-		if pos and v.path and v.index and v.end_index then
-			--start and end pos of the train
-			local cmp1=v.path[atround(v.index)]
-			local cmp2=v.path[atround(v.end_index)]
-			if vector.distance(pos, cmp1)>inv_radius and vector.distance(pos, cmp2)>inv_radius then
-				exec=false
-			end
-		end
-		if exec then
-			advtrains.invalidate_path(k)
-		end
+	local tab
+	if pos then
+		-- if position given, check occupation system
+		tab = advtrains.occ.get_trains_over(pos)
+	else
+		tab = advtrains.trains
+	end
+	
+	for id, _ in pairs(tab) do
+		advtrains.invalidate_path(id)
 	end
 end
 function advtrains.invalidate_path(id)
+	atdebug("Path invalidate:",id)
 	local v=advtrains.trains[id]
 	if not v then return end
 	advtrains.path_invalidate(v)

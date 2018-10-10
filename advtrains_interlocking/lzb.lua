@@ -177,14 +177,22 @@ local function apply_control(id, train)
 	train.ctrl.lzb = nil
 end
 
-
-advtrains.te_register_on_new_path(function(id, train)
+local function invalidate(train)
 	train.lzb = {
 		trav = atfloor(train.index),
 		travsht = train.is_shunt,
 		oncoming = {}
 	}
 	train.ctrl.lzb = nil
+end
+
+function advtrains.interlocking.lzb_invalidate(train)
+	invalidate(train)
+end
+
+
+advtrains.te_register_on_new_path(function(id, train)
+	invalidate(train)
 	look_ahead(id, train)
 end)
 

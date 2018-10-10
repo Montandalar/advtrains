@@ -105,6 +105,7 @@ local signal_assignments = {}
 -- track+direction -> signal position
 local influence_points = {}
 
+
 function ildb.load(data)
 	if not data then return end
 	if data.tcbs then
@@ -119,6 +120,9 @@ function ildb.load(data)
 	if data.rs_locks then
 		advtrains.interlocking.route.rte_locks = data.rs_locks
 	end
+	if data.rs_callbacks then
+		advtrains.interlocking.route.rte_callbacks = data.rs_callbacks
+	end
 	if data.influence_points then
 		influence_points = data.influence_points
 	end
@@ -130,6 +134,7 @@ function ildb.save()
 		ts=track_sections,
 		signalass = signal_assignments,
 		rs_locks = advtrains.interlocking.route.rte_locks,
+		rs_callbacks = advtrains.interlocking.route.rte_callbacks,
 		influence_points = influence_points,
 	}
 end

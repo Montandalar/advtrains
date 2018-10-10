@@ -66,9 +66,10 @@ advtrains = {
 		
 		-- The aspect passed in here can always be queried using the
 		-- advtrains.interlocking.signal_get_supposed_aspect(pos) function.
+		-- It is always DANGER when the signal is not used as route signal.
 		
 		-- For static signals, this function should be completely omitted
-		-- If this function is ommitted, it won't be possible to use
+		-- If this function is omitted, it won't be possible to use
 		-- route setting on this signal.
 	end
 	function get_aspect(pos, node)
@@ -89,6 +90,18 @@ after_dig_node = advtrains.interlocking.signal_after_dig
 
 (If you need to specify custom can_dig or after_dig_node callbacks,
 please call those functions anyway!)
+
+Important note: If your signal should support external ways to set its
+aspect (e.g. via mesecons), there are some things that need to be considered:
+- advtrains.interlocking.signal_get_supposed_aspect(pos) won't respect this
+- Whenever you change the signal aspect, and that aspect change
+did not happen through a call to
+advtrains.interlocking.signal_set_aspect(pos, asp), you are
+*required* to call this function:
+advtrains.interlocking.signal_on_aspect_changed(pos)
+in order to notify trains about the aspect change.
+This function will query get_aspect to retrieve the new aspect.
+
 ]]--
 
 local DANGER = {
@@ -128,6 +141,22 @@ function advtrains.interlocking.signal_set_aspect(pos, asp)
 	local ndef=minetest.registered_nodes[node.name]
 	if ndef and ndef.advtrains and ndef.advtrains.set_aspect then
 		ndef.advtrains.set_aspect(pos, node, asp)
+		advtrains.interlocking.signal_on_aspect_changed(pos)
+	end
+end
+
+-- should be called when aspect has changed on this signal.
+function advtrains.interlocking.signal_on_aspect_changed(pos)
+	local ipts, iconn = advtrains.interlocking.db.get_ip_by_signalpos(pos)
+	if not ipts then return end
+	local ipos = minetest.string_to_pos(ipts)
+	
+	local tns = advtrains.occ.get_trains_over(ipos)
+	for id, sidx in pairs(tns) do
+		local train = advtrains.trains[id]
+		if train.index <= sidx then
+			advtrains.interlocking.lzb_invalidate(train)
+		end
 	end
 end
 

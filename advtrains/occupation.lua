@@ -208,7 +208,7 @@ function o.get_occupations(train, index)
 	return r, pos
 end
 -- Gets a mapping of train id's to indexes of trains that stand or drive over
--- returns (table with train_id->index), position
+-- returns (table with train_id->index)
 function o.get_trains_at(ppos)
 	local pos = advtrains.round_vector_floor_y(ppos)
 	local t = occget(pos)
@@ -221,6 +221,24 @@ function o.get_trains_at(ppos)
 		if train.end_index - 0.5 <= idx and idx <= train.index + 0.5 then
 			r[t[i]] = idx
 		end
+		i = i + 2
+	end
+	return r
+end
+
+-- Gets a mapping of train id's to indexes of trains that have a path
+-- generated over this node
+-- returns (table with train_id->index)
+function o.get_trains_over(ppos)
+	local pos = advtrains.round_vector_floor_y(ppos)
+	local t = occget(pos)
+	if not t then return {} end
+	local r = {}
+	local i = 1
+	while t[i] do
+		local train = advtrains.trains[t[i]]
+		local idx = t[i+1]
+		r[t[i]] = idx
 		i = i + 2
 	end
 	return r
