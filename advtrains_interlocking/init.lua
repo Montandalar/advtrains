@@ -8,9 +8,12 @@ local modpath = minetest.get_modpath(minetest.get_current_modname()) .. DIR_DELI
 dofile(modpath.."database.lua")
 dofile(modpath.."signal_api.lua")
 dofile(modpath.."demosignals.lua")
-dofile(modpath.."train_related.lua")
+dofile(modpath.."train_sections.lua")
 dofile(modpath.."route_prog.lua")
 dofile(modpath.."routesetting.lua")
 dofile(modpath.."tcb_ts_ui.lua")
+
+dofile(modpath.."lzb.lua")
+
 
 minetest.register_privilege("interlocking", {description = "Can set up track sections, routes and signals.", give_to_singleplayer = true})

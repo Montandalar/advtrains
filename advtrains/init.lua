@@ -45,6 +45,7 @@ function advtrains.pcall(fun)
 			atwarn(debug.traceback())
 			if advtrains.atprint_context_tid then
 				advtrains.path_print(advtrains.trains[advtrains.atprint_context_tid], atdebug)
+				atwarn(advtrains.trains[advtrains.atprint_context_tid].debug)
 			end
 		end)
 	if not succ then

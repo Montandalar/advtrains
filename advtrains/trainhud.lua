@@ -44,19 +44,19 @@ function advtrains.on_control_change(pc, train, flip)
 	else
 		local act=false
 		if pc.up then
-		   train.lever=4
+		   train.ctrl.user=4
 		   act=true
 		end
 		if pc.jump then
-			train.lever = 1
+			train.ctrl.user = 1
 			act=true
 		end
 		if pc.down then
 			if train.velocity>0 then
 				if pc.jump then
-					train.lever = 0
+					train.ctrl.user = 0
 				else
-					train.lever = 2
+					train.ctrl.user = 2
 				end
 				act=true
 			else
@@ -77,7 +77,9 @@ function advtrains.on_control_change(pc, train, flip)
 				train.door_open = 1
 			end
 		end
-		train.active_control = act
+		if not act then
+			train.ctrl.user = nil
+		end
 		if pc.aux1 then
 			--horn
 		end
@@ -161,9 +163,7 @@ function advtrains.hud_train_format(train, flip)
 	
 	local max=train.max_speed or 10
 	local vel=advtrains.abs_ceil(train.velocity)
-	local tvel=advtrains.abs_ceil(train.tarvelocity)
 	local vel_kmh=advtrains.abs_ceil(advtrains.ms_to_kmh(train.velocity))
-	local tvel_kmh=advtrains.abs_ceil(advtrains.ms_to_kmh(train.tarvelocity))
 	
 	local levers = "B - o +"
 	local tlev=train.lever
@@ -174,11 +174,28 @@ function advtrains.hud_train_format(train, flip)
 	if tlev == 3 then levers = "B - >o< +" end
 	if tlev == 4 then levers = "B - o >+<" end
 	
-	local topLine, firstLine, secondLine
+	local topLine, firstLine
+	
+	local secondLine
+	if train.tarvelocity then
+		local b="   "
+		local tvel=advtrains.abs_ceil(train.tarvelocity)
+		local tvel_kmh=advtrains.abs_ceil(advtrains.ms_to_kmh(train.tarvelocity))
+		if train.atc_brake_target then
+			b="-B-"
+		end
+		secondLine="ATC"..b..": |"..string.rep("+", tvel)..string.rep("_", max-tvel).."> "..tvel_kmh.." km/h"
+	elseif train.atc_delay then
+		secondLine = "ATC waiting "..advtrains.abs_ceil(train.atc_delay).."s"
+	else
+		secondLine = "Manual operation"
+	end
+	if train.ctrl.lzb then
+		secondLine = "-!- Safety override -!-"
+	end
 	
 	topLine="  ["..mletter[fct].."]  {"..levers.."} "..doorstr[(train.door_open or 0) * fct]
 	firstLine=attrans("Speed:").." |"..string.rep("+", vel)..string.rep("_", max-vel).."> "..vel_kmh.." km/h"
-	secondLine=attrans("Target:").." |"..string.rep("+", tvel)..string.rep("_", max-tvel).."> "..tvel_kmh.." km/h"
 	
-	return topLine.."\n"..firstLine.."\n"..secondLine
+	return (train.debug or "").."\n"..topLine.."\n"..firstLine.."\n"..secondLine
 end

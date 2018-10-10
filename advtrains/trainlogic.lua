@@ -181,6 +181,13 @@ local function assertdef(tbl, var, def)
 	end
 end
 
+function advtrains.get_acceleration(train, lever)
+	local acc_all = t_accel_all[lever]
+	local acc_eng = t_accel_eng[lever]
+	local nwagons = #train.trainparts
+	local acc = acc_all + (acc_eng*train.locomotives_in_train)/nwagons
+	return acc
+end
 
 -- Small local util function to recalculate train's end index
 local function recalc_end_index(train)
@@ -219,9 +226,10 @@ function advtrains.train_ensure_init(id, train)
 	if train.no_step then return end
 
 	assertdef(train, "velocity", 0)
-	assertdef(train, "tarvelocity", 0)
+	--assertdef(train, "tarvelocity", 0)
 	assertdef(train, "acceleration", 0)
 	assertdef(train, "id", id)
+	assertdef(train, "ctrl", {})
 	
 	
 	if not train.drives_on or not train.max_speed then
@@ -275,11 +283,10 @@ function advtrains.train_step_b(id, train, dtime)
 	
 	--- 3. handle velocity influences ---
 	local train_moves=(train.velocity~=0)
-	local tarvel_cap
+	local tarvel_cap = train.speed_restriction
 	
 	if train.recently_collided_with_env then
 		tarvel_cap=0
-		train.active_control=false
 		if not train_moves then
 			train.recently_collided_with_env=nil--reset status when stopped
 		end
@@ -307,11 +314,24 @@ function advtrains.train_step_b(id, train, dtime)
 		tarvel_cap=1
 	end
 	
+	-- Driving control rework:
+	--[[
+	Items are only defined when something is controlling them.
+	In order of precedence.
+	train.ctrl = {
+		lzb  = restrictive override from LZB
+		user = User input from driverstand
+		atc  = ATC command override (determined here)
+	}
+	The code here determines the precedence and writes the final control into train.lever
+	]]
+	
 	--interpret ATC command and apply auto-lever control when not actively controlled
 	local trainvelocity = train.velocity
-	if not train.lever then train.lever=3 end
-	if train.active_control then
-		advtrains.atc.train_reset_command(id)
+	
+	
+	if train.ctrl.user then
+		advtrains.atc.train_reset_command(train)
 	else
 		local braketar = train.atc_brake_target
 		local emerg = false -- atc_brake_target==-1 means emergency brake (BB command)
@@ -323,8 +343,11 @@ function advtrains.train_step_b(id, train, dtime)
 			train.atc_brake_target=nil
 			braketar = nil
 		end
+		if train.tarvelocity and train.velocity==train.tarvelocity then
+			train.tarvelocity = nil
+		end
 		if train.atc_wait_finish then
-			if not train.atc_brake_target and train.velocity==train.tarvelocity then
+			if not train.atc_brake_target and not train.tarvelocity then
 				train.atc_wait_finish=nil
 			end
 		end
@@ -334,42 +357,62 @@ function advtrains.train_step_b(id, train, dtime)
 			else
 				train.atc_delay=train.atc_delay-dtime
 			end
+		elseif train.atc_delay then
+			train.atc_delay = nil
 		end
 		
-		train.lever = 3
-		if train.tarvelocity>trainvelocity then train.lever=4 end
-		if train.tarvelocity<trainvelocity then
+		train.ctrl.atc = nil
+		if train.tarvelocity and train.tarvelocity>trainvelocity then
+			train.ctrl.atc=4
+		end
+		if train.tarvelocity and train.tarvelocity<trainvelocity then
 			if (braketar and braketar<trainvelocity) then
 				if emerg then
-					train.lever = 0
+					train.ctrl.atc = 0
 				else
-					train.lever=1
+					train.ctrl.atc=1
 				end
 			else
-				train.lever=2
+				train.ctrl.atc=2
 			end
 		end
 	end
 	
-	if tarvel_cap and tarvel_cap<train.tarvelocity then
+	if tarvel_cap and train.tarvelocity and tarvel_cap<train.tarvelocity then
 		train.tarvelocity=tarvel_cap
 	end
-	local tmp_lever = train.lever
+	
+	local tmp_lever
+	
+	for _, lev in pairs(train.ctrl) do
+		-- use the most restrictive of all control overrides
+		tmp_lever = math.min(tmp_lever or 4, lev)
+	end
+	
+	if not tmp_lever then
+		-- if there was no control at all, default to 3
+		tmp_lever = 3
+	end
+	
 	if tarvel_cap and trainvelocity>tarvel_cap then
 		tmp_lever = 0
 	end
 	
+	train.lever = tmp_lever
+	
 	--- 3a. actually calculate new velocity ---
 	if tmp_lever~=3 then
-		local acc_all = t_accel_all[tmp_lever]
-		local acc_eng = t_accel_eng[tmp_lever]
-		local nwagons = #train.trainparts
-		local accel = acc_all + (acc_eng*train.locomotives_in_train)/nwagons
+		local accel = advtrains.get_acceleration(train, tmp_lever)
 		local vdiff = accel*dtime
-		if not train.active_control then
+		
+		-- ATC control exception: don't cross tarvelocity if
+		-- atc provided a target_vel
+		if train.tarvelocity then
 			local tvdiff = train.tarvelocity - trainvelocity
-			if math.abs(vdiff) > math.abs(tvdiff) then
+			if tvdiff~=0 and math.abs(vdiff) > math.abs(tvdiff) then
 				--applying this change would cross tarvelocity
+				--atdebug("In Tvdiff condition, clipping",vdiff,"to",tvdiff)
+				--atdebug("vel=",trainvelocity,"tvel=",train.tarvelocity)
 				vdiff=tvdiff
 			end
 		end
@@ -385,9 +428,9 @@ function advtrains.train_step_b(id, train, dtime)
 		end
 		train.acceleration=vdiff
 		train.velocity=train.velocity+vdiff
-		if train.active_control then
-			train.tarvelocity = train.velocity
-		end
+		--if train.ctrl.user then
+		--	train.tarvelocity = train.velocity
+		--end
 	else
 		train.acceleration = 0
 	end
@@ -443,7 +486,7 @@ if train.no_step or train.wait_for_path then return end
 					if not collided and advtrains.occ.check_collision(testpos, id) then
 						--collides
 						train.velocity = 0
-						train.tarvelocity = 0
+						advtrains.atc.train_reset_command(train)
 						collided = true
 					end
 					--- 8b damage players ---
@@ -622,7 +665,7 @@ function advtrains.create_new_train_at(pos, connid, ioff, trainparts)
 	t.last_connid=connid
 	t.last_frac=ioff
 	
-	t.tarvelocity=0
+	--t.tarvelocity=0
 	t.velocity=0
 	t.trainparts=trainparts
 	

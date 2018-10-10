@@ -260,7 +260,7 @@ function advtrains.path_get_index_by_offset(train, index, offset)
 	--atdebug("pibo: 2 off=",off,"idx=",idx)
 	-- then walk the path forward until we would overshoot
 	while off - train.path_dist[idx] >= 0 do
-		idx = idx - 1
+		idx = idx + 1
 		advtrains.path_get_adjacent(train, idx)
 		if not train.path_dist[idx] then
 			for i=-5,5 do

@@ -20,10 +20,11 @@ end
 --contents: {command="...", arrowconn=0-15 where arrow points}
 
 --general
-function atc.train_set_command(train_id, command, arrow)
-	atc.train_reset_command(train_id)
-	advtrains.trains[train_id].atc_arrow = arrow
-	advtrains.trains[train_id].atc_command = command
+function atc.train_set_command(train, command, arrow)
+	atc.train_reset_command(train)
+	train.atc_delay = 0
+	train.atc_arrow = arrow
+	train.atc_command = command
 end
 
 function atc.send_command(pos, par_tid)
@@ -49,7 +50,7 @@ function atc.send_command(pos, par_tid)
 					atwarn("ATC rail at", pos, ": Rail not on train's path! Can't determine arrow direction. Assuming +!")
 				end
 				
-				atc.train_set_command(train_id, atc.controllers[pts].command, iconnid==1)
+				atc.train_set_command(train, atc.controllers[pts].command, iconnid==1)
 				atprint("Sending ATC Command to", train_id, ":", atc.controllers[pts].command, "iconnid=",iconnid)
 				return true
 				
@@ -66,12 +67,13 @@ function atc.send_command(pos, par_tid)
 	return false
 end
 
-function atc.train_reset_command(train_id)
-	advtrains.trains[train_id].atc_command=nil
-	advtrains.trains[train_id].atc_delay=0
-	advtrains.trains[train_id].atc_brake_target=nil
-	advtrains.trains[train_id].atc_wait_finish=nil
-	advtrains.trains[train_id].atc_arrow=nil
+function atc.train_reset_command(train)
+	train.atc_command=nil
+	train.atc_delay=nil
+	train.atc_brake_target=nil
+	train.atc_wait_finish=nil
+	train.atc_arrow=nil
+	train.tarvelocity=nil
 end
 
 --nodes
@@ -179,7 +181,7 @@ local matchptn={
 			train.tarvelocity = 0
 		elseif train.velocity>tonumber(match) then
 			train.atc_brake_target=tonumber(match)
-			if train.tarvelocity>train.atc_brake_target then
+			if not train.tarvelocity or train.tarvelocity>train.atc_brake_target then
 				train.tarvelocity=train.atc_brake_target
 			end
 		end
@@ -258,7 +260,7 @@ function atc.execute_atc_command(id, train)
 		while nest>=0 do
 			if pos>#rest then
 				atwarn(sid(id), attrans("ATC command syntax error: I statement not closed: @1",command))
-				atc.train_reset_command(id)
+				atc.train_reset_command(train)
 				return
 			end
 			local char=string.sub(rest, pos, pos)
@@ -301,7 +303,7 @@ function atc.execute_atc_command(id, train)
 		end
 	end
 	atwarn(sid(id), attrans("ATC command parse error: Unknown command: @1", command))
-	atc.train_reset_command(id)
+	atc.train_reset_command(train)
 end
 
 

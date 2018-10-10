@@ -485,7 +485,7 @@ function ildb.get_ip_signal_asp(pts, connid)
 			ildb.clear_ip_signal(pts, connid)
 			return nil
 		end
-		return asp
+		return asp, p
 	end
 	return nil
 end

@@ -50,9 +50,7 @@ function r.fire_event(pos, evtdata)
 		atc_send = function(cmd)
 			if not train_id then return false end
 			assertt(cmd, "string")
-			advtrains.atc.train_reset_command(train_id)
-			train.atc_command=cmd
-			train.atc_arrow=atc_arrow
+			advtrains.atc.train_set_command(train, cmd, atc_arrow)
 			return true
 		end,
 		set_line = function(line)
@@ -62,7 +60,7 @@ function r.fire_event(pos, evtdata)
 		atc_reset = function(cmd)
 			if not train_id then return false end
 			assertt(cmd, "string")
-			advtrains.atc.train_reset_command(train_id)
+			advtrains.atc.train_reset_command(train)
 			return true
 		end,
 		atc_arrow = atc_arrow,
