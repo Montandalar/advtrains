@@ -161,8 +161,9 @@ function advtrains.hud_train_format(train, flip)
 	local fct=flip and -1 or 1
 	if not train then return "" end
 	
-	local max=train.max_speed or 10
-	local vel=advtrains.abs_ceil(train.velocity)
+	local max = train.max_speed or 10
+	local res = train.speed_restriction or max
+	local vel = advtrains.abs_ceil(train.velocity)
 	local vel_kmh=advtrains.abs_ceil(advtrains.ms_to_kmh(train.velocity))
 	
 	local levers = "B - o +"
@@ -184,7 +185,7 @@ function advtrains.hud_train_format(train, flip)
 		if train.atc_brake_target then
 			b="-B-"
 		end
-		secondLine="ATC"..b..": |"..string.rep("+", tvel)..string.rep("_", max-tvel).."> "..tvel_kmh.." km/h"
+		secondLine="ATC"..b..": |"..string.rep("+", tvel)..string.rep("_", max-tvel).." > "..tvel_kmh.." km/h"
 	elseif train.atc_delay then
 		secondLine = "ATC waiting "..advtrains.abs_ceil(train.atc_delay).."s"
 	else
@@ -195,7 +196,7 @@ function advtrains.hud_train_format(train, flip)
 	end
 	
 	topLine="  ["..mletter[fct].."]  {"..levers.."} "..doorstr[(train.door_open or 0) * fct]
-	firstLine=attrans("Speed:").." |"..string.rep("+", vel)..string.rep("_", max-vel).."> "..vel_kmh.." km/h"
+	firstLine=attrans("Speed:").." |"..string.rep("+", vel)..string.rep("_", res-vel).."|"..string.rep("_", max-res).."> "..vel_kmh.." km/h"
 	
 	return (train.debug or "").."\n"..topLine.."\n"..firstLine.."\n"..secondLine
 end

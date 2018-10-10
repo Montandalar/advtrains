@@ -840,7 +840,23 @@ function wagon:show_bordcom(pname)
 	else
 		form=form.."label[0.5,4.5;Train overview / coupling control is only shown when the train stands.]"
 	end
-	form = form .. "button[0.5,8;3,1;Save;save]"
+	form = form .. "button[0.5,8;3,1;save;Save]"
+	
+	-- Interlocking functionality: If the interlocking module is loaded, you can set the signal aspect
+	-- from inside the train
+	if advtrains.interlocking and train.lzb and #train.lzb.oncoming > 0 then
+		local i=1
+		while train.lzb.oncoming[i] do
+			local oci = train.lzb.oncoming[i]
+			if oci.pos then
+				if advtrains.interlocking.db.get_sigd_for_signal(oci.pos) then
+					form = form .. "button[4.5,8;5,1;ilrs;Remote Routesetting]"
+					break
+				end
+			end
+			i=i+1
+		end
+	end
 	
 	minetest.show_formspec(pname, "advtrains_bordcom_"..self.id, form)
 end
@@ -922,6 +938,23 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 	end
 	if fields.cpl_ulck_b and chkownsany() then
 		train.couple_lck_back=false
+	end
+	
+	-- Interlocking functionality: If the interlocking module is loaded, you can set the signal aspect
+	-- from inside the train
+	if fields.ilrs and advtrains.interlocking and train.lzb and #train.lzb.oncoming > 0 then
+		local i=1
+		while train.lzb.oncoming[i] do
+			local oci = train.lzb.oncoming[i]
+			if oci.pos then
+				local sigd = advtrains.interlocking.db.get_sigd_for_signal(oci.pos)
+				if sigd then
+					advtrains.interlocking.show_signalling_form(sigd, pname)
+					return
+				end
+			end
+			i=i+1
+		end
 	end
 	
 	

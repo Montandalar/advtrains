@@ -1027,6 +1027,9 @@ function advtrains.invert_train(train_id)
 		table.insert(train.trainparts, 1, v)--notice insertion at first place
 	end
 	advtrains.update_trainpart_properties(train_id, true)
+	
+	-- TODO: this should actually be SHUNT_MAX_SPEED, but signals and lzb is not present everywhere
+	advtrains.speed_restriction = nil
 end
 
 -- returns: train id, index of one of the trains that stand at this position.
