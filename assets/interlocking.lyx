@@ -615,8 +615,8 @@ Interlocking patterns
 \end_layout
 
 \begin_layout Standard
-This section shows some examples on how you should set up track sections
- on certain track configurations.
+This section is supposed to show some examples on how you should set up
+ track sections on certain track configurations.
 \end_layout
 
 \begin_layout Section
@@ -624,71 +624,159 @@ Signals and routes
 \end_layout
 
 \begin_layout Standard
-The purpose of signals is to inform trains about whether they can proceed
- into the next section safely.
- Making a section of track safe to pass for a train, turnouts need to be
- set to the correct position and no other train should be allowed to cross
- or share parts of the route with this train.
-\end_layout
-
-\begin_layout Subsection
-Assigning Signals to TCBs
+Signals are appliances that can give instructions to trains.
+ That can be the permission to proceed, a speed restriction, or other informatio
+n.
 \end_layout
 
 \begin_layout Standard
-Signals in the advtrains interlocking system are positioned - like in real
- life - at the border of track sections.
+There are 2 types of signals:
 \end_layout
 
-\begin_layout Standard
-When you set up a signal, do the following steps:
+\begin_layout Itemize
+Static signals always display the same information to the train.
+ This can be a speed restriction (or the end of one), a disallowal to proceed
+ as shunt move or similar things.
+ In most cases, these are signs.
 \end_layout
 
-\begin_layout Enumerate
-If not already happened, set up a TCB (you don't need to, but are advised
- to, configure track sections there)
-\end_layout
-
-\begin_layout Enumerate
-Place the signal a few meters in front of the TCB, so that trains stopping
- at the signal do never pass the TCB
-\end_layout
-
-\begin_layout Enumerate
-Locate the side of the TCB which points in the direction that trains will
- proceed past the signal, as shown in the figure below.
-\end_layout
-
-\begin_layout Enumerate
-Right-click the TCB, and click 
+\begin_layout Itemize
+Variable signals are what most people would call a 
 \begin_inset Quotes eld
 \end_inset
 
-Assign a signal
+signal
 \begin_inset Quotes erd
 \end_inset
 
- on this side.
+.
+ Its function is to inform trains about whether and at which speed they
+ can proceed into the next section safely.
 \end_layout
 
-\begin_layout Enumerate
-Punch the signal.
+\begin_layout Subsection
+Signal Influence Point
 \end_layout
 
 \begin_layout Standard
-\begin_inset Graphics
-	filename lyx_img/assign_signal.png
-	width 8cm
+Every signal is associated to a track on which the instruction should be
+ followed.
+ Signals are usually placed right next to the track on the right side.
+ Human observers do know then that the signal belongs to the track left
+ of it, however, train safety systems (like the one in advtrains) can not.
+\end_layout
 
+\begin_layout Standard
+This is the reason why a so-called 
+\begin_inset Quotes eld
 \end_inset
 
+influence point
+\begin_inset Quotes erd
+\end_inset
 
+ needs to be assigned to any signal that should actually give instructions
+ to trains, should the driver (if even there is one) fail to recognize the
+ instructions.
 \end_layout
 
 \begin_layout Standard
-You can assign a signal to each side of a TCB.
- This is, for example, useful when creating block sections on a bi-directional
- main running line.
+Depending on the signal and the mod that adds the signal, there are different
+ ways to configure this.
+ Signals integrated into advtrains behave as follows:
+\end_layout
+
+\begin_layout Itemize
+Static signals and all red-green light signals from core advtrains that
+ are not assigned to a TCB can be configured by holding the 
+\begin_inset Quotes eld
+\end_inset
+
+Sneak
+\begin_inset Quotes erd
+\end_inset
+
+ key and then right-clicking the signal
+\end_layout
+
+\begin_layout Itemize
+All signals that are assigned to a TCB can be configured by first right-clicking
+ them, then selecting 
+\begin_inset Quotes eld
+\end_inset
+
+Influence Point
+\begin_inset Quotes erd
+\end_inset
+
+ in the signalling formspec.
+\end_layout
+
+\begin_layout Standard
+The small formspec that opens allows you to set and later view or clear
+ the Influence Point.
+ To set the influence point, click the 
+\begin_inset Quotes eld
+\end_inset
+
+Set
+\begin_inset Quotes erd
+\end_inset
+
+ button, face towards the signal and punch a rail about 2m in front of the
+ signal.
+ A small marker will be shown, indicating success.
+ To cancel setting an influence point, punch anything other.
+ (note that then the influence point remains unset, regardless of its previous
+ state)
+\end_layout
+
+\begin_layout Standard
+The advtrains-internal train safety system ensures that the train always
+ obeys any restrictions imposed by signals, if (and only if) the influence
+ point is set properly.
+\end_layout
+
+\begin_layout Subsection
+Main and Shunt signals
+\end_layout
+
+\begin_layout Standard
+While static signals are mainly used for speed restrictions, the interesting
+ ones are variable signals.
+ Of course, you can always control any variable signal by traditional means
+ (mesecons, digiline, right-click) if the signal allows it, but that misses
+ the point of this interlocking system.
+\end_layout
+
+\begin_layout Standard
+In the following sections, we will talk about main signals.
+ By this, we mean a variable signal that can display both a 
+\begin_inset Quotes eld
+\end_inset
+
+Danger
+\begin_inset Quotes erd
+\end_inset
+
+ aspect (trains are not allowed to proceed) and at least one 
+\begin_inset Quotes eld
+\end_inset
+
+Proceed
+\begin_inset Quotes erd
+\end_inset
+
+ aspect (train may proceed as train/shunt move, with optional speed restriction)
+, which act as an 
+\begin_inset Quotes eld
+\end_inset
+
+entry signal
+\begin_inset Quotes erd
+\end_inset
+
+ for one or multiple routes.
 \end_layout
 
 \begin_layout Subsection
@@ -696,8 +784,20 @@ The concept of routes
 \end_layout
 
 \begin_layout Standard
-A so-called route is a locked path between two signals, which locks all
- turnouts in the correct position.
+A so-called route is a locked path between two main signals, which locks
+ all turnouts in the correct position.
+ Its purpose is to offer a train a path on which it can safely proceed without
+ interfering with any other train.
+ A route always incorporates and locks one to multiple track sections, starting
+ with the one that lies directly behind the 
+\begin_inset Quotes eld
+\end_inset
+
+entry
+\begin_inset Quotes erd
+\end_inset
+
+ signal.
 \end_layout
 
 \begin_layout Standard
@@ -795,7 +895,95 @@ There are, of course, situations, where both positions of a turnout would
 \end_layout
 
 \begin_layout Subsection
+Assigning main signals to TCBs
+\end_layout
+
+\begin_layout Standard
+Main signals in the advtrains interlocking system are positioned - like
+ in real life - at the border of track sections, because routes also start
+ and end there.
+ For advtrains to know from which signal which routes can be set, you need
+ to assign the signal to a TCB.
+\end_layout
+
+\begin_layout Standard
+To do this, perform the following steps:
+\end_layout
+
+\begin_layout Enumerate
+If not already happened, set up a TCB (you don't need to, but are advised
+ to, configure track sections there)
+\end_layout
+
+\begin_layout Enumerate
+Place the signal a few meters in front of the TCB, so that trains stopping
+ at the signal do never pass the TCB
+\end_layout
+
+\begin_layout Enumerate
+Locate the side of the TCB which points in the direction that trains will
+ proceed past the signal, as shown in the figure below.
+\end_layout
+
+\begin_layout Enumerate
+Right-click the TCB, and click 
+\begin_inset Quotes eld
+\end_inset
+
+Assign a signal
+\begin_inset Quotes erd
+\end_inset
+
+ on this side.
+\end_layout
+
+\begin_layout Enumerate
+Punch the signal.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename lyx_img/assign_signal.png
+	width 8cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If you haven't set an influence point for the signal yet, the influence
+ point formspec automatically opens.
+\end_layout
+
+\begin_layout Standard
+You can assign a signal to each side of a TCB.
+ This is, for example, useful when creating block sections on a bi-directional
+ main running line.
+\end_layout
+
+\begin_layout Standard
+Only main signals can ever be assigned to TCBs, because static ones can
+ either not display 
+\begin_inset Quotes eld
+\end_inset
+
+Danger
+\begin_inset Quotes erd
+\end_inset
+
+ or do not permit to proceed at all.
+\end_layout
+
+\begin_layout Subsection
 Shunt routes
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+The information in this section is subject to future change because of safety
+ issues!
 \end_layout
 
 \begin_layout Standard
@@ -882,6 +1070,16 @@ AdvTrains has chosen a modern approach to route releasing.
  Once the train leaves this section, all assigned locks are also freed.
 \end_layout
 
+\begin_layout Standard
+Please note that reversing a train outside of stations is not only discouraged,
+ but also very dangerous, because even real-world interlocking system do
+ not expect this.
+ There is a clear, human-sense rule that you should never reverse the driving
+ direction of a train while on a main line or on a turnout.
+ Else, you can be considered a terrorist.
+ (quote from professional!)
+\end_layout
+
 \begin_layout Subsection
 Programming a route
 \end_layout
@@ -892,12 +1090,12 @@ The route programming procedure is quite straightforward if you've read
 \end_layout
 
 \begin_layout Standard
-Routes always start at a signal.
+Routes always start at a main signal.
  You must have assigned the signal to a TCB, as described earlier.
 \end_layout
 
 \begin_layout Standard
-When you right-click the signal, it no longer changes its aspect.
+When you right-click the main signal, it no longer changes its aspect.
  Instead, a formspec pops up, showing you an (empty) list of routes with
  the possibility to set them or to create new routes.
  Click the 
@@ -1096,9 +1294,17 @@ Setting up the interlocking for a portion of a railway network requires
 \end_layout
 
 \begin_layout Standard
-At the moment, routes can only be set by clicking the signal or via LuaATC,
- except if you use automatic working.
- It is planned to control this via the onboard computer and via a 
+At the moment, routes can either be set by clicking the signal or via LuaATC,
+ or by using the 
+\begin_inset Quotes eld
+\end_inset
+
+Remote Routesetting
+\begin_inset Quotes erd
+\end_inset
+
+ button from the Onboard Computer.
+ It is planned to control this via a 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1107,6 +1313,49 @@ signal box
 \end_inset
 
  view based on the currently broken itrainmap.
+\end_layout
+
+\begin_layout Subsection
+Train Safety System
+\end_layout
+
+\begin_layout Standard
+The Train Safety System, called 
+\begin_inset Quotes eld
+\end_inset
+
+LZB
+\begin_inset Quotes erd
+\end_inset
+
+ in the code (from the german term Linienzugbeeinflussung, although this
+ is a completely different system), ensures that trains obey any restrictions
+ imposed by signals when influence points are set.
+ This way, it is not possible to pass signals at danger or to bypass speed
+ restrictions.
+\end_layout
+
+\begin_layout Standard
+It is possible to overrun red signals, if a route is cancelled while a train
+ is approaching.
+ Real interlocking systems use a mechanism called Approach locking for this,
+ however, as of now, there's no similar system in this mod.
+ If a red signal is overrun, the train brakes using emergency brake (
+\begin_inset Quotes eld
+\end_inset
+
+BB
+\begin_inset Quotes erd
+\end_inset
+
+) and can not be moved any further.
+ You should then examine the situation and drive the train backwards out
+ of the section.
+\end_layout
+
+\begin_layout Standard
+As of now, changing the driving direction of a train always clears any imposed
+ speed restrictions.
 \end_layout
 
 \begin_layout Subsection
@@ -1188,10 +1437,6 @@ Final notes
 The interlocking system is mainly finished, though there are still some
  plans and ideas.
  They include:
-\end_layout
-
-\begin_layout Itemize
-Setting routes from inside a train (via onboard computer)
 \end_layout
 
 \begin_layout Itemize

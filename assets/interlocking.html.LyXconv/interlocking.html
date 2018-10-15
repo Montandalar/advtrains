@@ -277,7 +277,7 @@ class="ecsx-1200">Interlocking</span>
 class="ecsx-1200">patterns</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 213--><p class="noindent" >This section shows some examples on how you should set up track sections on certain track configurations.
+<!--l. 213--><p class="noindent" >This section is supposed to show some examples on how you should set up track sections on certain track configurations.
 <!--l. 216--><p class="noindent" >
 <a 
  id="x1-31r3"></a>
@@ -290,51 +290,71 @@ class="ecsx-1200">and</span>
 class="ecsx-1200">routes</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 218--><p class="noindent" >The purpose of signals is to inform trains about whether they can proceed into the next section safely. Making a section of track safe to
-pass for a train, turnouts need to be set to the correct position and no other train should be allowed to cross or share parts of the route
-with this train.
-<!--l. 224--><p class="noindent" >
+<!--l. 218--><p class="noindent" >Signals are appliances that can give instructions to trains. That can be the permission to proceed, a speed restriction, or other
+information.
+<!--l. 221--><p class="noindent" >There are 2 types of signals:
+     <ul class="itemize1">
+     <li class="itemize">Static signals always display the same information to the train. This can be a speed restriction (or the end of one), a
+     disallowal to proceed as shunt move or similar things. In most cases, these are signs.
+     </li>
+     <li class="itemize">Variable signals are what most people would call a &#8220;signal&#8221;. Its function is to inform trains about whether and at which
+     speed they can proceed into the next section safely.</li></ul>
+<!--l. 231--><p class="noindent" >
 <a 
  id="x1-32r1"></a>
-      <!--l. 224--><p class="noindent" ><span 
+      <!--l. 231--><p class="noindent" ><span 
 class="ecsx-1200">3.1</span>   <span 
-class="ecsx-1200">Assigning</span>
+class="ecsx-1200">Signal</span>
       <span 
-class="ecsx-1200">Signals</span>
+class="ecsx-1200">Influence</span>
       <span 
-class="ecsx-1200">to</span>
-      <span 
-class="ecsx-1200">TCBs</span>
+class="ecsx-1200">Point</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 226--><p class="noindent" >Signals in the advtrains interlocking system are positioned - like in real life - at the border of track sections.
-<!--l. 229--><p class="noindent" >When you set up a signal, do the following steps:
-     <ol  class="enumerate1" >
-     <li 
-  class="enumerate" id="x1-34x1">If not already happened, set up a TCB (you don&#8217;t need to, but are advised to, configure track sections there)
+<!--l. 233--><p class="noindent" >Every signal is associated to a track on which the instruction should be followed. Signals are usually placed right next to the track on the
+right side. Human observers do know then that the signal belongs to the track left of it, however, train safety systems (like the one in
+advtrains) can not.
+<!--l. 239--><p class="noindent" >This is the reason why a so-called &#8220;influence point&#8221; needs to be assigned to any signal that should actually give instructions to trains,
+should the driver (if even there is one) fail to recognize the instructions.
+<!--l. 244--><p class="noindent" >Depending on the signal and the mod that adds the signal, there are different ways to configure this. Signals integrated into advtrains
+behave as follows:
+     <ul class="itemize1">
+     <li class="itemize">Static signals and all red-green light signals from core advtrains that are not assigned to a TCB can be configured by
+     holding the &#8220;Sneak&#8221; key and then right-clicking the signal
      </li>
-     <li 
-  class="enumerate" id="x1-36x2">Place the signal a few meters in front of the TCB, so that trains stopping at the signal do never pass the TCB
-     </li>
-     <li 
-  class="enumerate" id="x1-38x3">Locate the side of the TCB which points in the direction that trains will proceed past the signal, as shown in the figure
-     below.
-     </li>
-     <li 
-  class="enumerate" id="x1-40x4">Right-click the TCB, and click &#8220;Assign a signal&#8221; on this side.
-     </li>
-     <li 
-  class="enumerate" id="x1-42x5">Punch the signal.</li></ol>
-<!--l. 240--><p class="noindent" ><img 
-src="6_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_assign_signal.png" alt="PIC"  
->
-<!--l. 242--><p class="noindent" >You can assign a signal to each side of a TCB. This is, for example, useful when creating block sections on a bi-directional main running
-line.
-<!--l. 246--><p class="noindent" >
+     <li class="itemize">All signals that are assigned to a TCB can be configured by first right-clicking them, then selecting &#8220;Influence Point&#8221; in
+     the signalling formspec.</li></ul>
+<!--l. 255--><p class="noindent" >The small formspec that opens allows you to set and later view or clear the Influence Point. To set the influence point, click the &#8220;Set&#8221;
+button, face towards the signal and punch a rail about 2m in front of the signal. A small marker will be shown, indicating success. To
+cancel setting an influence point, punch anything other. (note that then the influence point remains unset, regardless of its previous
+state)
+<!--l. 263--><p class="noindent" >The advtrains-internal train safety system ensures that the train always obeys any restrictions imposed by signals, if (and only if) the
+influence point is set properly.
+<!--l. 267--><p class="noindent" >
 <a 
- id="x1-43r2"></a>
-      <!--l. 246--><p class="noindent" ><span 
+ id="x1-33r2"></a>
+      <!--l. 267--><p class="noindent" ><span 
 class="ecsx-1200">3.2</span>   <span 
+class="ecsx-1200">Main</span>
+      <span 
+class="ecsx-1200">and</span>
+      <span 
+class="ecsx-1200">Shunt</span>
+      <span 
+class="ecsx-1200">signals</span>
+<a 
+ id="Q1-1-0"></a>
+<!--l. 269--><p class="noindent" >While static signals are mainly used for speed restrictions, the interesting ones are variable signals. Of course, you can always control any
+variable signal by traditional means (mesecons, digiline, right-click) if the signal allows it, but that misses the point of this interlocking
+system.
+<!--l. 274--><p class="noindent" >In the following sections, we will talk about main signals. By this, we mean a variable signal that can display both a &#8220;Danger&#8221; aspect
+(trains are not allowed to proceed) and at least one &#8220;Proceed&#8221; aspect (train may proceed as train/shunt move, with optional speed
+restriction), which act as an &#8220;entry signal&#8221; for one or multiple routes.
+<!--l. 281--><p class="noindent" >
+<a 
+ id="x1-34r3"></a>
+      <!--l. 281--><p class="noindent" ><span 
+class="ecsx-1200">3.3</span>   <span 
 class="ecsx-1200">The</span>
       <span 
 class="ecsx-1200">concept</span>
@@ -344,87 +364,139 @@ class="ecsx-1200">of</span>
 class="ecsx-1200">routes</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 248--><p class="noindent" >A so-called route is a locked path between two signals, which locks all turnouts in the correct position.
-<!--l. 251--><p class="noindent" >Example: Imagine a station with 2 platforms on a single track running line. We are looking at signal A. You probably want trains coming
+<!--l. 283--><p class="noindent" >A so-called route is a locked path between two main signals, which locks all turnouts in the correct position. Its purpose is to offer a train
+a path on which it can safely proceed without interfering with any other train. A route always incorporates and locks one to multiple
+track sections, starting with the one that lies directly behind the &#8220;entry&#8221; signal.
+<!--l. 290--><p class="noindent" >Example: Imagine a station with 2 platforms on a single track running line. We are looking at signal A. You probably want trains coming
 from the right to go into platform 1 or into platform 2, so you need to program 2 routes.
-<!--l. 256--><p class="noindent" ><img 
-src="7_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_route_ex1.png" alt="PIC"  
+<!--l. 295--><p class="noindent" ><img 
+src="6_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_route_ex1.png" alt="PIC"  
 >
-<!--l. 258--><p class="noindent" >This leads us to the most important aspect of route programming: Routes always start at a signal (A) and end at a signal facing in the
+<!--l. 297--><p class="noindent" >This leads us to the most important aspect of route programming: Routes always start at a signal (A) and end at a signal facing in the
 <span 
 class="ecbx-1000">same direction </span>(D and E), not at an opposite-facing signal (B and C). There are only few exceptions, we&#8217;ll cover this
 later.
-<!--l. 263--><p class="noindent" >When you set a route to make a train proceed on it, the interlocking system ensures that:
+<!--l. 302--><p class="noindent" >When you set a route to make a train proceed on it, the interlocking system ensures that:
      <ul class="itemize1">
      <li class="itemize">There are no rail vehicles on the route
      </li>
      <li class="itemize">All turnouts are set to the correct position and it is impossible to move them
      </li>
      <li class="itemize">No other routes can be set that would in any way conflict with this route</li></ul>
-<!--l. 272--><p class="noindent" >For this to work, you need to specify all track sections the train will pass along, as well as the positions of all turnouts that need to be
+<!--l. 311--><p class="noindent" >For this to work, you need to specify all track sections the train will pass along, as well as the positions of all turnouts that need to be
 locked. Those are not only the turnouts that lay directly on the train&#8217;s route, but also some turnouts on adjacent tracks, the so-called
 flank protection.
-<!--l. 278--><p class="noindent" >The purpose of flank protection is to prevent runaway trains and/or wagons to pass into a route. This is achieved by setting nearby
+<!--l. 317--><p class="noindent" >The purpose of flank protection is to prevent runaway trains and/or wagons to pass into a route. This is achieved by setting nearby
 turnouts to a position that points &#8220;away&#8221; from the route. Example:
-<!--l. 282--><p class="noindent" ><img 
-src="8_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_route_ex2.png" alt="PIC"  
+<!--l. 321--><p class="noindent" ><img 
+src="7_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_route_ex2.png" alt="PIC"  
 >
-<!--l. 284--><p class="noindent" >The upper turnout, of course, needs to be locked in straight (normal) position, while the lower one is not relevant for the route itself. But
+<!--l. 323--><p class="noindent" >The upper turnout, of course, needs to be locked in straight (normal) position, while the lower one is not relevant for the route itself. But
 what if the lower turnout was set to the diverging (reverse) position and the driver of another train approaching signal B fails to see the
 red light? This train would crash into the first one. To minimise danger, that other train would need to be routed towards signal
 D.
-<!--l. 291--><p class="noindent" >There are, of course, situations, where both positions of a turnout would conflict with a route equally. In those situations, there&#8217;s nothing
+<!--l. 330--><p class="noindent" >There are, of course, situations, where both positions of a turnout would conflict with a route equally. In those situations, there&#8217;s nothing
 you can do and no flank lock needs to be set.
-<!--l. 295--><p class="noindent" >
+<!--l. 334--><p class="noindent" >
 <a 
- id="x1-44r3"></a>
-      <!--l. 295--><p class="noindent" ><span 
-class="ecsx-1200">3.3</span>   <span 
+ id="x1-35r4"></a>
+      <!--l. 334--><p class="noindent" ><span 
+class="ecsx-1200">3.4</span>   <span 
+class="ecsx-1200">Assigning</span>
+      <span 
+class="ecsx-1200">main</span>
+      <span 
+class="ecsx-1200">signals</span>
+      <span 
+class="ecsx-1200">to</span>
+      <span 
+class="ecsx-1200">TCBs</span>
+<a 
+ id="Q1-1-0"></a>
+<!--l. 336--><p class="noindent" >Main signals in the advtrains interlocking system are positioned - like in real life - at the border of track sections, because routes also start
+and end there. For advtrains to know from which signal which routes can be set, you need to assign the signal to a
+TCB.
+<!--l. 341--><p class="noindent" >To do this, perform the following steps:
+     <ol  class="enumerate1" >
+     <li 
+  class="enumerate" id="x1-37x1">If not already happened, set up a TCB (you don&#8217;t need to, but are advised to, configure track sections there)
+     </li>
+     <li 
+  class="enumerate" id="x1-39x2">Place the signal a few meters in front of the TCB, so that trains stopping at the signal do never pass the TCB
+     </li>
+     <li 
+  class="enumerate" id="x1-41x3">Locate the side of the TCB which points in the direction that trains will proceed past the signal, as shown in the figure
+     below.
+     </li>
+     <li 
+  class="enumerate" id="x1-43x4">Right-click the TCB, and click &#8220;Assign a signal&#8221; on this side.
+     </li>
+     <li 
+  class="enumerate" id="x1-45x5">Punch the signal.</li></ol>
+<!--l. 352--><p class="noindent" ><img 
+src="8_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_assign_signal.png" alt="PIC"  
+>
+<!--l. 354--><p class="noindent" >If you haven&#8217;t set an influence point for the signal yet, the influence point formspec automatically opens.
+<!--l. 357--><p class="noindent" >You can assign a signal to each side of a TCB. This is, for example, useful when creating block sections on a bi-directional main running
+line.
+<!--l. 361--><p class="noindent" >Only main signals can ever be assigned to TCBs, because static ones can either not display &#8220;Danger&#8221; or do not permit to proceed at
+all.
+<!--l. 365--><p class="noindent" >
+<a 
+ id="x1-46r5"></a>
+      <!--l. 365--><p class="noindent" ><span 
+class="ecsx-1200">3.5</span>   <span 
 class="ecsx-1200">Shunt</span>
       <span 
 class="ecsx-1200">routes</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 297--><p class="noindent" >Operating railways is not all about driving trains around. Coupling, decoupling and moving single engines, wagons or groups of wagons
+<!--l. 368--><p class="noindent" ><span 
+class="ecbx-1000">The information in this section is subject to future change because of safety issues!</span>
+<!--l. 370--><p class="noindent" >Operating railways is not all about driving trains around. Coupling, decoupling and moving single engines, wagons or groups of wagons
 across a station, called shunting, also plays an important role.
-<!--l. 301--><p class="noindent" >Remember what we said about routes: There must be no rail vehicles on the route. So what if you have some goods wagons
+<!--l. 374--><p class="noindent" >Remember what we said about routes: There must be no rail vehicles on the route. So what if you have some goods wagons
 ready on a siding, and want to couple an engine to it? You can not set a regular route into the siding, because it is
 occupied.
-<!--l. 306--><p class="noindent" >The solution is to program a second route into the siding, but with the difference that it already ends at the rear-facing signal of it, so it
+<!--l. 379--><p class="noindent" >The solution is to program a second route into the siding, but with the difference that it already ends at the rear-facing signal of it, so it
 doesn&#8217;t include the siding section itself:
-<!--l. 310--><p class="noindent" ><img 
+<!--l. 383--><p class="noindent" ><img 
 src="9_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_route_ex3.png" alt="PIC"  
 >
-<!--l. 312--><p class="noindent" >The Sht2 route then needs to show a shunt aspect, which instructs the driver to proceed slowly and watch out for vehicles on the route.
+<!--l. 385--><p class="noindent" >The Sht2 route then needs to show a shunt aspect, which instructs the driver to proceed slowly and watch out for vehicles on the route.
 To show a &#8220;free&#8221; aspect here would be wrong, because that would mean that the track is free until the next main signal, which it is clearly
 not.
-<!--l. 320--><p class="noindent" ><span 
+<!--l. 393--><p class="noindent" ><span 
 class="ecti-1000">Note that advtrains_interlocking currently does not allow to set individual aspects for routes, this is a feature still to be implemented</span>
 <span 
 class="ecti-1000">soon.</span>
-<!--l. 322--><p class="noindent" >Shunt routes like this are, so far, the only exception to the &#8220;Routes should end at a signal facing the same direction&#8221;
+<!--l. 395--><p class="noindent" >Shunt routes like this are, so far, the only exception to the &#8220;Routes should end at a signal facing the same direction&#8221;
 rule.
-<!--l. 325--><p class="noindent" >
+<!--l. 398--><p class="noindent" >
 <a 
- id="x1-45r4"></a>
-      <!--l. 325--><p class="noindent" ><span 
-class="ecsx-1200">3.4</span>   <span 
+ id="x1-47r6"></a>
+      <!--l. 398--><p class="noindent" ><span 
+class="ecsx-1200">3.6</span>   <span 
 class="ecsx-1200">Route</span>
       <span 
 class="ecsx-1200">Release</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 327--><p class="noindent" >In early real-life interlocking systems, routes either had to be cancelled by the signalman after the train had passed the route, or there was
+<!--l. 400--><p class="noindent" >In early real-life interlocking systems, routes either had to be cancelled by the signalman after the train had passed the route, or there was
 a single release contact at the end of the route. However, as interlocking systems evolved and the position of trains is now
 roughly known by the track sections, portions of the route can be freed as soon as the train has left the corresponding
 section.
-<!--l. 334--><p class="noindent" >AdvTrains has chosen a modern approach to route releasing. Each turnout lock is associated to a track section belonging to the route&#8217;s
+<!--l. 407--><p class="noindent" >AdvTrains has chosen a modern approach to route releasing. Each turnout lock is associated to a track section belonging to the route&#8217;s
 path. Once the train leaves this section, all assigned locks are also freed.
-<!--l. 338--><p class="noindent" >
+<!--l. 411--><p class="noindent" >Please note that reversing a train outside of stations is not only discouraged, but also very dangerous, because even
+real-world interlocking system do not expect this. There is a clear, human-sense rule that you should never reverse the
+driving direction of a train while on a main line or on a turnout. Else, you can be considered a terrorist. (quote from
+professional!)
+<!--l. 418--><p class="noindent" >
 <a 
- id="x1-46r5"></a>
-      <!--l. 338--><p class="noindent" ><span 
-class="ecsx-1200">3.5</span>   <span 
+ id="x1-48r7"></a>
+      <!--l. 418--><p class="noindent" ><span 
+class="ecsx-1200">3.7</span>   <span 
 class="ecsx-1200">Programming</span>
       <span 
 class="ecsx-1200">a</span>
@@ -432,13 +504,13 @@ class="ecsx-1200">a</span>
 class="ecsx-1200">route</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 340--><p class="noindent" >The route programming procedure is quite straightforward if you&#8217;ve read the previous sections and understood how routes should be
+<!--l. 420--><p class="noindent" >The route programming procedure is quite straightforward if you&#8217;ve read the previous sections and understood how routes should be
 set.
-<!--l. 343--><p class="noindent" >Routes always start at a signal. You must have assigned the signal to a TCB, as described earlier.
-<!--l. 346--><p class="noindent" >When you right-click the signal, it no longer changes its aspect. Instead, a formspec pops up, showing you an (empty) list of routes with
-the possibility to set them or to create new routes. Click the &#8220;Create new route&#8221; button to start programming a new
+<!--l. 423--><p class="noindent" >Routes always start at a main signal. You must have assigned the signal to a TCB, as described earlier.
+<!--l. 426--><p class="noindent" >When you right-click the main signal, it no longer changes its aspect. Instead, a formspec pops up, showing you an (empty) list of routes
+with the possibility to set them or to create new routes. Click the &#8220;Create new route&#8221; button to start programming a new
 route.
-<!--l. 351--><p class="noindent" >The form closes, and an arrow is displayed on the TCB. You are now in &#8220;Route Programming&#8221; mode, programming the first track section
+<!--l. 431--><p class="noindent" >The form closes, and an arrow is displayed on the TCB. You are now in &#8220;Route Programming&#8221; mode, programming the first track section
 of the route. Now:
      <ul class="itemize1">
      <li class="itemize">Put any turnouts you need to lock in the correct position (e.g. by right-clicking them). This includes flank protection.
@@ -449,11 +521,11 @@ of the route. Now:
      </li>
      <li class="itemize">When you&#8217;ve locked all turnouts in the current section, go to and punch the TCB that is the border to the next track
      section the train proceeds into.</li></ul>
-<!--l. 364--><p class="noindent" >Depending on the situation, you are now offered some possibilities to proceed:
+<!--l. 444--><p class="noindent" >Depending on the situation, you are now offered some possibilities to proceed:
      <ul class="itemize1">
      <li class="itemize">Click the &#8220;Advance to next section&#8221; button if your route consists of more sections with turnouts to lock, and you need to
      continue programming. Follow the above steps to set locks for the next section.</li></ul>
-<!--l. 371--><p class="noindent" >Once you&#8217;ve clicked the &#8220;Advance&#8221; button, the lock markers change to a red lock symbol, telling they can&#8217;t be changed anymore. Repeat
+<!--l. 451--><p class="noindent" >Once you&#8217;ve clicked the &#8220;Advance&#8221; button, the lock markers change to a red lock symbol, telling they can&#8217;t be changed anymore. Repeat
 the above procedure until you are ready to complete the programming procedure:
      <ul class="itemize1">
      <li class="itemize">Click the &#8220;Finish route HERE&#8221; button when you&#8217;ve set up the locks for the last track section of the route and punched the
@@ -462,7 +534,7 @@ the above procedure until you are ready to complete the programming procedure:
      <li class="itemize">The &#8220;Finish route at end of NEXT section&#8221; button (third button) is an useful quickhand to make the route proceed one
      more section. Using this button is equivalent to first clicking the &#8220;Advance&#8221; button, then flying to the end of the next track
      section and finishing the route there. You can not (officially) set turnout locks in the final section using this method.</li></ul>
-<!--l. 387--><p class="noindent" >A few hints:
+<!--l. 467--><p class="noindent" >A few hints:
      <ul class="itemize1">
      <li class="itemize">If one turnout should be locked by more than one section, set the lock only in the <span 
 class="ectt-1000">last </span>of those sections. Locking the same
@@ -480,10 +552,10 @@ class="ectt-1000">last </span>of those sections. Locking the same
      </li>
      <li class="itemize">The third button does NOT work on sections with more than 2 exits, because the system won&#8217;t be able to determine the
      final TCB of the route then.</li></ul>
-<!--l. 408--><p class="noindent" >
+<!--l. 488--><p class="noindent" >
 <a 
- id="x1-47r4"></a>
-    <!--l. 408--><p class="noindent" ><span 
+ id="x1-49r4"></a>
+    <!--l. 488--><p class="noindent" ><span 
 class="ecsx-1200">4</span>   <span 
 class="ecsx-1200">Interlocking</span>
     <span 
@@ -492,16 +564,37 @@ class="ecsx-1200">system</span>
 class="ecsx-1200">operation</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 410--><p class="noindent" >Setting up the interlocking for a portion of a railway network requires some time, experience and planning, but once done, there&#8217;s not
+<!--l. 490--><p class="noindent" >Setting up the interlocking for a portion of a railway network requires some time, experience and planning, but once done, there&#8217;s not
 much to do anymore to make trains run on your, now safer, railway. This section covers some useful practices to route trains across your
 network.
-<!--l. 415--><p class="noindent" >At the moment, routes can only be set by clicking the signal or via LuaATC, except if you use automatic working. It is planned to control
-this via the onboard computer and via a &#8220;signal box&#8221; view based on the currently broken itrainmap.
-<!--l. 420--><p class="noindent" >
+<!--l. 495--><p class="noindent" >At the moment, routes can either be set by clicking the signal or via LuaATC, or by using the &#8220;Remote Routesetting&#8221;
+button from the Onboard Computer. It is planned to control this via a &#8220;signal box&#8221; view based on the currently broken
+itrainmap.
+<!--l. 500--><p class="noindent" >
 <a 
- id="x1-48r1"></a>
-      <!--l. 420--><p class="noindent" ><span 
+ id="x1-50r1"></a>
+      <!--l. 500--><p class="noindent" ><span 
 class="ecsx-1200">4.1</span>   <span 
+class="ecsx-1200">Train</span>
+      <span 
+class="ecsx-1200">Safety</span>
+      <span 
+class="ecsx-1200">System</span>
+<a 
+ id="Q1-1-0"></a>
+<!--l. 502--><p class="noindent" >The Train Safety System, called &#8220;LZB&#8221; in the code (from the german term Linienzugbeeinflussung, although this is a completely different
+system), ensures that trains obey any restrictions imposed by signals when influence points are set. This way, it is not possible to pass
+signals at danger or to bypass speed restrictions.
+<!--l. 508--><p class="noindent" >It is possible to overrun red signals, if a route is cancelled while a train is approaching. Real interlocking systems use a mechanism called
+Approach locking for this, however, as of now, there&#8217;s no similar system in this mod. If a red signal is overrun, the train brakes using
+emergency brake (&#8220;BB&#8221;) and can not be moved any further. You should then examine the situation and drive the train backwards out of
+the section.
+<!--l. 516--><p class="noindent" >As of now, changing the driving direction of a train always clears any imposed speed restrictions.
+<!--l. 519--><p class="noindent" >
+<a 
+ id="x1-51r2"></a>
+      <!--l. 519--><p class="noindent" ><span 
+class="ecsx-1200">4.2</span>   <span 
 class="ecsx-1200">Simple</span>
       <span 
 class="ecsx-1200">route</span>
@@ -513,47 +606,45 @@ class="ecsx-1200">and</span>
 class="ecsx-1200">cancelling</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 422--><p class="noindent" >To set a route, simply right-click the signal, select a route and click &#8220;set route&#8221;. If there are no conflicts, the signal turns green and the
+<!--l. 521--><p class="noindent" >To set a route, simply right-click the signal, select a route and click &#8220;set route&#8221;. If there are no conflicts, the signal turns green and the
 train is allowed to proceed.
-<!--l. 426--><p class="noindent" >It may be possible that the route can not be set, because one or more other routes conflict with the current one, or a section is blocked. In
+<!--l. 525--><p class="noindent" >It may be possible that the route can not be set, because one or more other routes conflict with the current one, or a section is blocked. In
 this case, the signal stays red, and the conflicting item is shown in the formspec. As soon as the conflict is resolved (by cancellation
 or release of the conflicting route, or the section becoming free), the requested route will be set and the signal turns
 green.
-<!--l. 433--><p class="noindent" >If a route is either requested or set, it can be cancelled from the signalling formspec. This means that all turnouts and sections are
+<!--l. 532--><p class="noindent" >If a route is either requested or set, it can be cancelled from the signalling formspec. This means that all turnouts and sections are
 released, and the signal reverts back to red. This of course only works when the train has not passed the signal yet. There is no
 mechanism for Approach Locking.
-<!--l. 439--><p class="noindent" >
+<!--l. 538--><p class="noindent" >
 <a 
- id="x1-49r2"></a>
-      <!--l. 439--><p class="noindent" ><span 
-class="ecsx-1200">4.2</span>   <span 
+ id="x1-52r3"></a>
+      <!--l. 538--><p class="noindent" ><span 
+class="ecsx-1200">4.3</span>   <span 
 class="ecsx-1200">Automatic</span>
       <span 
 class="ecsx-1200">Working</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 441--><p class="noindent" >Block signals on main running lines usually only have a single route to set, the one proceeding along the main line. Their purpose is only
+<!--l. 540--><p class="noindent" >Block signals on main running lines usually only have a single route to set, the one proceeding along the main line. Their purpose is only
 to show whether there are trains in the next section. So, it would be convenient if this only route would set itself again after a train
 passed.
-<!--l. 447--><p class="noindent" >This is what Automatic Working is for. Set a route, click &#8220;Enable Automatic Working&#8221;, and as soon as a train passes, the route is
+<!--l. 546--><p class="noindent" >This is what Automatic Working is for. Set a route, click &#8220;Enable Automatic Working&#8221;, and as soon as a train passes, the route is
 automatically re-set.
-<!--l. 451--><p class="noindent" >This function is nearly identical to SimSig automatic signals. It can also be useful on a line with high traffic, when there&#8217;s a
+<!--l. 550--><p class="noindent" >This function is nearly identical to SimSig automatic signals. It can also be useful on a line with high traffic, when there&#8217;s a
 low-frequented access to a siding. You&#8217;d enable automatic working for the main route and cancel it only when you need a train to go into
 the siding.
-<!--l. 456--><p class="noindent" >
+<!--l. 555--><p class="noindent" >
 <a 
- id="x1-50r5"></a>
-    <!--l. 456--><p class="noindent" ><span 
+ id="x1-53r5"></a>
+    <!--l. 555--><p class="noindent" ><span 
 class="ecsx-1200">5</span>   <span 
 class="ecsx-1200">Final</span>
     <span 
 class="ecsx-1200">notes</span>
 <a 
  id="Q1-1-0"></a>
-<!--l. 458--><p class="noindent" >The interlocking system is mainly finished, though there are still some plans and ideas. They include:
+<!--l. 557--><p class="noindent" >The interlocking system is mainly finished, though there are still some plans and ideas. They include:
      <ul class="itemize1">
-     <li class="itemize">Setting routes from inside a train (via onboard computer)
-     </li>
      <li class="itemize">Signalbox panels, as revival of itrainmap
      </li>
      <li class="itemize">Individual signal aspects for routes
@@ -561,11 +652,11 @@ class="ecsx-1200">notes</span>
      <li class="itemize">Distant signals
      </li>
      <li class="itemize">On-Train head-up display for oncoming signals (they have something like this in Czech Republic, I forgot how it&#8217;s called.)</li></ul>
-<!--l. 468--><p class="noindent" >Apart from this, there&#8217;s the large oncoming project of a new timetable-based train automation system, but this will take some time to
+<!--l. 566--><p class="noindent" >Apart from this, there&#8217;s the large oncoming project of a new timetable-based train automation system, but this will take some time to
 evolve and is out of the scope of this document.
-<!--l. 472--><p class="noindent" >If you have any suggestions, corrections, improvements, criticism or cute kittens and stuff, you can always contact me by various means
+<!--l. 570--><p class="noindent" >If you have any suggestions, corrections, improvements, criticism or cute kittens and stuff, you can always contact me by various means
 (Forum PM, E-Mail (orwell@bleipb.de), Linuxworks server chat a.s.o.). Have fun!
-<!--l. 477--><p class="noindent" >- orwell  
+<!--l. 575--><p class="noindent" >- orwell  
 </body></html> 
 
 
