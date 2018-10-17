@@ -9,7 +9,7 @@ minetest.register_node("advtrains_luaautomation:oppanel", {
 	tiles={"atlatc_oppanel.png"},
 	description = "LuaAutomation operation panel",
 	groups = {
-		choppy = 1,
+		cracky = 1,
 		save_in_nodedb=1,
 	},
 	after_place_node = atlatc.active.after_place_node,

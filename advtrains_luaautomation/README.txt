@@ -148,8 +148,9 @@ The Lua-controlled ATC rails are the only components that can actually interface
 {type="train", train=true, id="<train_id>"}
 This event is fired when a train enters the rail. The field 'id' is the unique train ID, which is 6-digit random numerical string.
 
-{type="int", int=true, message=<message>}
+{type="int", int=true, msg=<message>}
 Fired when an interrupt set by the 'interrupt' function runs out. 'message' is the message passed to the interrupt function.
+For backwards compatiblity reasons, <message> is also contained in an event.message field.
 {type="ext_int", ext_int=true, message=<message>}
 Fired when another node called 'interrupt_pos' on this position. 'message' is the message passed to the interrupt_pos function.
 

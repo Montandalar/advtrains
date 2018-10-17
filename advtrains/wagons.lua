@@ -107,7 +107,7 @@ function wagon:set_id(wid)
 	minetest.after(0.2, function() self:reattach_all() end)
 	
 	if self.custom_on_activate then
-		self:custom_on_activate(dtime_s)
+		self:custom_on_activate()
 	end
 end
 

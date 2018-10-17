@@ -1056,7 +1056,7 @@ function advtrains.invalidate_all_paths(pos)
 	end
 end
 function advtrains.invalidate_path(id)
-	atdebug("Path invalidate:",id)
+	--atdebug("Path invalidate:",id)
 	local v=advtrains.trains[id]
 	if not v then return end
 	advtrains.path_invalidate(v)
@@ -1081,6 +1081,7 @@ local nonblocknodes={
 	"default:fence_pine_wood",
 	"default:fence_junglewood",
 	"default:torch",
+	"bones:bones",
 	
 	"default:sign_wall",
 	"signs:sign_wall",
