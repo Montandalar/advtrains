@@ -26,7 +26,7 @@ function advtrains.on_control_change(pc, train, flip)
 		if pc.right then
 			train.tarvelocity = 8
 		end
-		if pc.jump then
+		--[[if pc.jump then
 			train.brake = true
 			--0: released, 1: brake and pressed, 2: released and brake, 3: pressed and brake
 			if not train.brake_hold_state or train.brake_hold_state==0 then
@@ -39,17 +39,21 @@ function advtrains.on_control_change(pc, train, flip)
 		elseif train.brake_hold_state==3 then
 			train.brake = false
 			train.brake_hold_state = 0
-		end
+		end]]
 		--shift+use:see wagons.lua
 	else
 		local act=false
-		if pc.up then
-		   train.ctrl.user=4
-		   act=true
-		end
 		if pc.jump then
 			train.ctrl.user = 1
 			act=true
+		end
+		-- If atc command set, only "Jump" key can clear command. To prevent accidental control.
+		if train.tarvelocity or train.atc_command then
+			return
+		end
+		if pc.up then
+		   train.ctrl.user=4
+		   act=true
 		end
 		if pc.down then
 			if train.velocity>0 then
@@ -80,9 +84,6 @@ function advtrains.on_control_change(pc, train, flip)
 		end
 		if not act then
 			train.ctrl.user = nil
-		end
-		if pc.aux1 then
-			--horn
 		end
 	end
 end
