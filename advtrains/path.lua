@@ -122,6 +122,10 @@ end
 -- Prints a path using the passed print function
 -- This function should be 'atprint', 'atlog', 'atwarn' or 'atdebug', because it needs to use print_concat_table
 function advtrains.path_print(train, printf)
+	if not train.path then
+		printf("path_print: Path is invalidated/inexistant.")
+		return
+	end
 	printf("i:	CP	Position	Dir	CN		->Dist->")
 	for i = train.path_ext_b, train.path_ext_f do
 		if i==train.path_trk_b then
