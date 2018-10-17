@@ -30,7 +30,9 @@ local AWARE_ZONE  = 50
 
 local ADD_STAND  =  2
 local ADD_SLOW   =  1
-local ADD_FAST   =  10
+local ADD_FAST   =  7
+local ZONE_ROLL  =  2
+local ZONE_HOLD  =  5 -- added on top of ZONE_ROLL
 
 local SHUNT_SPEED_MAX = 4
 
@@ -49,7 +51,7 @@ local function look_ahead(id, train)
 	local travwspd = lzb.travwspd
 	local lspd
 	
-	train.debug = lspd
+	--train.debug = lspd
 	
 	while trav <= brake_i and (not lspd or lspd>0) do
 		trav = trav + 1
@@ -170,6 +172,18 @@ local function apply_control(id, train)
 				-- Gotcha! Braking...
 				train.ctrl.lzb = 1
 				--train.debug = train.debug .. "BRAKE!!!"
+				return
+			end
+			i = advtrains.path_get_index_by_offset(train, i, -ZONE_ROLL)
+			if i <= train.index then
+				-- roll control
+				train.ctrl.lzb = 2
+				return
+			end
+			i = advtrains.path_get_index_by_offset(train, i, -ZONE_HOLD)
+			if i <= train.index then
+				-- hold speed
+				train.ctrl.lzb = 3
 				return
 			end
 		end

@@ -61,6 +61,7 @@ function advtrains.on_control_change(pc, train, flip)
 				act=true
 			else
 				advtrains.invert_train(train.id)
+				advtrains.atc.train_reset_command(train)
 			end
 		end
 		if pc.left then
@@ -178,16 +179,21 @@ function advtrains.hud_train_format(train, flip)
 	local topLine, firstLine
 	
 	local secondLine
-	if train.tarvelocity then
+	if train.tarvelocity or train.atc_command then
 		local b="   "
-		local tvel=advtrains.abs_ceil(train.tarvelocity)
-		local tvel_kmh=advtrains.abs_ceil(advtrains.ms_to_kmh(train.tarvelocity))
+		local tvels=""
+		if train.tarvelocity then
+			local tvel = advtrains.abs_ceil(train.tarvelocity)
+			tvels = "|"..string.rep("+", tvel)..string.rep("_", max-tvel)
+		end
 		if train.atc_brake_target then
 			b="-B-"
 		end
-		secondLine="ATC"..b..": |"..string.rep("+", tvel)..string.rep("_", max-tvel).." > "..tvel_kmh.." km/h"
-	elseif train.atc_delay then
-		secondLine = "ATC waiting "..advtrains.abs_ceil(train.atc_delay).."s"
+		local ad = ""
+		if train.atc_delay then
+			ad = " "..advtrains.abs_ceil(train.atc_delay).."s "
+		end
+		secondLine="ATC"..b..": "..tvels..ad..(train.atc_command or "")
 	else
 		secondLine = "Manual operation"
 	end

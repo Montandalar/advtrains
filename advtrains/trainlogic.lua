@@ -329,7 +329,6 @@ function advtrains.train_step_b(id, train, dtime)
 	--interpret ATC command and apply auto-lever control when not actively controlled
 	local trainvelocity = train.velocity
 	
-	
 	if train.ctrl.user then
 		advtrains.atc.train_reset_command(train)
 	else
@@ -343,16 +342,16 @@ function advtrains.train_step_b(id, train, dtime)
 			train.atc_brake_target=nil
 			braketar = nil
 		end
-		if train.tarvelocity and train.velocity==train.tarvelocity then
-			train.tarvelocity = nil
-		end
+		--if train.tarvelocity and train.velocity==train.tarvelocity then
+		--	train.tarvelocity = nil
+		--end
 		if train.atc_wait_finish then
-			if not train.atc_brake_target and not train.tarvelocity then
+			if not train.atc_brake_target and (not train.tarvelocity or train.velocity==train.tarvelocity) then
 				train.atc_wait_finish=nil
 			end
 		end
 		if train.atc_command then
-			if train.atc_delay<=0 and not train.atc_wait_finish then
+			if (not train.atc_delay or train.atc_delay<=0) and not train.atc_wait_finish then
 				advtrains.atc.execute_atc_command(id, train)
 			else
 				train.atc_delay=train.atc_delay-dtime
