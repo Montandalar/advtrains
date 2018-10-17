@@ -78,8 +78,8 @@ end
 
 --nodes
 local idxtrans={static=1, mesecon=2, digiline=3}
-local apn_func=function(pos, node)
-	advtrains.ndb.update(pos, node)
+local apn_func=function(pos)
+	-- FIX for long-persisting ndb bug: there's no node in parameter 2 of this function!
 	local meta=minetest.get_meta(pos)
 	if meta then
 		meta:set_string("infotext", attrans("ATC controller, unconfigured."))

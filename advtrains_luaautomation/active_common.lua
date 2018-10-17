@@ -12,7 +12,6 @@ function ac.save()
 end
 
 function ac.after_place_node(pos, player)
-	advtrains.ndb.update(pos)
 	local meta=minetest.get_meta(pos)
 	meta:set_string("formspec", ac.getform(pos, meta))
 	meta:set_string("infotext", "LuaAutomation component, unconfigured.")
