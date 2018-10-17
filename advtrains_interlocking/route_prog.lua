@@ -239,7 +239,7 @@ end
 local function do_advance_route(pname, rp, sigd, tsname)
 	table.insert(rp.route, {next = sigd, locks = rp.tmp_lcks})
 	rp.tmp_lcks = {}
-	chat(pname, "Added track section '"..tsname.."' to the route (revert with /at_rp_back)")
+	chat(pname, "Added track section '"..tsname.."' to the route.")
 end
 
 local function finishrpform(pname)

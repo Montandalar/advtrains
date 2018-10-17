@@ -230,6 +230,9 @@ local players_assign_ip = {}
 -- shows small info form for signal IP state/assignment
 -- only_notset: show only if it is not set yet (used by signal tcb assignment)
 function advtrains.interlocking.show_ip_form(pos, pname, only_notset)
+	if not minetest.check_player_privs(pname, "interlocking") then
+		return
+	end
 	local form = "size[7,5]label[0.5,0.5;Signal at "..minetest.pos_to_string(pos).."]"
 	local pts, connid = advtrains.interlocking.db.get_ip_by_signalpos(pos)
 	if pts then

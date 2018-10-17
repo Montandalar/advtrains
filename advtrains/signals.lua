@@ -69,6 +69,8 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				local sigd = advtrains.interlocking and advtrains.interlocking.db.get_sigd_for_signal(pos)
 				if sigd then
 					advtrains.interlocking.show_signalling_form(sigd, pname)
+				elseif advtrains.interlocking and player:get_player_control().aux1 then
+					advtrains.interlocking.show_ip_form(pos, pname)
 				elseif advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
 					advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_"..f.as..rotation, param2 = node.param2}, true)
 				end
@@ -124,6 +126,8 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				local sigd = advtrains.interlocking and advtrains.interlocking.db.get_sigd_for_signal(pos)
 				if sigd then
 					advtrains.interlocking.show_signalling_form(sigd, pname)
+				elseif advtrains.interlocking and player:get_player_control().aux1 then
+					advtrains.interlocking.show_ip_form(pos, pname)
 				elseif advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
 					advtrains.setstate(pos, f.als, node)
 				end
@@ -190,6 +194,8 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				local sigd = advtrains.interlocking and advtrains.interlocking.db.get_sigd_for_signal(pos)
 				if sigd then
 					advtrains.interlocking.show_signalling_form(sigd, pname)
+				elseif advtrains.interlocking and player:get_player_control().aux1 then
+					advtrains.interlocking.show_ip_form(pos, pname)
 				elseif advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
 					advtrains.setstate(pos, f.als, node)
 				end
