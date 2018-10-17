@@ -207,15 +207,18 @@ function tp.placetrack(pos, nnpref, placer, itemstack, pointed_thing, yaw)
 					if (dconn1[conn1.."_"..conn2]) then
 						using = dconn1[conn1.."_"..conn2]
 					end
-					
-					tp.bend_rail(p_railpos[conn1], conn1, nnpref)
-					tp.bend_rail(p_railpos[conn2], conn2, nnpref)
-					advtrains.ndb.swap_node(pos, using)
-					local nname=using.name
-					if minetest.registered_nodes[nname] and minetest.registered_nodes[nname].after_place_node then
-						minetest.registered_nodes[nname].after_place_node(pos, placer, itemstack, pointed_thing)
+					if using then
+						-- has found a fitting rail in either direction
+						-- if not, continue loop
+						tp.bend_rail(p_railpos[conn1], conn1, nnpref)
+						tp.bend_rail(p_railpos[conn2], conn2, nnpref)
+						advtrains.ndb.swap_node(pos, using)
+						local nname=using.name
+						if minetest.registered_nodes[nname] and minetest.registered_nodes[nname].after_place_node then
+							minetest.registered_nodes[nname].after_place_node(pos, placer, itemstack, pointed_thing)
+						end
+						return
 					end
-					return
 				end
 			end
 		end

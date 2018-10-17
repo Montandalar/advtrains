@@ -118,7 +118,7 @@ function ac.run_in_env(pos, evtdata, customfct_p)
 		atlatc.interrupt.add(t, pos, {type="int", int=true, message=imesg})
 	end
 	-- add digiline_send function, if digiline is loaded
-	if digiline then
+	if minetest.global_exists("digiline") then
 		customfct.digiline_send=function(channel, msg)
 			assertt(channel, "string")
 			digiline:receptor_send(pos, digiline.rules.default, channel, msg)
