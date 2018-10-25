@@ -24,12 +24,13 @@ asp = {
 		speed = <int km/h>,
 	}
 	info = {
-		call_on = <boolean>, -- Call-on route, expect train in track ahead
-		dead_end = <boolean>, -- Route ends on a dead end (e.g. bumper)
+		call_on = <boolean>, -- Call-on route, expect train in track ahead (not implemented yet)
+		dead_end = <boolean>, -- Route ends on a dead end (e.g. bumper) (not implemented yet)
 		w_speed = <integer>,
 		-- "Warning speed restriction". Supposed for short-term speed
 		-- restrictions which always override any other restrictions
 		-- imposed by "speed" fields, until lifted by a value of -1
+		-- (Example: german Langsamfahrstellen-Signale)
 	}
 }
 -- For "speed" and "w_speed" fields, a value of -1 means that the
@@ -55,7 +56,7 @@ groups = {
 	save_in_at_nodedb = 1,
 }
 advtrains = {
-	function set_aspect(pos, node, asp)
+	set_aspect = function(pos, node, asp)
 		-- This function gets called whenever the signal should display
 		-- a new or changed signal aspect. It is not required that
 		-- the signal actually displays the exact same aspect, since
@@ -63,6 +64,9 @@ advtrains = {
 		-- Example: pure shunt signals can not display a "main" aspect
 		-- and have no effect on train moves, so they will only ever
 		-- honor the shunt.free field for their aspect.
+		-- In turn, it is not guaranteed that the aspect will fulfill the
+		-- criteria put down in supported_aspects.
+		-- If set_aspect is present, supported_aspects should also be declared.
 		
 		-- The aspect passed in here can always be queried using the
 		-- advtrains.interlocking.signal_get_supposed_aspect(pos) function.
@@ -71,8 +75,43 @@ advtrains = {
 		-- For static signals, this function should be completely omitted
 		-- If this function is omitted, it won't be possible to use
 		-- route setting on this signal.
-	end
-	function get_aspect(pos, node)
+	end,
+	supported_aspects = {
+		-- A table which tells which different types of aspects this signal
+		--  is able to display. It is used to construct the "aspect editing"
+		--  formspec for route programming (and others) It should always be
+		--  present alongside with set_aspect. If this is not specified but
+		--  set_aspect is, the user will be allowed to select any aspect.
+		-- Any of the fields marked with <boolean/nil> support 3 types of values:
+				nil: if this signal can switch between free/blocked
+				false: always shows "blocked", unchangable
+				true: always shows "free", unchangable
+		-- Any of the "speed" fields should contain a list of possible values
+		--  to be set as restriction. If omitted, this signal should never
+		--  set the corresponding "speed" field in the aspect, which means
+		--  that the previous speed limit stays valid
+		-- If your signal can only display a single speed (may it be -1),
+		--  always enclose that single value into a list. (such as {-1})
+		main = {
+			free = <boolean/nil>,
+			speed = {<speed1>, ..., <speedn>} or nil,
+		},
+		dst = {
+			free = <boolean/nil>,
+			speed = {<speed1>, ..., <speedn>} or nil,
+		},
+		shunt = {
+			free = <boolean/nil>,
+			proceed_as_main = <boolean/nil>,
+		},
+		info = {
+			call_on = <boolean/nil>,
+			dead_end = <boolean/nil>,
+			w_speed = {<speed1>, ..., <speedn>} or nil,
+		}
+		
+	},
+	get_aspect = function(pos, node)
 		-- This function gets called by the train safety system. It
 		should return the aspect that this signal actually displays,
 		not preferably the input of set_aspect.
@@ -82,7 +121,19 @@ advtrains = {
 		the set_aspect input because they can not signal "Halt" to
 		train moves.
 		-- advtrains.interlocking.DANGER contains a default "all-danger" aspect.
-	end
+		-- If your signal does not cover certain sub-tables of the aspect,
+		the following reasonable defaults are automatically assumed:
+		main = {
+			free = true,
+		}
+		dst = {
+			free = true,
+		}
+		shunt = {
+			free = false,
+			proceed_as_main = false,
+		}
+	end,
 }
 on_rightclick = advtrains.interlocking.signal_rc_handler
 can_dig =  advtrains.interlocking.signal_can_dig
@@ -120,6 +171,25 @@ local DANGER = {
 }
 advtrains.interlocking.DANGER = DANGER
 
+local function fillout_aspect(asp)
+	if not asp.main then
+		asp.main = {
+			free = true,
+		}
+	end
+	if not asp.dst then
+		asp.dst = {
+			free = true,
+		}
+	end 
+	if not asp.shunt then
+		asp.shunt = {
+			free = false,
+			proceed_as_main = false,
+		}
+	end
+end
+
 function advtrains.interlocking.update_signal_aspect(tcbs)
 	if tcbs.signal then
 		local asp = tcbs.aspect or DANGER
@@ -137,6 +207,7 @@ function advtrains.interlocking.signal_after_dig(pos)
 end
 
 function advtrains.interlocking.signal_set_aspect(pos, asp)
+	fillout_aspect(asp)
 	local node=advtrains.ndb.get_node(pos)
 	local ndef=minetest.registered_nodes[node.name]
 	if ndef and ndef.advtrains and ndef.advtrains.set_aspect then
@@ -167,7 +238,7 @@ function advtrains.interlocking.signal_rc_handler(pos, node, player, itemstack, 
 		advtrains.interlocking.show_signalling_form(sigd, pname)
 	else
 		-- permit to set aspect manually
-		minetest.show_formspec(pname, "at_il_sigasp_"..minetest.pos_to_string(pos), "field[aspect;Set Aspect (F/D)Speed(F/D)Speed(F/D) ['A' to assign IP];D0D0D]")
+		minetest.show_formspec(pname, "at_il_sigasp_"..minetest.pos_to_string(pos), "field[aspect;Set Aspect (F/D)Speed(F/D)Speed(F/D) %['A' to assign IP%];D0D0D]")
 	end
 end
 
@@ -221,7 +292,10 @@ function advtrains.interlocking.signal_get_aspect(pos)
 	local node=advtrains.ndb.get_node(pos)
 	local ndef=minetest.registered_nodes[node.name]
 	if ndef and ndef.advtrains and ndef.advtrains.get_aspect then
-		return ndef.advtrains.get_aspect(pos, node)
+		local asp = ndef.advtrains.get_aspect(pos, node)
+		if not asp then asp = DANGER end
+		fillout_aspect(asp)
+		return 
 	end
 end
 
