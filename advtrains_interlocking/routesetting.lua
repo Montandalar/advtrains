@@ -55,7 +55,7 @@ function ilrs.set_route(signal, route, try)
 		
 		if c_ts.route then
 			if not try then atwarn("Encountered ts lock during a real run of routesetting routine, at ts=",c_ts_id,"while setting route",rtename,"of",signal) end
-			return false, "Section '"..c_ts.name.."' already has route set from "..sigd_to_string(c_ts.route.origin).."!", c_ts_id, nil
+			return false, "Section '"..c_ts.name.."' already has route set from "..sigd_to_string(c_ts.route.origin)..":\n"..c_ts.route.rsn, c_ts_id, nil
 		end
 		if c_ts.trains and #c_ts.trains>0 then
 			if not try then atwarn("Encountered ts occupied during a real run of routesetting routine, at ts=",c_ts_id,"while setting route",rtename,"of",signal) end
@@ -224,14 +224,14 @@ end
 local asp_generic_free = {
 	main = {
 		free = true,
-		speed = 100,
+		speed = -1,
 	},
 	shunt = {
 		free = false,
 	},
 	dst = {
 		free = true,
-		speed = 100,
+		speed = -1,
 	},
 	info = {}
 }
