@@ -5,6 +5,42 @@
 -- advtrains_signal=1 is meant for signals that do not implement set_aspect.
 
 
+local setaspect = function(pos, node, asp)
+	if not asp.main.free then
+		advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_danger"})
+	else
+		if asp.dst.free and asp.main.speed == -1 then
+			advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_free"})
+		else
+			advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_slow"})
+		end
+	end
+	local meta = minetest.get_meta(pos)
+	if meta then
+		meta:set_string("infotext", minetest.serialize(asp))
+	end
+end
+
+local suppasp = {
+		main = {
+			free = nil,
+			speed = {6, -1},
+		},
+		dst = {
+			free = nil,
+			speed = nil,
+		},
+		shunt = {
+			free = false,
+			proceed_as_main = true,
+		},
+		info = {
+			call_on = false,
+			dead_end = false,
+			w_speed = nil,
+		}
+}
+
 minetest.register_node("advtrains_interlocking:ds_danger", {
 	description = "Demo signal at Danger",
 	tiles = {"at_il_signal_asp_danger.png"},
@@ -15,21 +51,11 @@ minetest.register_node("advtrains_interlocking:ds_danger", {
 	},
 	sounds = default.node_sound_stone_defaults(),
 	advtrains = {
-		set_aspect = function(pos, node, asp)
-			if asp.main.free then
-				if asp.dst.free and asp.main.speed > 50 then
-					advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_free"})
-				else
-					advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_slow"})
-				end
-			else
-				advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_danger"})
-			end
-			local meta = minetest.get_meta(pos)
-			if meta then
-				meta:set_string("infotext", minetest.serialize(asp))
-			end
-		end
+		set_aspect = setaspect,
+		supported_aspects = suppasp,
+		get_aspect = function(pos, node)
+			return advtrains.interlocking.DANGER
+		end,
 	},
 	on_rightclick = advtrains.interlocking.signal_rc_handler,
 	can_dig = advtrains.interlocking.signal_can_dig,
@@ -44,21 +70,16 @@ minetest.register_node("advtrains_interlocking:ds_free", {
 	},
 	sounds = default.node_sound_stone_defaults(),
 	advtrains = {
-		set_aspect = function(pos, node, asp)
-			if asp.main.free then
-				if asp.dst.free and asp.main.speed > 50 then
-					advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_free"})
-				else
-					advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_slow"})
-				end
-			else
-				advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_danger"})
-			end
-			local meta = minetest.get_meta(pos)
-			if meta then
-				meta:set_string("infotext", minetest.serialize(asp))
-			end
-		end
+		set_aspect = setaspect,
+		supported_aspects = suppasp,
+		get_aspect = function(pos, node)
+			return {
+				main = {
+					free = true,
+					speed = -1,
+				}
+			}
+		end,
 	},
 	on_rightclick = advtrains.interlocking.signal_rc_handler,
 	can_dig = advtrains.interlocking.signal_can_dig,
@@ -73,21 +94,16 @@ minetest.register_node("advtrains_interlocking:ds_slow", {
 	},
 	sounds = default.node_sound_stone_defaults(),
 	advtrains = {
-		set_aspect = function(pos, node, asp)
-			if asp.main.free then
-				if asp.dst.free and asp.main.speed > 50 then
-					advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_free"})
-				else
-					advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_slow"})
-				end
-			else
-				advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_danger"})
-			end
-			local meta = minetest.get_meta(pos)
-			if meta then
-				meta:set_string("infotext", minetest.serialize(asp))
-			end
-		end
+		set_aspect = setaspect,
+		supported_aspects = suppasp,
+		get_aspect = function(pos, node)
+			return {
+				main = {
+					free = true,
+					speed = 6,
+				}
+			}
+		end,
 	},
 	on_rightclick = advtrains.interlocking.signal_rc_handler,
 	can_dig = advtrains.interlocking.signal_can_dig,

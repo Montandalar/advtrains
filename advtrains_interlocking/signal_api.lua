@@ -238,7 +238,7 @@ function advtrains.interlocking.signal_rc_handler(pos, node, player, itemstack, 
 		advtrains.interlocking.show_signalling_form(sigd, pname)
 	else
 		-- permit to set aspect manually
-		minetest.show_formspec(pname, "at_il_sigasp_"..minetest.pos_to_string(pos), "field[aspect;Set Aspect (F/D)Speed(F/D)Speed(F/D) %['A' to assign IP%];D0D0D]")
+		minetest.show_formspec(pname, "at_il_sigasp_"..minetest.pos_to_string(pos), "field[aspect;Set Aspect ('A' to assign IP);D0D0D]")
 	end
 end
 
@@ -252,7 +252,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			advtrains.interlocking.show_ip_form(pos, pname)
 			return
 		end
-		local mfs, msps, dfs, dsps, shs = string.match(fields.aspect, "^([FD])([0-9]+)([FD])([0-9]+)([FD])$")
+		local mfs, msps, dfs, dsps, shs = string.match(fields.aspect, "^([FD])([-0-9]+)([FD])([-0-9]+)([FD])$")
 		local asp = {
 			main = {
 				free = mfs=="F",
