@@ -142,8 +142,12 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 				local tcbs = ildb.get_tcbs(sigd)
 				if tcbs then
 					tcbs.signal = pos
-					tcbs.signal_name = "Signal at "..minetest.pos_to_string(sigd.p)
-					tcbs.routes = {}
+					if not tchs.signal_name then
+						tcbs.signal_name = "Signal at "..minetest.pos_to_string(sigd.p)
+					end
+					if not tcbs.routes then
+						tcbs.routes = {}
+					end
 					ildb.set_sigd_for_signal(pos, sigd)
 					minetest.chat_send_player(pname, "Configuring TCB: Successfully assigned signal.")
 					advtrains.interlocking.show_ip_form(pos, pname, true)
@@ -330,13 +334,20 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 		hint = 2
 	end
 	
+	if ts.route then
+		form = form.."label[0.5,6.1;Route is set: "..ts.route.rsn.."]"
+	elseif ts.route_post then
+		form = form.."label[0.5,6.1;Section holds "..#ts.route_post.lcks.." route locks.]"
+	end
 	-- occupying trains
 	if ts.trains and #ts.trains>0 then
-		form = form.."label[0.5,6.1;Trains on this section:]"
-		form = form.."textlist[0.5,6.7;3,2;trnlist;"..table.concat(ts.trains, ",").."]"
+		form = form.."label[0.5,7.1;Trains on this section:]"
+		form = form.."textlist[0.5,7.7;3,2;trnlist;"..table.concat(ts.trains, ",").."]"
 	else
-		form = form.."label[0.5,6.1;No trains on this section.]"
+		form = form.."label[0.5,7.1;No trains on this section.]"
 	end
+	
+	form = form.."button[5.5,7;4,1;reset;Reset section state]"
 	
 	if hint == 1 then
 		form = form.."label[0.5,0.75;Use the 'Join' button to designate rail crosses and link not listed far-away TCBs]"
@@ -403,7 +414,37 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				ts.name = "Section "..ts_id
 			end
 		end
+		
+		if fields.reset then
+			-- User requested resetting the section
+			-- Show him what this means...
+			local form = "size[7,5]label[0.5,0.5;Reset track section]"
+			form = form.."label[0.5,1;This will clear the list of trains\nand the routesetting status of this section.\nAre you sure?]"
+			form = form.."button_exit[0.5,2.5;  5,1;reset;Yes]"
+			form = form.."button_exit[0.5,3.5;  5,1;cancel;Cancel]"
+			minetest.show_formspec(pname, "at_il_tsreset_"..ts_id, form)
+			return
+		end
+		
 		advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
+		return
+	end
+	
+	ts_id = string.match(formname, "^at_il_tsreset_(.+)$")
+	if ts_id and fields.reset then
+		local ts = ildb.get_ts(ts_id)
+		if not ts then return end
+		ts.trains = {}
+		if ts.route_post then
+			advtrains.interlocking.route.free_route_locks(ts_id, ts.route_post.locks)
+		end
+		ts.route_post = nil
+		ts.route = nil
+		for _, sigd in ipairs(ts.tc_breaks) do
+			local tcbs = ildb.get_tcbs(sigd)
+			advtrains.interlocking.update_signal_aspect(tcbs)
+		end
+		minetest.chat_send_player(pname, "Reset track section "..ts_id.."!")
 	end
 end)
 
