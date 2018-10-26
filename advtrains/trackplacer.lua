@@ -331,7 +331,8 @@ minetest.register_craftitem("advtrains:trackworker",{
 				end
 
 				local nnprefix, suffix, rotation=string.match(node.name, "^(.+)_([^_]+)(_[^_]+)$")
-				--atprint(node.name.."\npattern recognizes:"..nodeprefix.." / "..railtype.." / "..rotation)
+				--atdebug(node.name.."\npattern recognizes:"..nnprefix.." / "..suffix.." / "..rotation)
+				--atdebug("nntab: ",tp.tracks[nnprefix])
 				if not tp.tracks[nnprefix] or not tp.tracks[nnprefix].twrotate[suffix] then
 					nnprefix, suffix=string.match(node.name, "^(.+)_([^_]+)$")
 					rotation = ""
@@ -347,9 +348,11 @@ minetest.register_craftitem("advtrains:trackworker",{
 					return
 				else
 					local modpos
-					for k,v in pairs(modext) do if v==rotation then modpos=k end end
-						if not modpos then
-							minetest.chat_send_player(placer:get_player_name(), attrans("This node can't be rotated using the trackworker!"))
+					for k,v in pairs(modext) do
+						if v==rotation then modpos=k end
+					end
+					if not modpos then
+						minetest.chat_send_player(placer:get_player_name(), attrans("This node can't be rotated using the trackworker!"))
 						return
 					end
 					advtrains.ndb.swap_node(pos, {name=nnprefix.."_"..suffix..modext[modpos+1], param2=node.param2})
@@ -374,7 +377,7 @@ minetest.register_craftitem("advtrains:trackworker",{
 				--if not advtrains.is_track_and_drives_on(minetest.get_node(pos).name, advtrains.all_tracktypes) then return end
 				if advtrains.get_train_at_pos(pos) then return end
 				local nnprefix, suffix, rotation=string.match(node.name, "^(.+)_([^_]+)(_[^_]+)$")
-				--atprint(node.name.."\npattern recognizes:"..nodeprefix.." / "..railtype.." / "..rotation)
+				--atdebug(node.name.."\npattern recognizes:"..nodeprefix.." / "..railtype.." / "..rotation)
 				if not tp.tracks[nnprefix] or not tp.tracks[nnprefix].twcycle[suffix] then
 				  nnprefix, suffix=string.match(node.name, "^(.+)_([^_]+)$")
 				  rotation = ""
