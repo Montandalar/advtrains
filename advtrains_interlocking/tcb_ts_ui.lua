@@ -635,7 +635,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 					advtrains.interlocking.visualize_route(sigd, tcbs.routes[sel_rte], "disp_"..t)
 					minetest.after(10, function() advtrains.interlocking.clear_visu_context("disp_"..t) end)
 				end
-				if fields.renroute and hasprivs then
+				if fields.editroute and hasprivs then
 					local rte = tcbs.routes[sel_rte]
 					minetest.show_formspec(pname, formname.."_renroute_"..sel_rte, "field[name;Enter new route name;"..rte.name.."]")
 					return

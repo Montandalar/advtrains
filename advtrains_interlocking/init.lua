@@ -12,6 +12,7 @@ dofile(modpath.."train_sections.lua")
 dofile(modpath.."route_prog.lua")
 dofile(modpath.."routesetting.lua")
 dofile(modpath.."tcb_ts_ui.lua")
+dofile(modpath.."tool.lua")
 
 dofile(modpath.."lzb.lua")
 
