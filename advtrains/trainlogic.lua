@@ -223,7 +223,7 @@ local callbacks_remove, run_callbacks_remove = mkcallback("remove")
 -- Additionally, this gets called outside the step cycle to initialize and/or remove a train, then occ_write_mode is set.
 function advtrains.train_ensure_init(id, train)
 	train.dirty = true
-	if train.no_step then return end
+	if train.no_step then return nil end
 
 	assertdef(train, "velocity", 0)
 	--assertdef(train, "tarvelocity", 0)
@@ -241,7 +241,7 @@ function advtrains.train_ensure_init(id, train)
 		if not train.last_pos then
 			atwarn("Train",id,": Restoring path failed, no last_pos set! Train will be disabled. You can try to fix the issue in the save file.")
 			train.no_step = true
-			return
+			return nil
 		end
 		if not train.last_connid then
 			atwarn("Train",id,": Restoring path: no last_connid set! Will assume 1")
@@ -250,15 +250,15 @@ function advtrains.train_ensure_init(id, train)
 		local result = advtrains.path_create(train, train.last_pos, train.last_connid or 1, train.last_frac or 0)
 		
 		if result==false then
-			atwarn("Train",id,": Restoring path failed, node at",train.last_pos,"is gone! Train will be disabled. You can try to fix the issue in the save file.")
+			atwarn("Train",id,": Restoring path failed, node at",train.last_pos,"is gone! Train will be disabled. You can try to place a rail at this position and restart the server.")
 			train.no_step = true
-			return
+			return nil
 		elseif result==nil then
 			if not train.wait_for_path then
 				atwarn("Train",id,": Can't initialize: Waiting for the (yet unloaded) node at",train.last_pos," to be loaded.")
 			end
 			train.wait_for_path = true
-			return
+			return false
 		end
 		-- by now, we should have a working initial path
 		train.wait_for_path = false
@@ -273,6 +273,7 @@ function advtrains.train_ensure_init(id, train)
 	end
 	
 	train.dirty = false -- TODO einbauen!
+	return true
 end
 
 function advtrains.train_step_b(id, train, dtime)
@@ -672,7 +673,10 @@ function advtrains.create_new_train_at(pos, connid, ioff, trainparts)
 	advtrains.trains[new_id] = t
 	--atdebug("Created new train:",t)
 	
-	advtrains.train_ensure_init(new_id, advtrains.trains[new_id])
+	if not advtrains.train_ensure_init(new_id, advtrains.trains[new_id]) then
+		atwarn("create_new_train_at",pos,connid,"failed! This might lead to temporary bugs.")
+		return
+	end
 	
 	run_callbacks_create(new_id, advtrains.trains[new_id])
 	
@@ -682,7 +686,10 @@ end
 function advtrains.remove_train(id)
 	local train = advtrains.trains[id]
 	
-	advtrains.train_ensure_init(id, train)
+	if not advtrains.train_ensure_init(id, train) then
+		atwarn("remove_train",id,"failed! This might lead to temporary bugs.")
+		return
+	end
 	
 	run_callbacks_remove(id, train)
 	
@@ -702,7 +709,10 @@ end
 function advtrains.add_wagon_to_train(wagon_id, train_id, index)
 	local train=advtrains.trains[train_id]
 	
-	advtrains.train_ensure_init(train_id, train)
+	if not advtrains.train_ensure_init(train_id, train) then
+		atwarn("Train",train_id,"is not initialized! Operation aborted!")
+		return
+	end
 	
 	if index then
 		table.insert(train.trainparts, index, wagon_id)
@@ -786,6 +796,7 @@ end
 
 local ablkrng = minetest.settings:get("active_block_range")*16
 -- This function checks whether entities need to be spawned for certain wagons, and spawns them.
+-- Called from train_step_*(), not required to check init.
 function advtrains.spawn_wagons(train_id)
 	local train = advtrains.trains[train_id]
 	
@@ -831,7 +842,10 @@ function advtrains.split_train_at_wagon(wagon_id)
 	local train=advtrains.trains[old_id]
 	local _, wagon = advtrains.get_wagon_prototype(data)
 	
-	advtrains.train_ensure_init(old_id, train)
+	if not advtrains.train_ensure_init(old_id, train) then
+		atwarn("Train",old_id,"is not initialized! Operation aborted!")
+		return
+	end
 	
 	local index=advtrains.path_get_index_by_offset(train, train.index, - data.pos_in_train + wagon.wagon_span)
 	
@@ -907,7 +921,10 @@ function advtrains.train_check_couples(train)
 		local front_trains, pos = advtrains.occ.get_occupations(train, atround(train.index) + CPL_CHK_DST)
 		for tid, idx in pairs(front_trains) do
 			local other_train = advtrains.trains[tid]
-			advtrains.train_ensure_init(tid, other_train)
+			if not advtrains.train_ensure_init(tid, other_train) then
+				atwarn("Train",tid,"is not initialized! Couldn't check couples!")
+				return
+			end
 			--atdebug(train.id,"front: ",idx,"on",tid,atround(other_train.index),atround(other_train.end_index))
 			if other_train.velocity == 0 then
 				if idx>=other_train.index and idx<=other_train.index + CPL_ZONE then
@@ -932,7 +949,10 @@ function advtrains.train_check_couples(train)
 		local back_trains, pos = advtrains.occ.get_occupations(train, atround(train.end_index) - CPL_CHK_DST)
 		for tid, idx in pairs(back_trains) do
 			local other_train = advtrains.trains[tid]
-			advtrains.train_ensure_init(tid, other_train)
+			if not advtrains.train_ensure_init(tid, other_train) then
+				atwarn("Train",tid,"is not initialized! Couldn't check couples!")
+				return
+			end
 			if other_train.velocity == 0 then
 				if idx>=other_train.index and idx<=other_train.index + CPL_ZONE then
 					createcouple(pos, train, false, other_train, true)
@@ -973,8 +993,14 @@ end
 function advtrains.do_connect_trains(first_id, second_id)
 	local first, second=advtrains.trains[first_id], advtrains.trains[second_id]
 	
-	advtrains.train_ensure_init(first_id, first)
-	advtrains.train_ensure_init(second_id, second)
+	if not advtrains.train_ensure_init(first_id, first) then
+		atwarn("Train",first_id,"is not initialized! Operation aborted!")
+		return
+	end
+	if not advtrains.train_ensure_init(second_id, second) then
+		atwarn("Train",second_id,"is not initialized! Operation aborted!")
+		return
+	end
 	
 	if first.couple_lck_back or second.couple_lck_front then
 		-- trains are ordered correctly!
@@ -1005,7 +1031,10 @@ end
 function advtrains.invert_train(train_id)
 	local train=advtrains.trains[train_id]
 	
-	advtrains.train_ensure_init(train_id, train)
+	if not advtrains.train_ensure_init(train_id, train) then
+		atwarn("Train",train_id,"is not initialized! Operation aborted!")
+		return
+	end
 	
 	advtrains.path_setrestore(train, true)
 	

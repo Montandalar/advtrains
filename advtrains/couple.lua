@@ -98,8 +98,14 @@ minetest.register_entity("advtrains:couple", {
 			
 			local train1=advtrains.trains[self.train_id_1]
 			local train2=advtrains.trains[self.train_id_2]
-			advtrains.train_ensure_init(self.train_id_1, train1)
-			advtrains.train_ensure_init(self.train_id_2, train2)
+			if not advtrains.train_ensure_init(self.train_id_1, train1) then
+				atwarn("Train",self.train_id_1,"is not initialized! Operation aborted!")
+				return
+			end
+			if not advtrains.train_ensure_init(self.train_id_2, train2) then
+				atwarn("Train",self.train_id_2,"is not initialized! Operation aborted!")
+				return
+			end
 			
 			local id1, id2=self.train_id_1, self.train_id_2
 			local bp1, bp2 = self.t1_is_front, self.t2_is_front
@@ -160,8 +166,15 @@ minetest.register_entity("advtrains:couple", {
 				return
 			end
 			
-			advtrains.train_ensure_init(self.train_id_1, train1)
-			advtrains.train_ensure_init(self.train_id_2, train2)
+			--shh, silence here, this is an on-step callback!
+			if not advtrains.train_ensure_init(self.train_id_1, train1) then
+				--atwarn("Train",self.train_id_1,"is not initialized! Operation aborted!")
+				return
+			end
+			if not advtrains.train_ensure_init(self.train_id_2, train2) then
+				--atwarn("Train",self.train_id_2,"is not initialized! Operation aborted!")
+				return
+			end
 			
 			if train1.velocity>0 or train2.velocity>0 then
 				if not self.position_set then --ensures that train stands a single time before check fires. Using flag below

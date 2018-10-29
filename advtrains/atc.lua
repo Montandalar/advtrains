@@ -199,6 +199,7 @@ local matchptn={
 		if train.velocity<=0 then
 			advtrains.invert_train(id)
 			advtrains.train_ensure_init(id, train)
+			-- no one minds if this failed... this shouldn't even be called without train being initialized...
 		else
 			atwarn(sid(id), attrans("ATC Reverse command warning: didn't reverse train, train moving!"))
 		end
