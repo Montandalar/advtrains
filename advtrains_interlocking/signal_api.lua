@@ -287,7 +287,7 @@ function advtrains.interlocking.signal_get_supposed_aspect(pos)
 end
 
 -- Returns the actual aspect of the signal at position, as returned by the nodedef.
--- returns nil
+-- returns nil when there's no signal at the position
 function advtrains.interlocking.signal_get_aspect(pos)
 	local node=advtrains.ndb.get_node(pos)
 	local ndef=minetest.registered_nodes[node.name]
@@ -295,8 +295,9 @@ function advtrains.interlocking.signal_get_aspect(pos)
 		local asp = ndef.advtrains.get_aspect(pos, node)
 		if not asp then asp = DANGER end
 		fillout_aspect(asp)
-		return 
+		return asp
 	end
+	return nil
 end
 
 local players_assign_ip = {}

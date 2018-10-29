@@ -117,7 +117,6 @@ local function look_ahead(id, train)
 					idx = trav,
 					spd = lspd,
 				})
-				-- TODO register aspect change callback!
 			end
 		end
 	end
@@ -125,6 +124,8 @@ local function look_ahead(id, train)
 	lzb.trav = trav
 	lzb.travspd = travspd
 	lzb.travwspd = travwspd
+	
+	--train.debug = dump(lzb)
 	
 end
 
