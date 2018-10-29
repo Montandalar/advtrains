@@ -58,6 +58,41 @@ end
 
 advtrains.modpath = minetest.get_modpath("advtrains")
 
+--Advtrains dump (special treatment of pos and sigd)
+function atdump(t, intend)
+	local str
+	if type(t)=="table" then
+		if t.x and t.y and t.z then
+			str=minetest.pos_to_string(t)
+		elseif t.p and t.s then -- interlocking sigd
+			str="S["..minetest.pos_to_string(t.p).."/"..t.s.."]"
+		else
+			str="{"
+			local intd = (intend or "") .. "  "
+			for k,v in pairs(t) do
+				if type(k)~="string" or not string.match(k, "^path[_]?") then
+					-- do not print anything path-related
+					str = str .. "\n" .. intd .. atdump(k, intd) .. " = " ..atdump(v, intd)
+				end
+			end
+			str = str .. "\n" .. (intend or "") .. "}"
+		end
+	elseif type(t)=="boolean" then
+		if t then
+			str="true"
+		else
+			str="false"
+		end
+	elseif type(t)=="function" then
+		str="<function>"
+	elseif type(t)=="userdata" then
+		str="<userdata>"
+	else
+		str=""..t
+	end
+	return str
+end
+
 function advtrains.print_concat_table(a)
 	local str=""
 	local stra=""
@@ -69,28 +104,7 @@ function advtrains.print_concat_table(a)
 		else
 			str=str..stra
 			stra=""
-			if type(t)=="table" then
-				if t.x and t.y and t.z then
-					str=str..minetest.pos_to_string(t)
-				elseif t.p and t.s then -- interlocking sigd
-					str=str.."("..minetest.pos_to_string(t.p).."/"..t.s..")"
-				else
-					str=str..dump(t)
-				end
-			elseif type(t)=="boolean" then
-				if t then
-					str=str.."true"
-				else
-					str=str.."false"
-				end
-			elseif type(t)=="function" then
-				str=str.."<function>"
-			elseif type(t)=="userdata" then
-				str=str.."<userdata>"
-			else
-				str=str..t
-			end
-			str=str.." "
+			str=str..atdump(t).." "
 		end
 	end
 	return str
