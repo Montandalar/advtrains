@@ -246,6 +246,16 @@ function advtrains.train_ensure_init(id, train)
 		if not train.last_connid then
 			atwarn("Train",id,": Restoring path: no last_connid set! Will assume 1")
 			train.last_connid = 1
+			--[[
+			Why this fix was necessary:
+			Issue: Migration problems on Grand Theft Auto Minetest
+			1. Run of this code, warning printed.
+			2. path_create failed with result==nil (there was an unloaded node, wait_for_path set)
+			3. in consequence, the supposed call to path_setrestore does not happen
+			4. train.last_connid is still unset
+			5. next step, warning is printed again
+			Result: log flood.
+			]]
 		end
 		
 		local result = advtrains.path_create(train, train.last_pos, train.last_connid or 1, train.last_frac or 0)
