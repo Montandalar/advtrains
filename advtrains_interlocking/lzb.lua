@@ -33,6 +33,7 @@ local ADD_SLOW   =  1
 local ADD_FAST   =  7
 local ZONE_ROLL  =  2
 local ZONE_HOLD  =  5 -- added on top of ZONE_ROLL
+local ZONE_VSLOW =  2 -- When speed is <2, still allow accelerating
 
 local SHUNT_SPEED_MAX = 4
 
@@ -175,17 +176,26 @@ local function apply_control(id, train)
 				--train.debug = train.debug .. "BRAKE!!!"
 				return
 			end
-			i = advtrains.path_get_index_by_offset(train, i, -ZONE_ROLL)
-			if i <= train.index then
-				-- roll control
-				train.ctrl.lzb = 2
-				return
-			end
-			i = advtrains.path_get_index_by_offset(train, i, -ZONE_HOLD)
-			if i <= train.index then
-				-- hold speed
-				train.ctrl.lzb = 3
-				return
+			if v1==0 and v0<2 then
+				i = advtrains.path_get_index_by_offset(train, i, -ZONE_VSLOW)
+				if i <= train.index then
+					-- roll control
+					train.ctrl.lzb = 2
+					return
+				end
+			else
+				i = advtrains.path_get_index_by_offset(train, i, -ZONE_ROLL)
+				if i <= train.index then
+					-- roll control
+					train.ctrl.lzb = 2
+					return
+				end
+				i = advtrains.path_get_index_by_offset(train, i, -ZONE_HOLD)
+				if i <= train.index then
+					-- hold speed
+					train.ctrl.lzb = 3
+					return
+				end
 			end
 		end
 	end
