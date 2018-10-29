@@ -144,7 +144,7 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 				local tcbs = ildb.get_tcbs(sigd)
 				if tcbs then
 					tcbs.signal = pos
-					if not tchs.signal_name then
+					if not tcbs.signal_name then
 						tcbs.signal_name = "Signal at "..minetest.pos_to_string(sigd.p)
 					end
 					if not tcbs.routes then
