@@ -245,6 +245,7 @@ function advtrains.train_ensure_init(id, train)
 		end
 		if not train.last_connid then
 			atwarn("Train",id,": Restoring path: no last_connid set! Will assume 1")
+			train.last_connid = 1
 		end
 		
 		local result = advtrains.path_create(train, train.last_pos, train.last_connid or 1, train.last_frac or 0)
