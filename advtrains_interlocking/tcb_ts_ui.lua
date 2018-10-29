@@ -7,6 +7,8 @@ local players_link_ts = {}
 local ildb = advtrains.interlocking.db
 local ilrs = advtrains.interlocking.route
 
+local sigd_equal = advtrains.interlocking.sigd_equal
+
 local lntrans = { "A", "B" }
 
 local function sigd_to_string(sigd)
@@ -337,7 +339,7 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 	if ts.route then
 		form = form.."label[0.5,6.1;Route is set: "..ts.route.rsn.."]"
 	elseif ts.route_post then
-		form = form.."label[0.5,6.1;Section holds "..#ts.route_post.lcks.." route locks.]"
+		form = form.."label[0.5,6.1;Section holds "..#(ts.route_post.lcks or {}).." route locks.]"
 	end
 	-- occupying trains
 	if ts.trains and #ts.trains>0 then
@@ -558,28 +560,41 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 		
 		form = form.."button[0.5,6;  5,1;cancelroute;Cancel Route]"
 	else
-		local strtab = {}
-		for idx, route in ipairs(tcbs.routes) do
-			strtab[#strtab+1] = minetest.formspec_escape(route.name)
-		end
-		form = form.."label[0.5,2.5;Routes:]"
-		form = form.."textlist[0.5,3;5,3;rtelist;"..table.concat(strtab, ",").."]"
-		if sel_rte then
-			form = form.."button[0.5,6;  5,1;setroute;Set Route]"
-			form = form.."button[0.5,7;2,1;dsproute;Show]"
-			if hasprivs then
-				form = form.."button[2.5,7;1,1;delroute;Delete]"
-				form = form.."button[3.5,7;2,1;editroute;Edit]"
+		if not tcbs.route_origin then
+			local strtab = {}
+			for idx, route in ipairs(tcbs.routes) do
+				strtab[#strtab+1] = minetest.formspec_escape(route.name)
 			end
-		end
-		if hasprivs then
-			form = form.."button[0.5,8;2.5,1;newroute;New Route]"
-			form = form.."button[  3,8;2.5,1;unassign;Unassign Signal]"
-			form = form.."button[  3,9;2.5,1;influp;Influence Point]"
+			form = form.."label[0.5,2.5;Routes:]"
+			form = form.."textlist[0.5,3;5,3;rtelist;"..table.concat(strtab, ",").."]"
+			if sel_rte then
+				form = form.."button[0.5,6;  5,1;setroute;Set Route]"
+				form = form.."button[0.5,7;2,1;dsproute;Show]"
+				if hasprivs then
+					form = form.."button[2.5,7;1,1;delroute;Delete]"
+					form = form.."button[3.5,7;2,1;editroute;Edit]"
+				end
+			end
+			if hasprivs then
+				form = form.."button[0.5,8;2.5,1;newroute;New Route]"
+				form = form.."button[  3,8;2.5,1;unassign;Unassign Signal]"
+				form = form.."button[  3,9;2.5,1;influp;Influence Point]"
+			end
+		elseif sigd_equal(tcbs.route_origin, sigd) then
+			-- something has gone wrong: tcbs.routeset should have been set...
+			atwarn("Signal",tcbs.signal_name,"- Unknown route set. Route is being cancelled.")
+			ilrs.cancel_route_from(sigd)
+			return
+		else
+			form = form.."label[0.5,2.5;Route is set over this signal by:\n"..sigd_to_string(tcbs.route_origin).."]"
+			form = form.."label[0.5,4;Wait for this route to be cancelled in order to do anything here.]"
 		end
 	end	
 	sig_pselidx[pname] = sel_rte
 	minetest.show_formspec(pname, "at_il_signalling_"..minetest.pos_to_string(sigd.p).."_"..sigd.s, form)
+	
+	-- always a good idea to update the signal aspect
+	advtrains.interlocking.update_signal_aspect(tcbs)
 end
 
 

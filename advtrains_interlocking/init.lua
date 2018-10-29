@@ -3,6 +3,11 @@
 
 advtrains.interlocking = {}
 
+function advtrains.interlocking.sigd_equal(sigd, cmp)
+	return vector.equals(sigd.p, cmp.p) and sigd.s==cmp.s
+end
+
+
 local modpath = minetest.get_modpath(minetest.get_current_modname()) .. DIR_DELIM
 
 dofile(modpath.."database.lua")

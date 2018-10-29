@@ -248,9 +248,7 @@ end
 
 
 -- various helper functions handling sigd's
-local function sigd_equal(sigd, cmp)
-	return vector.equals(sigd.p, cmp.p) and sigd.s==cmp.s
-end
+local sigd_equal = advtrains.interlocking.sigd_equal
 local function insert_sigd_nodouble(list, sigd)
 	for idx, cmp in pairs(list) do
 		if sigd_equal(sigd, cmp) then

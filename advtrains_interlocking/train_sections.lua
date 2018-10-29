@@ -21,6 +21,7 @@ It will be possible to indicate a section "free" via the GUI.
 
 local ildb = advtrains.interlocking.db
 
+local sigd_equal = advtrains.interlocking.sigd_equal
 
 local function itexist(tbl, com)
 	for _,item in ipairs(tbl) do
@@ -60,7 +61,7 @@ local function itkremove(tbl, ikey, com)
 	end
 end
 
-local function setsection(tid, train, ts_id, ts, origin)
+local function setsection(tid, train, ts_id, ts, sigd)
 	-- train
 	if not train.il_sections then train.il_sections = {} end
 	if not itkexist(train.il_sections, "ts_id", ts_id) then
@@ -73,25 +74,37 @@ local function setsection(tid, train, ts_id, ts, origin)
 		table.insert(ts.trains, tid)
 	end
 	
+	-- routes
+	local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
+	
 	-- route setting - clear route state
 	if ts.route then
-		if ts.route.first then
-			-- this is the first route section. clear route status from origin sigd
-			local tcbs = advtrains.interlocking.db.get_tcbs(ts.route.origin)
-			if tcbs then
-				tcbs.route_committed = nil
-				tcbs.aspect = nil
-				advtrains.interlocking.update_signal_aspect(tcbs)
-				if tcbs.route_auto then
-					advtrains.interlocking.route.update_route(ts.route.origin, tcbs)
-				else
-					tcbs.routeset = nil
-				end
+		--atdebug(tid,"enters",ts_id,"examining Routestate",ts.route)
+		if not sigd_equal(ts.route.entry, sigd) then
+			-- Train entered not from the route. Locate origin and cancel route!
+			atwarn("Train",tid,"hit route",ts.route.rsn,"!")
+			advtrains.interlocking.route.cancel_route_from(ts.route.origin)
+			atwarn("Route was cancelled.")
+		end
+		-- train entered route regularily. Reset route and signal
+		tcbs.route_committed = nil
+		tcbs.route_comitted = nil -- TODO compatibility cleanup
+		tcbs.aspect = nil
+		tcbs.route_origin = nil
+		advtrains.interlocking.update_signal_aspect(tcbs)
+		if tcbs.signal and sigd_equal(ts.route.entry, ts.route.origin) then
+			if tcbs.route_auto and tcbs.routeset then
+				--atdebug("Resetting route (",ts.route.origin,")")
+				advtrains.interlocking.route.update_route(ts.route.origin, tcbs)
+			else
+				tcbs.routeset = nil
 			end
 		end
 		ts.route = nil
 	end
-	
+	if tcbs.signal then
+		advtrains.interlocking.route.update_route(sigd, tcbs)
+	end
 end
 
 local function freesection(tid, train, ts_id, ts)

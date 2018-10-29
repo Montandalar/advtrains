@@ -6,8 +6,25 @@ local function sigd_to_string(sigd)
 	return minetest.pos_to_string(sigd.p).." / "..lntrans[sigd.s]
 end
 
+local asp_generic_free = {
+	main = {
+		free = true,
+		speed = -1,
+	},
+	shunt = {
+		free = false,
+	},
+	dst = {
+		free = true,
+		speed = -1,
+	},
+	info = {}
+}
+
 local ildb = advtrains.interlocking.db
 local ilrs = {}
+
+local sigd_equal = advtrains.interlocking.sigd_equal
 
 -- table containing locked points
 -- also manual locks (maintenance a.s.o.) are recorded here
@@ -88,6 +105,11 @@ function ilrs.set_route(signal, route, try)
 		end
 		-- reserve ts and write locks
 		if not try then
+			local nvar = c_rseg.next
+			if not route[i+1] then
+				-- We shouldn't use the "next" value of the final route segment, because this can lead to accidental route-cancelling of already set routes from another signal.
+				nvar = nil
+			end
 			c_ts.route = {
 				origin = signal,
 				entry = c_sigd,
@@ -96,8 +118,14 @@ function ilrs.set_route(signal, route, try)
 			}
 			c_ts.route_post = {
 				locks = c_lckp,
-				next = c_rseg.next,
+				next = nvar,
 			}
+			if c_tcbs.signal then
+				c_tcbs.route_committed = true
+				c_tcbs.aspect = asp_generic_free
+				c_tcbs.route_origin = signal
+				advtrains.interlocking.update_signal_aspect(c_tcbs)
+			end
 		end
 		-- advance
 		first = nil
@@ -185,9 +213,6 @@ function ilrs.remove_route_locks(pts, nocallbacks)
 	end
 end
 
-local function sigd_equal(sigd, cmp)
-	return vector.equals(sigd.p, cmp.p) and sigd.s==cmp.s
-end
 
 -- starting from the designated sigd, clears all subsequent route and route_post
 -- information from the track sections.
@@ -198,6 +223,7 @@ function ilrs.cancel_route_from(sigd)
 	local c_sigd = sigd
 	local c_tcbs, c_ts_id, c_ts, c_rseg, c_lckp
 	while c_sigd do
+		--atdebug("cancel_route_from: at sigd",c_sigd)
 		c_tcbs = ildb.get_tcbs(c_sigd)
 		c_ts_id = c_tcbs.ts_id
 		c_ts = ildb.get_ts(c_ts_id)
@@ -205,8 +231,19 @@ function ilrs.cancel_route_from(sigd)
 		if not c_ts
 			or not c_ts.route
 			or not sigd_equal(c_ts.route.entry, c_sigd) then
+			--atdebug("cancel_route_from: abort (eoi/no route):")
 			return
 		end
+		
+		--atdebug("cancelling",c_ts.route.rsn)
+		-- clear signal aspect and routesetting state
+		c_tcbs.route_committed = nil
+		c_tcbs.aspect = nil
+		c_tcbs.routeset = nil
+		c_tcbs.route_auto = nil
+		c_tcbs.route_origin = nil
+		
+		advtrains.interlocking.update_signal_aspect(c_tcbs)
 		
 		c_ts.route = nil
 		
@@ -219,22 +256,8 @@ function ilrs.cancel_route_from(sigd)
 		c_ts.route_post = nil
 		minetest.after(0, advtrains.interlocking.route.update_waiting, "ts", c_ts_id)
 	end
+	--atdebug("cancel_route_from: done (no final sigd)")
 end
-
-local asp_generic_free = {
-	main = {
-		free = true,
-		speed = -1,
-	},
-	shunt = {
-		free = false,
-	},
-	dst = {
-		free = true,
-		speed = -1,
-	},
-	info = {}
-}
 
 -- TCBS Routesetting helper: generic update function for
 -- route setting
@@ -242,14 +265,21 @@ local asp_generic_free = {
 function ilrs.update_route(sigd, tcbs, newrte, cancel)
 	-- in general, always show danger signal
 	tcbs.aspect = nil
+	--atdebug("Update_Route for",sigd,tcbs.signal_name)
+	if tcbs.route_origin and not sigd_equal(tcbs.route_origin, sigd) then
+		--atdebug("Signal not in control, held by",tcbs.signal_name)
+		return
+	end
 	if (newrte and tcbs.routeset and tcbs.routeset ~= newrte) or cancel then
 		if tcbs.route_committed then
 			--atdebug("Cancelling:",tcbs.routeset)
 			advtrains.interlocking.route.cancel_route_from(sigd)
 		end
 		tcbs.route_committed = nil
-		tcbs.routeset = newrte
+		tcbs.aspect = nil
+		tcbs.routeset = nil
 		tcbs.route_auto = nil
+		tcbs.route_rsn = nil
 	end
 	if newrte or tcbs.routeset then
 		if newrte then tcbs.routeset = newrte end
@@ -271,9 +301,6 @@ function ilrs.update_route(sigd, tcbs, newrte, cancel)
 			end
 		else
 			--atdebug("Committed Route:",tcbs.routeset)
-			tcbs.route_committed = true
-			tcbs.route_rsn = false
-			tcbs.aspect = asp_generic_free
 		end
 	end
 	advtrains.interlocking.update_signal_aspect(tcbs)
