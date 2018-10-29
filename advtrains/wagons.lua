@@ -864,7 +864,7 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 	local data = advtrains.wagons[self.id]
 	
 	local seatno=self:get_seatno(pname)
-	if not seatno or not self.seat_groups[self.seats[seatno].group].driving_ctrl_access or not advtrains.check_driving_couple_protection(pname, self.owner, self.whitelist) then
+	if not seatno or not self.seat_groups[self.seats[seatno].group].driving_ctrl_access or not advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist) then
 		return
 	end
 	local train = self:train()
@@ -1053,7 +1053,8 @@ function wagon:seating_from_key_helper(pname, fields, no)
 	end
 end
 function wagon:check_seat_group_access(pname, sgr)
-	if self.seat_groups[sgr].driving_ctrl_access and not (advtrains.check_driving_couple_protection(pname, self.owner, self.whitelist)) then
+	local data = advtrains.wagons[self.id]
+	if self.seat_groups[sgr].driving_ctrl_access and not (advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist)) then
 		return false, "Not allowed to access a driver stand!"
 	end
 	if self.seat_groups[sgr].driving_ctrl_access then

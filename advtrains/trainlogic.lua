@@ -258,6 +258,7 @@ function advtrains.train_ensure_init(id, train)
 				atwarn("Train",id,": Can't initialize: Waiting for the (yet unloaded) node at",train.last_pos," to be loaded.")
 			end
 			train.wait_for_path = true
+			return
 		end
 		-- by now, we should have a working initial path
 		train.wait_for_path = false
