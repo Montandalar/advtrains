@@ -188,6 +188,9 @@ local function fillout_aspect(asp)
 			proceed_as_main = false,
 		}
 	end
+	if not asp.info then
+		asp.info = {}
+	end
 end
 
 function advtrains.interlocking.update_signal_aspect(tcbs)
