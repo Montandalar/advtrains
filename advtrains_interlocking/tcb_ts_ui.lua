@@ -141,20 +141,25 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 		if vector.distance(pos, sigd.p)<=50 then
 			local is_signal = minetest.get_item_group(node.name, "advtrains_signal") >= 2
 			if is_signal then
-				local tcbs = ildb.get_tcbs(sigd)
-				if tcbs then
-					tcbs.signal = pos
-					if not tcbs.signal_name then
-						tcbs.signal_name = "Signal at "..minetest.pos_to_string(sigd.p)
+				local ndef = minetest.registered_nodes[node.name]
+				if ndef and ndef.advtrains and ndef.advtrains.set_aspect then
+					local tcbs = ildb.get_tcbs(sigd)
+					if tcbs then
+						tcbs.signal = pos
+						if not tcbs.signal_name then
+							tcbs.signal_name = "Signal at "..minetest.pos_to_string(sigd.p)
+						end
+						if not tcbs.routes then
+							tcbs.routes = {}
+						end
+						ildb.set_sigd_for_signal(pos, sigd)
+						minetest.chat_send_player(pname, "Configuring TCB: Successfully assigned signal.")
+						advtrains.interlocking.show_ip_form(pos, pname, true)
+					else
+						minetest.chat_send_player(pname, "Configuring TCB: Internal error, TCBS doesn't exist. Aborted.")
 					end
-					if not tcbs.routes then
-						tcbs.routes = {}
-					end
-					ildb.set_sigd_for_signal(pos, sigd)
-					minetest.chat_send_player(pname, "Configuring TCB: Successfully assigned signal.")
-					advtrains.interlocking.show_ip_form(pos, pname, true)
 				else
-					minetest.chat_send_player(pname, "Configuring TCB: Internal error, TCBS doesn't exist. Aborted.")
+					minetest.chat_send_player(pname, "Configuring TCB: Cannot use static signals for routesetting. Aborted.")
 				end
 			else
 				minetest.chat_send_player(pname, "Configuring TCB: Not a compatible signal. Aborted.")
