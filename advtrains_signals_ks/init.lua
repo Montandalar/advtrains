@@ -82,7 +82,7 @@ for _, rtab in ipairs({
 			inventory_image = "advtrains_signals_ks_hs_inv.png",
 			sounds = default.node_sound_stone_defaults(),
 			advtrains = {
-				set_aspect = setaspect,
+				set_aspect = setaspectf(rot),
 				supported_aspects = suppasp,
 				get_aspect = function(pos, node)
 					return prts.asp
