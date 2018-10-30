@@ -282,6 +282,9 @@ function ilrs.update_route(sigd, tcbs, newrte, cancel)
 		tcbs.route_rsn = nil
 	end
 	if newrte or tcbs.routeset then
+		if tcbs.route_committed then
+			return
+		end
 		if newrte then tcbs.routeset = newrte end
 		--atdebug("Setting:",tcbs.routeset)
 		local succ, rsn, cbts, cblk = ilrs.set_route(sigd, tcbs.routes[tcbs.routeset])
