@@ -67,6 +67,11 @@ for _, rtab in ipairs({
 			drawtype = "mesh",
 			mesh = "advtrains_signals_ks_main_smr"..rot..".obj",
 			tiles = {"advtrains_signals_ks_mast.png", "advtrains_signals_ks_head.png", "advtrains_signals_ks_head.png", "advtrains_signals_ks_ltm_"..typ..".png"},
+			
+			paramtype="light",
+			sunlight_propagates=true,
+			light_source = 4,
+			
 			paramtype2 = "facedir",
 			selection_box = {
 				type = "fixed",
@@ -103,6 +108,11 @@ for _, rtab in ipairs({
 		drawtype = "mesh",
 		mesh = "advtrains_signals_ks_mast_smr"..rot..".obj",
 		tiles = {"advtrains_signals_ks_mast.png"},
+		
+		paramtype="light",
+		sunlight_propagates=true,
+		--light_source = 4,
+		
 		paramtype2 = "facedir",
 		selection_box = {
 			type = "fixed",
