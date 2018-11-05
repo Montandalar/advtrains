@@ -43,7 +43,8 @@ minetest.register_craftitem("advtrains_luaautomation:pcnaming",{
 				minetest.record_protection_violation(pos, pname)
 				return
 			end
-			if advtrains.is_passive(pos) then
+			local node = advtrains.ndb.get_node(pos)
+			if node.name and (minetest.get_item_group(node.name, "advtrains_signal")>0 or advtrains.is_passive(pos)) then
 				--look if this one already has a name
 				local pn=""
 				for name, npos in pairs(atlatc.pcnaming.name_map) do
