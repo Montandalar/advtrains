@@ -11,7 +11,7 @@ end
 
 --advtrains
 
-DUMP_DEBUG_SAVE = false
+DUMP_DEBUG_SAVE = true
 
 --Constant for maximum connection value/division of the circle
 AT_CMAX = 16
@@ -314,6 +314,7 @@ advtrains.avt_save = function(remove_players_from_wagons)
 	
 	--versions:
 	-- 1 - Initial new save format.
+	-- 2 - version as of tss branch 11-2018+
 	local il_save
 	if advtrains.interlocking then
 		il_save = advtrains.interlocking.db.save()
@@ -325,7 +326,7 @@ advtrains.avt_save = function(remove_players_from_wagons)
 		atc = advtrains.atc.save_data(),
 		ndb = advtrains.ndb.save_data(),
 		interlocking = il_save,
-		version = 1,
+		version = 2,
 	}
 	local datastr = minetest.serialize(save_tbl)
 	if not datastr then
