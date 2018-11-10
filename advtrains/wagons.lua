@@ -300,7 +300,7 @@ function wagon:on_step(dtime)
 		--check infotext
 		local outside=self:train().text_outside or ""
 		if setting_show_ids then
-			outside = outside .. "\nT:" .. data.train_id .. " W:" .. self.id
+			outside = outside .. "\nT:" .. data.train_id .. " W:" .. self.id .. " O:" .. data.owner
 		end
 		
 		local train=self:train()
@@ -361,7 +361,7 @@ function wagon:on_step(dtime)
 		
 		--DisCouple
 		if data.pos_in_trainparts and data.pos_in_trainparts>1 then
-			if train.velocity==0 and not data.dcpl_lock then
+			if train.velocity==0 then
 				if not self.discouple or not self.discouple.object:getyaw() then
 					atprint(self.id,"trying to spawn discouple")
 					local yaw = self.object:getyaw()
@@ -374,9 +374,6 @@ function wagon:on_step(dtime)
 						--box is hidden when attached, so unuseful.
 						--object:set_attach(self.object, "", {x=0, y=0, z=self.wagon_span*10}, {x=0, y=0, z=0})
 						self.discouple=le
-						atprint(self.id,"success")
-					else
-						atprint("Couldn't spawn DisCouple")
 					end
 				end
 			else
@@ -474,12 +471,13 @@ function wagon:on_step(dtime)
 		end
 		
 		self.updatepct_timer=(self.updatepct_timer or 0)-dtime
+		local updatepct_timer_elapsed = self.updatepct_timer<=0
 		if not self.old_velocity_vector 
 				or not vector.equals(velocityvec, self.old_velocity_vector)
 				or not self.old_acceleration_vector 
 				or not vector.equals(accelerationvec, self.old_acceleration_vector)
 				or self.old_yaw~=yaw
-				or self.updatepct_timer<=0 then--only send update packet if something changed
+				or updatepct_timer_elapsed then--only send update packet if something changed
 			
 			self.object:setpos(pos)
 			self.object:setvelocity(velocityvec)
@@ -518,7 +516,7 @@ function wagon:on_step(dtime)
 				self:custom_on_velocity_change(train.velocity, self.old_velocity or 0, dtime)
 			end
 			-- remove discouple object, because it will be in a wrong location
-			if self.discouple then
+			if not updatepct_timer_elapsed and self.discouple then
 				self.discouple.object:remove()
 			end
 		end
@@ -792,13 +790,8 @@ function wagon:show_bordcom(pname)
 				local ename = ent.type
 				form = form .. "item_image["..i..","..linhei..";1,1;"..ename.."]"
 				if i~=1 then
-					if not ent.dcpl_lock then
+					if checklock(pname, ent.owner, pre_own, ent.whitelist, pre_wl) then
 						form = form .. "image_button["..(i-0.5)..","..(linhei+1)..";1,1;advtrains_discouple.png;dcpl_"..i..";]"
-						if checklock(pname, ent.owner, pre_own, ent.whitelist, pre_wl) then
-							form = form .. "image_button["..(i-0.5)..","..(linhei+2)..";1,1;advtrains_cpl_unlock.png;dcpl_lck_"..i..";]"
-						end
-					else
-						form = form .. "image_button["..(i-0.5)..","..(linhei+2)..";1,1;advtrains_cpl_lock.png;dcpl_ulck_"..i..";]"
 					end
 				end
 				if i == data.pos_in_trainparts then
@@ -823,18 +816,6 @@ function wagon:show_bordcom(pname)
 		end
 		if couple_back then
 			form = form .. "image_button["..(#train.trainparts+0.5)..","..(linhei+1)..";1,1;advtrains_couple.png;cpl_b;]"
-		end
-		if owns_any then
-			if train.couple_lck_front then
-				form = form .. "image_button[0.5,"..(linhei+2)..";1,1;advtrains_cpl_lock.png;cpl_ulck_f;]"
-			else
-				form = form .. "image_button[0.5,"..(linhei+2)..";1,1;advtrains_cpl_unlock.png;cpl_lck_f;]"
-			end
-			if train.couple_lck_back then
-				form = form .. "image_button["..(#train.trainparts+0.5)..","..(linhei+2)..";1,1;advtrains_cpl_lock.png;cpl_ulck_b;]"
-			else
-				form = form .. "image_button["..(#train.trainparts+0.5)..","..(linhei+2)..";1,1;advtrains_cpl_unlock.png;cpl_lck_b;]"
-			end
 		end
 		
 	else
@@ -887,24 +868,6 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 		if fields["dcpl_"..i] then
 			advtrains.safe_decouple_wagon(tpid, pname)
 		end
-		if i>1 and fields["dcpl_lck_"..i] then
-			local ent = advtrains.wagons[tpid]
-			local pent = advtrains.wagons[train.trainparts[i-1]]
-			if ent and pent then
-				if checklock(pname, ent.owner, pent.owner, ent.whitelist, pent.whitelist) then
-					ent.dcpl_lock = true
-				end
-			end
-		end
-		if i>1 and fields["dcpl_ulck_"..i] then
-			local ent = advtrains.wagons[tpid]
-			local pent = advtrains.wagons[train.trainparts[i-1]]
-			if ent and pent then
-				if checklock(pname, ent.owner, pent.owner, ent.whitelist, pent.whitelist) then
-					ent.dcpl_lock = false
-				end
-			end
-		end
 	end
 	--check cpl_eid_front and _back of train
 	local couple_front = checkcouple(train.cpl_front)
@@ -915,29 +878,6 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 	end
 	if fields.cpl_b and couple_back then
 		couple_back:on_rightclick(pname)
-	end
-	
-	local function chkownsany()
-		local owns_any = minetest.check_player_privs(pname, "train_admin")
-		for i, tpid in ipairs(train.trainparts) do
-			local ent = advtrains.wagons[tpid]
-			if ent then
-				owns_any = owns_any or advtrains.check_driving_couple_protection(pname, ent.owner, ent.whitelist)
-			end
-		end
-		return owns_any
-	end
-	if fields.cpl_lck_f and chkownsany() then
-		train.couple_lck_front=true
-	end
-	if fields.cpl_lck_b and chkownsany() then
-		train.couple_lck_back=true
-	end
-	if fields.cpl_ulck_f and chkownsany() then
-		train.couple_lck_front=false
-	end
-	if fields.cpl_ulck_b and chkownsany() then
-		train.couple_lck_back=false
 	end
 	
 	-- Interlocking functionality: If the interlocking module is loaded, you can set the signal aspect
@@ -1072,6 +1012,97 @@ function wagon:reattach_all()
 		end
 	end
 end
+
+local function check_twagon_owner(train, b_first, pname)
+	local wtp = b_first and 1 or #train.trainparts
+	atdebug("wtp",wtp)
+	local wid = train.trainparts[wtp]
+	local wdata = advtrains.wagons[wid]
+	if wdata then
+		return advtrains.check_driving_couple_protection(pname, wdata.owner, wdata.whitelist)
+	end
+	return false
+end
+
+function advtrains.safe_couple_trains(id1, id2, t1f, t2f, pname, try_run)
+	
+	if not minetest.check_player_privs(pname, "train_operator") then
+		minetest.chat_send_player(pname, "Missing train_operator privilege")
+		return false
+	end
+	
+	local train1=advtrains.trains[id1]
+	local train2=advtrains.trains[id2]
+	
+	if not advtrains.train_ensure_init(id1, train1)
+		or not advtrains.train_ensure_init(id2, train2) then
+		return false
+	end
+	
+	local wck_t1 = check_twagon_owner(train1, t1f, pname)
+	local wck_t2 = check_twagon_owner(train2, t2f, pname)
+	
+	if wck_t1 or wck_t2 then
+		if try_run then
+			return true
+		end
+		if t1f then
+			if t2f then
+				advtrains.invert_train(id1)
+				advtrains.do_connect_trains(id1, id2)
+			else
+				advtrains.do_connect_trains(id2, id1)
+			end
+		else
+			if t2f then
+				advtrains.do_connect_trains(id1, id2)
+			else
+				advtrains.invert_train(id2)
+				advtrains.do_connect_trains(id1, id2)
+			end
+		end
+		return true
+	else
+		minetest.chat_send_player(pname, "You must be authorized for at least one wagon.")
+		return false
+	end
+end
+
+
+function advtrains.safe_decouple_wagon(w_id, pname, try_run)
+	if not minetest.check_player_privs(pname, "train_operator") then
+		minetest.chat_send_player(pname, "Missing train_operator privilege")
+		return false
+	end
+	local data = advtrains.wagons[w_id]
+	
+	local dpt = data.pos_in_trainparts
+	if not dpt or dpt <= 1 then
+		return false
+	end
+	local train = advtrains.trains[data.train_id]
+	local owid = train.trainparts[dpt-1]
+	local owdata = advtrains.wagons[owid]
+	
+	if not owdata then
+		return
+	end
+	
+	if not checklock(pname, data.owner, owdata.owner, data.whitelist, owdata.whitelist) then
+		minetest.chat_send_player(pname, "Not allowed to do this.")
+		return false
+	end
+	
+	if try_run then
+		return true
+	end
+	
+	advtrains.log("Discouple", pname, train.last_pos, train.text_outside)
+	advtrains.split_train_at_wagon(w_id)
+	return true
+end
+
+
 
 function advtrains.get_wagon_prototype(data)
 	local wt = data.type

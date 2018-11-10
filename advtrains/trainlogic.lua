@@ -736,22 +736,7 @@ function advtrains.add_wagon_to_train(wagon_id, train_id, index)
 	run_callbacks_update(train_id, train)
 end
 
-function advtrains.safe_decouple_wagon(w_id, pname)
-	if not minetest.check_player_privs(pname, "train_operator") then
-		minetest.chat_send_player(pname, "Missing train_operator privilege")
-		return false
-	end
-	local data = advtrains.wagons[w_id]
-	if data.dcpl_lock then
-		minetest.chat_send_player(pname, "Couple is locked (ask owner or admin to unlock it)")
-		return false
-	end
-	atprint("wagon:discouple() Splitting train", data.train_id)
-	local train = advtrains.trains[data.train_id]
-	advtrains.log("Discouple", pname, train.last_pos, train.text_outside)
-	advtrains.split_train_at_wagon(w_id)
-	return true
-end
+-- Note: safe_decouple_wagon() has been moved to wagons.lua
 
 -- this function sets wagon's pos_in_train(parts) properties and train's max_speed and drives_on (and more)
 function advtrains.update_trainpart_properties(train_id, invert_flipstate)
@@ -881,13 +866,7 @@ function advtrains.split_train_at_wagon(wagon_id)
 	local newtrain_id=advtrains.create_new_train_at(pos, connid, frac, tp)
 	local newtrain=advtrains.trains[newtrain_id]
 	
-	train.tarvelocity=0
 	newtrain.velocity=train.velocity
-	newtrain.tarvelocity=0
-	
-	newtrain.couple_lck_back=train.couple_lck_back
-	newtrain.couple_lck_front=false
-	train.couple_lck_back=false
 	
 end
 
@@ -1013,12 +992,6 @@ function advtrains.do_connect_trains(first_id, second_id)
 		return
 	end
 	
-	if first.couple_lck_back or second.couple_lck_front then
-		-- trains are ordered correctly!
-		-- Note, this is already checked in the rightclick step of the couple entity before trains are actually reversed
-		return
-	end
-	
 	local first_wagoncnt=#first.trainparts
 	local second_wagoncnt=#second.trainparts
 	
@@ -1026,13 +999,10 @@ function advtrains.do_connect_trains(first_id, second_id)
 		table.insert(first.trainparts, v)
 	end
 	
-	local tmp_cpl_lck=second.couple_lck_back
-	
 	advtrains.remove_train(second_id)
 	
 	first.velocity=0
 	first.tarvelocity=0
-	first.couple_lck_back=tmp_cpl_lck
 	
 	advtrains.update_trainpart_properties(first_id)
 	advtrains.couple_invalidate(first)
@@ -1050,7 +1020,6 @@ function advtrains.invert_train(train_id)
 	advtrains.path_setrestore(train, true)
 	
 	-- rotate some other stuff
-	train.couple_lck_back, train.couple_lck_front = train.couple_lck_front, train.couple_lck_back
 	if train.door_open then
 		train.door_open = - train.door_open
 	end

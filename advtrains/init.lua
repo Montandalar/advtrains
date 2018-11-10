@@ -287,7 +287,7 @@ advtrains.avt_save = function(remove_players_from_wagons)
 				"last_pos", "last_connid", "last_frac", "velocity", "tarvelocity",
 				"trainparts", "recently_collided_with_env",
 				"atc_brake_target", "atc_wait_finish", "atc_command", "atc_delay", "door_open",
-				"text_outside", "text_inside", "couple_lck_front", "couple_lck_back", "line",
+				"text_outside", "text_inside", "line",
 				"il_sections", "speed_restriction",
 			})
 			--then save it
@@ -308,6 +308,8 @@ advtrains.avt_save = function(remove_players_from_wagons)
 			end
 		end
 		-- TODO apply save-keys here too
+		-- TODO temp
+		wdata.dcpl_lock = nil
 	end
 	
 	--versions:

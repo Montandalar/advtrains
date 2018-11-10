@@ -65,7 +65,7 @@ minetest.register_entity("advtrains:discouple", {
 -- advtrains:couple
 -- Couple entity 
 local function lockmarker(obj)
-	minetest.spawn_entity(obj:get_pos(), "advtrains.lockmarker")
+	minetest.add_entity(obj:get_pos(), "advtrains:lockmarker")
 	obj:remove()
 end
 
@@ -96,63 +96,12 @@ minetest.register_entity("advtrains:couple", {
 			
 			local pname=clicker
 			if type(clicker)~="string" then pname=clicker:get_player_name() end
-			if not minetest.check_player_privs(pname, "train_operator") then return end
 			
-			local train1=advtrains.trains[self.train_id_1]
-			local train2=advtrains.trains[self.train_id_2]
-			if not advtrains.train_ensure_init(self.train_id_1, train1) then
-				atwarn("Train",self.train_id_1,"is not initialized! Operation aborted!")
-				return
-			end
-			if not advtrains.train_ensure_init(self.train_id_2, train2) then
-				atwarn("Train",self.train_id_2,"is not initialized! Operation aborted!")
-				return
-			end
-			
-			local id1, id2=self.train_id_1, self.train_id_2
-			local bp1, bp2 = self.t1_is_front, self.t2_is_front
-			if bp1 then
-				if train1.couple_lock_front then
-					lockmarker(self.object)
-					return
-				end
-				if bp2 then
-					if train2.couple_lock_front then
-						lockmarker(self.object)
-						return
-					end
-					advtrains.invert_train(id1)
-					advtrains.do_connect_trains(id1, id2, clicker)
-				else
-					if train2.couple_lock_back then
-						lockmarker(self.object)
-						return
-					end
-					advtrains.do_connect_trains(id2, id1, clicker)
-				end
+			if advtrains.safe_couple_trains(self.train_id_1, self.train_id_2, self.t1_is_front, self.t2_is_front, pname) then
+				self.object:remove()
 			else
-				if train1.couple_lock_back then
-					lockmarker(self.object)
-					return
-				end
-				if bp2 then
-					if train2.couple_lock_front then
-						lockmarker(self.object)
-						return
-					end
-					advtrains.do_connect_trains(id1, id2, clicker)
-				else
-					if train2.couple_lock_back then
-						lockmarker(self.object)
-						return
-					end
-					advtrains.invert_train(id2)
-				advtrains.do_connect_trains(id1, id2, clicker)
-				end
+				lockmarker(self.object)
 			end
-			
-			atprint("Coupled trains", id1, id2)
-			self.object:remove()
 		end)
 	end,
 	on_step=function(self, dtime)
