@@ -2,6 +2,7 @@
 ### Advtrains Privilege Guide
 All privileges are automatically granted to singleplayer, but for
 multiplayer servers this might be interesting.
+In this document, "protected from" means the player does NOT have access to the area, while "protected by" means the player has (semi-)exclusive access to the area.
 There are 3 groups of privileges introduced by advtrains:
 
 ## Trains
@@ -17,10 +18,10 @@ destroy any train.
 The area 1 node around and 4 nodes up from each track node is protected.
 Players that don't have the 'track_builder' privilege can not build or
 dig (or modify) anything inside this area.
-If any player tries to modify anything that is in the area of a track
-node and this track node is protected from him, he also can not do this.
+If a player has this privilege and tries to modify anything that is in the area of a track node which is protected from him, he also can not do this.
 (that said, while checking protection, the area around a track is
 treated as the track node itself)
+Note that having 'protection_bypass' automatically implies 'track_builder' due to internal engine mechanics. (see comments in source code)
 
 ## Turnouts and Signals*
 Players without the 'railway_operator' privilege can not operate signals
@@ -31,3 +32,12 @@ an exception applies to players missing the required privileges when
 they are in a protected area that they have access to. Whether the
 area is protected from others is checked by checking for protection
 against a dummy player called '*dummy*'
+
+## Privileges of extensions:
+
+* atlatc:
+This privilege allows to create and modify LUA code in LuaATC rails added by the advtrains_luaautomation mod, as well as to create and manage code environments.
+
+* interlocking:
+This privilege allows to build, set up, configure and control all sorts of interlocking equipment.
+Players without this privilege are still allowed to set and cancel routes (under the condition that they have train_operator).

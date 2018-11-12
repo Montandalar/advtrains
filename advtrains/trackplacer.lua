@@ -277,8 +277,7 @@ function tp.register_track_placer(nnprefix, imgprefix, dispname)
 				if pointed_thing.type=="node" then
 					local pos=pointed_thing.above
 					local upos=vector.subtract(pointed_thing.above, {x=0, y=1, z=0})
-					if advtrains.is_protected(pos,name) then
-						minetest.record_protection_violation(pos, name)
+					if not advtrains.check_track_protection(pos, name) then
 						return itemstack, false
 					end
 					if minetest.registered_nodes[minetest.get_node(pos).name] and minetest.registered_nodes[minetest.get_node(pos).name].buildable_to
@@ -286,7 +285,7 @@ function tp.register_track_placer(nnprefix, imgprefix, dispname)
 --						minetest.chat_send_all(nnprefix)
 						local yaw = placer:get_look_horizontal()
 						tp.placetrack(pos, nnprefix, placer, itemstack, pointed_thing, yaw)
-						if not minetest.settings:get_bool("creative_mode") then
+						if not advtrains.is_creative(name) then
 							itemstack:take_item()
 						end
 					end
@@ -314,8 +313,7 @@ minetest.register_craftitem("advtrains:trackworker",{
 			local has_aux1_down = placer:get_player_control().aux1
 			if pointed_thing.type=="node" then
 				local pos=pointed_thing.under
-				if advtrains.is_protected(pos, name) then
-					minetest.record_protection_violation(pos, name)
+				if not advtrains.check_track_protection(pos, name) then
 					return
 				end
 				local node=minetest.get_node(pos)
@@ -369,8 +367,7 @@ minetest.register_craftitem("advtrains:trackworker",{
 			if pointed_thing.type=="node" then
 				local pos=pointed_thing.under
 				local node=minetest.get_node(pos)
-				if advtrains.is_protected(pos, name) then
-					minetest.record_protection_violation(pos, name)
+				if not advtrains.check_track_protection(pos, name) then
 					return
 				end
 				

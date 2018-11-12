@@ -11,7 +11,7 @@ end
 
 --advtrains
 
-DUMP_DEBUG_SAVE = true
+DUMP_DEBUG_SAVE = false
 
 --Constant for maximum connection value/division of the circle
 AT_CMAX = 16
