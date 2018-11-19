@@ -1015,7 +1015,6 @@ end
 
 local function check_twagon_owner(train, b_first, pname)
 	local wtp = b_first and 1 or #train.trainparts
-	atdebug("wtp",wtp)
 	local wid = train.trainparts[wtp]
 	local wdata = advtrains.wagons[wid]
 	if wdata then
