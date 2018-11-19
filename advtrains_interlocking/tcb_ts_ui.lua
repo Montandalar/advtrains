@@ -577,7 +577,8 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 				form = form.."button[0.5,7;2,1;dsproute;Show]"
 				if hasprivs then
 					form = form.."button[2.5,7;1,1;delroute;Delete]"
-					form = form.."button[3.5,7;2,1;editroute;Edit]"
+					form = form.."button[3.5,7;1,1;editroute;Rename]"
+					form = form.."button[4.5,7;1,1;asproute;Aspect]"
 				end
 			end
 			if hasprivs then
@@ -658,6 +659,18 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				if fields.editroute and hasprivs then
 					local rte = tcbs.routes[sel_rte]
 					minetest.show_formspec(pname, formname.."_renroute_"..sel_rte, "field[name;Enter new route name;"..rte.name.."]")
+					return
+				end
+				if fields.asproute and hasprivs then
+					local rte = tcbs.routes[sel_rte]
+					local suppasp = advtrains.interlocking.signal_get_supported_aspects(tcbs.signal)
+					
+					local callback = function(pname, asp)
+						rte.aspect = asp
+						advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
+					end
+					
+					advtrains.interlocking.show_signal_aspect_selector(pname, suppasp, rte.name, callback, rte.aspect)
 					return
 				end
 				if fields.delroute and hasprivs then

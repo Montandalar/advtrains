@@ -51,6 +51,7 @@ function ilrs.set_route(signal, route, try)
 			return false, trsn, cbts, cblk
 		end
 	end
+
 	
 	-- we start at the tc designated by signal
 	local c_sigd = signal
@@ -122,7 +123,7 @@ function ilrs.set_route(signal, route, try)
 			}
 			if c_tcbs.signal then
 				c_tcbs.route_committed = true
-				c_tcbs.aspect = asp_generic_free
+				c_tcbs.aspect = route.aspect or asp_generic_free
 				c_tcbs.route_origin = signal
 				advtrains.interlocking.update_signal_aspect(c_tcbs)
 			end

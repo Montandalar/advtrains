@@ -102,7 +102,6 @@ advtrains = {
 		},
 		shunt = {
 			free = <boolean/nil>,
-			proceed_as_main = <boolean/nil>,
 		},
 		info = {
 			call_on = <boolean/nil>,
@@ -303,6 +302,18 @@ function advtrains.interlocking.signal_get_aspect(pos)
 	return nil
 end
 
+-- Returns the "supported_aspects" of the signal at position, as returned by the nodedef.
+-- returns nil when there's no signal at the position
+function advtrains.interlocking.signal_get_supported_aspects(pos)
+	local node=advtrains.ndb.get_node(pos)
+	local ndef=minetest.registered_nodes[node.name]
+	if ndef and ndef.advtrains and ndef.advtrains.supported_aspects then
+		local asp = ndef.advtrains.supported_aspects
+		return asp
+	end
+	return nil
+end
+
 local players_assign_ip = {}
 
 -- shows small info form for signal IP state/assignment
@@ -412,4 +423,111 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 		end
 		players_assign_ip[pname] = nil
 	end
+end)
+
+
+--== aspect selector ==--
+
+local players_aspsel = {}
+
+--[[
+suppasp: "supported_aspects" table
+purpose: form title string
+callback: func(pname, aspect) called on form submit
+]]
+function advtrains.interlocking.show_signal_aspect_selector(pname, p_suppasp, p_purpose, callback, p_isasp)
+	local suppasp = p_suppasp or {
+		main = {}, dst = {}, shunt = {}, info = {},
+	}
+	local purpose = p_purpose or ""
+	local isasp = p_isasp and fillout_aspect(p_isasp)
+	
+	local form = "size[7,5]label[0.5,0.5;Select Signal Aspect:]"
+	form = form.."label[0.5,1;"..purpose.."]"
+	
+	form = form.."label[0.5,1.5;== Main Signal ==]"
+	if suppasp.main.free == nil then
+		local st = 2
+		if isasp and not isasp.main.free then st=1 end
+		form = form.."dropdown[0.5,2;2;main_free;danger,free;"..st.."]"
+	end
+	if suppasp.main.speed then
+		local selid = 1
+		if isasp and isasp.main.speed then
+			for idx, spv in ipairs(suppasp.main.speed) do
+				if spv == isasp.main.speed then
+					selid = idx
+					break
+				end
+			end
+		end
+		form = form.."label[2.3,1;Speed:]"
+		form = form.."dropdown[3,2;2;main_speed;"..table.concat(suppasp.main.speed, ",")..";"..selid.."]"
+	end
+	
+	form = form.."label[0.5,3;== Shunting ==]"
+	if suppasp.shunt.free == nil then
+		local st = 1
+		if isasp and isasp.shunt.free then st=2 end
+		form = form.."dropdown[0.5,3.5;2;shunt_free;---,allowed;"..st.."]"
+	end
+		
+	form = form.."button_exit[0.5,4.5;  5,1;save;OK]"
+	
+	local token = advtrains.random_id()
+	
+	minetest.show_formspec(pname, "at_il_sigaspdia_"..token, form)
+	
+	minetest.after(1, function()
+	players_aspsel[pname] = {
+		suppasp = suppasp,
+		callback = callback,
+		token = token,
+	}
+	end)
+end
+
+local function usebool(sup, val, free)
+	if sup == nil then
+		return val==free
+	else
+		return sup
+	end
+end
+local function usespeed(sup, val)
+	if sup then
+		return tonumber(val)
+	else
+		return nil
+	end
+end
+
+-- TODO use non-hacky way to parse outputs
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	local pname = player:get_player_name()
+	local psl = players_aspsel[pname]
+	if psl then
+		if formname == "at_il_sigaspdia_"..psl.token then
+			if fields.save then
+				local asp = {
+					main = {
+						free = usebool(psl.suppasp.main.free, fields.main_free, "free"),
+						speed = usespeed(psl.suppasp.main.speed, fields.main_speed),
+					},
+					dst = {
+						free = true, speed = -1,
+					},
+					shunt = {
+						free = usebool(psl.suppasp.shunt.free, fields.shunt_free, "allowed"),
+					},
+					info = {}
+				}
+				psl.callback(pname, asp)
+			end
+		else
+			players_aspsel[pname] = nil
+		end
+	end
+	
 end)
