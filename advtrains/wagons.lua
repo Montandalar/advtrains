@@ -349,30 +349,6 @@ function wagon:on_step(dtime)
 			end
 		end
 		
-		--DisCouple
-		if data.pos_in_trainparts and data.pos_in_trainparts>1 then
-			if train.velocity==0 then
-				if not self.discouple or not self.discouple.object:getyaw() then
-					atprint(self.id,"trying to spawn discouple")
-					local yaw = self.object:getyaw()
-					local flipsign=data.wagon_flipped and -1 or 1
-					local dcpl_pos = vector.add(pos, {y=0, x=-math.sin(yaw)*self.wagon_span*flipsign, z=math.cos(yaw)*self.wagon_span*flipsign})
-					local object=minetest.add_entity(dcpl_pos, "advtrains:discouple")
-					if object then
-						local le=object:get_luaentity()
-						le.wagon=self
-						--box is hidden when attached, so unuseful.
-						--object:set_attach(self.object, "", {x=0, y=0, z=self.wagon_span*10}, {x=0, y=0, z=0})
-						self.discouple=le
-					end
-				end
-			else
-				if self.discouple and self.discouple.object:getyaw() then
-					self.discouple.object:remove()
-					atprint(self.id," removing discouple")
-				end
-			end
-		end
 		--for path to be available. if not, skip step
 		if not train.path or train.no_step then
 			self.object:setvelocity({x=0, y=0, z=0})
@@ -445,6 +421,30 @@ function wagon:on_step(dtime)
 				end
 			else
 				self.collision_count=nil
+			end
+		end
+		
+		--DisCouple
+		-- FIX: Need to do this after the yaw calculation
+		if data.pos_in_trainparts and data.pos_in_trainparts>1 then
+			if train.velocity==0 then
+				if not self.discouple or not self.discouple.object:getyaw() then
+					atprint(self.id,"trying to spawn discouple")
+					local dcpl_pos = vector.add(pos, {y=0, x=-math.sin(yaw)*self.wagon_span, z=math.cos(yaw)*self.wagon_span})
+					local object=minetest.add_entity(dcpl_pos, "advtrains:discouple")
+					if object then
+						local le=object:get_luaentity()
+						le.wagon=self
+						--box is hidden when attached, so unuseful.
+						--object:set_attach(self.object, "", {x=0, y=0, z=self.wagon_span*10}, {x=0, y=0, z=0})
+						self.discouple=le
+					end
+				end
+			else
+				if self.discouple and self.discouple.object:getyaw() then
+					self.discouple.object:remove()
+					atprint(self.id," removing discouple")
+				end
 			end
 		end
 		
