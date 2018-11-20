@@ -218,4 +218,7 @@ Once you set a name for any component, you can reference it by that name in the 
 setstate("Stn_P1_out", "green") instead of setstate(POS(1,2,3), "green")
 This way, you don't need to memorize positions.
 
+PC-Naming can also be used to name interlocking signals for route setting via the set_route() functions. IMPORTANT: The "Signal Name" set in the
+signalling formspec is completely independent and can NOT be used to look up the position, you need to explicitly use the PCNaming tool.
+
 --TODO: Ein paar mehr Codebeispiele wären schön, insbesondere mit os.date und so...
