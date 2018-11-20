@@ -1002,7 +1002,6 @@ function advtrains.do_connect_trains(first_id, second_id)
 	advtrains.remove_train(second_id)
 	
 	first.velocity=0
-	first.tarvelocity=0
 	
 	advtrains.update_trainpart_properties(first_id)
 	advtrains.couple_invalidate(first)

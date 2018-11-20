@@ -114,7 +114,6 @@ advtrains.register_wagon("subway_wagon", {
 		 	})
 			self.line_cache=line
 		elseif self.line_cache~=nil and line==nil then
-			atdebug("clear line")
 			self.object:set_properties({
 				textures=self.textures,
 		 	})
