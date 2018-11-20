@@ -211,6 +211,10 @@ if advtrains.interlocking then
 		local pos = atlatc.pcnaming.resolve_pos(signal)
 		return advtrains.interlocking.signal_get_aspect(pos)
 	end
+	static_env.set_aspect = function(signal, asp)
+		local pos = atlatc.pcnaming.resolve_pos(signal)
+		return advtrains.interlocking.signal_set_aspect(pos)
+	end
 end
 
 for _, name in pairs(safe_globals) do
