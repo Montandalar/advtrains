@@ -101,6 +101,26 @@ advtrains.register_wagon("subway_wagon", {
 			self.sound_loop_tmr=0
 		end
 	end,
+	custom_on_step = function(self, dtime, data, train)
+		--set line number
+		local line = nil
+		if train.line then
+			line = tonumber(string.sub(train.line, 1, 1))
+		end
+		if line and line~=self.line_cache then
+			local new_line_tex="advtrains_subway_wagon.png^advtrains_subway_wagon_line"..line..".png"
+			self.object:set_properties({
+				textures={new_line_tex},
+		 	})
+			self.line_cache=line
+		elseif self.line_cache~=nil and line==nil then
+			atdebug("clear line")
+			self.object:set_properties({
+				textures=self.textures,
+		 	})
+			self.line_cache=nil
+		end
+	end,
 }, S("Subway Passenger Wagon"), "advtrains_subway_wagon_inv.png")
 
 --wagons

@@ -235,10 +235,12 @@ function wagon:on_step(dtime)
 		if not self.seatpc then
 			self.seatpc={}
 		end
+		
+		local train=self:train()
 
 		--custom on_step function
 		if self.custom_on_step then
-			self:custom_on_step(self, dtime)
+			self:custom_on_step(dtime, data, train)
 		end
 
 		--driver control
@@ -298,12 +300,12 @@ function wagon:on_step(dtime)
 		end
 		
 		--check infotext
-		local outside=self:train().text_outside or ""
+		local outside=train.text_outside or ""
 		if setting_show_ids then
 			outside = outside .. "\nT:" .. data.train_id .. " W:" .. self.id .. " O:" .. data.owner
 		end
 		
-		local train=self:train()
+		
 		--show off-track information in outside text instead of notifying the whole server about this
 		if train.off_track then
 			outside = outside .."\n!!! Train off track !!!"
@@ -315,19 +317,7 @@ function wagon:on_step(dtime)
 		end
 		
 		local fct=data.wagon_flipped and -1 or 1
-		--set line number
-		if self.name == "advtrains:subway_wagon" and train.line and train.line~=self.line_cache then
-			local new_line_tex="advtrains_subway_wagon.png^advtrains_subway_wagon_line"..train.line..".png"
-			self.object:set_properties({
-				textures={new_line_tex},
-		 	})
-			self.line_cache=train.line
-		elseif self.line_cache~=nil and train.line==nil then
-			self.object:set_properties({
-				textures=self.textures,
-		 	})
-			self.line_cache=nil
-		end
+		
 		--door animation
 		if self.doors then
 			if (self.door_anim_timer or 0)<=0 then
@@ -779,6 +769,7 @@ function wagon:show_bordcom(pname)
 	local form = "size[11,9]label[0.5,0;AdvTrains Boardcom v0.1]"
 	form=form.."textarea[0.5,1.5;7,1;text_outside;"..attrans("Text displayed outside on train")..";"..(train.text_outside or "").."]"
 	form=form.."textarea[0.5,3;7,1;text_inside;"..attrans("Text displayed inside train")..";"..(train.text_inside or "").."]"
+	form=form.."field[7.5,3.2;2,1;line;"..attrans("Line")..";"..(train.line or "").."]"
 	--row 5 : train overview and autocoupling
 	if train.velocity==0 then
 		form=form.."label[0.5,4.5;Train overview /coupling control:]"
@@ -862,6 +853,13 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 			train.text_inside=fields.text_inside
 		else
 			train.text_inside=nil
+		end
+	end
+	if fields.line then
+		if fields.line~="" then
+			train.line=fields.line
+		else
+			train.line=nil
 		end
 	end
 	for i, tpid in ipairs(train.trainparts) do

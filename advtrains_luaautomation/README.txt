@@ -173,8 +173,14 @@ atc_set_text_outside(text)
 	Set text shown on the outside of the train. Pass nil to show no text.
 atc_set_text_inside(text)
 	Set text shown to train passengers. Pass nil to show no text.
+get_line()
+	Returns the "Line" property of the train (a string).
+	This can be used to distinguish between trains of different lines and route them appropriately.
+	The interlocking system also uses this property for Automatic Routesetting.
 set_line(number)
-	Only for subway wagons: Display a line number (1-9) on the train.
+	Sets the "Line" property of the train (a string).
+	If the first digit of this string is a number (0-9), any subway wagons on the train will have this one displayed as line number
+	(where "0" is actually shown as Line 10 on the train)
 
 # Operator panel
 This simple node executes its actions when punched. It can be used to change a switch and update the corresponding signals or similar applications.

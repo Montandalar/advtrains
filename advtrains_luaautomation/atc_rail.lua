@@ -54,8 +54,14 @@ function r.fire_event(pos, evtdata)
 			return true
 		end,
 		set_line = function(line)
-		   train.line = line
-		   return true
+			if type(line)~="string" and type(line)~="number" then
+				return false
+			end
+			train.line = line .. ""
+			return true
+		end,
+		get_line = function()
+			return train.line
 		end,
 		atc_reset = function(cmd)
 			if not train_id then return false end
