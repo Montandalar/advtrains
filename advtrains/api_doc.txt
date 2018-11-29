@@ -178,5 +178,10 @@ minetest.register_node(nodename, {
 		^- called when a train enters the rail
 		on_train_leave=function(pos, train_id) end
 		^- called when a train leaves the rail
+		
+		-- The following function is only in effect when interlocking is enabled:
+		on_train_approach = function(pos, train_id, train, index)
+		^- called when a train is approaching this position, called exactly once for every path recalculation (which can happen at any time)
+		^- This is called so that if the train would start braking now, it would come to halt about(wide approx) 5 nodes before the rail.
 	}
 })

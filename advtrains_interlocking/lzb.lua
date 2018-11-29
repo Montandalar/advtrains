@@ -1,6 +1,18 @@
 -- lzb.lua
 -- Enforced and/or automatic train override control, obeying signals
 
+
+local function approach_callback(parpos, train_id, train, index)
+	local pos = advtrains.round_vector_floor_y(parpos)
+
+	local node=pnode or advtrains.ndb.get_node(pos)
+	local ndef=minetest.registered_nodes[node.name]
+	if ndef and ndef.advtrains and ndef.advtrains.on_train_approach then
+		ndef.advtrains.on_train_approach(pos, train_id, train, index)
+	end
+end
+
+
 --[[
 Documentation of train.lzb table
 train.lzb = {
@@ -10,9 +22,13 @@ train.lzb = {
 	travwspd = warning speed res.
 	oncoming = table containing oncoming signals, in order of appearance on the path
 		{
-			pos = position of the signal (not the IP!)
+			pos = position of the signal (not the IP!). Can be nil
 			idx = where this is on the path
 			spd = speed allowed to pass (determined dynamically)
+			npr = <boolean> "No permanent restriction" If true, this is only a punctual restriction.
+				speed_restriction is not set then, and train can accelerate after passing point
+				This is (as of Nov 2017) used by "lines" to brake the train down to 2 when approaching a stop
+				The actual "stop" command is given when the train passes the rail (on_train_enter callback)
 		}
 }
 each step, for every item in "oncoming", we need to determine the location to start braking (+ some safety margin)
@@ -67,6 +83,9 @@ local function look_ahead(id, train)
 				spd = 0,
 			})
 		else
+			-- run callback, if exists
+			approach_callback(pos, id, train, trav)
+			
 			-- check for signal
 			local asp, spos = il.db.get_ip_signal_asp(pts, cn)
 			--atdebug("trav: ",pos, cn, asp, spos, "travsht=", lzb.travsht)
@@ -205,6 +224,18 @@ end
 
 function advtrains.interlocking.lzb_invalidate(train)
 	invalidate(train)
+end
+
+-- Add an (extra) lzb control point that is not a permanent restriction (see above)
+-- (permanent restrictions are only to be imposed by signal ip's)
+function advtrains.interlocking.lzb_add_oncoming_npr(train, idx, spd)
+	local lzb = train.lzb
+	
+	table.insert(lzb.oncoming, {
+					idx = idx,
+					spd = spd,
+					npr = true,
+				})
 end
 
 

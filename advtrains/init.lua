@@ -194,6 +194,9 @@ dofile(advtrains.modpath.."/passive.lua")
 
 --load/save
 
+-- backup variables, used if someone should accidentally delete a sub-mod
+local MDS_interlocking
+
 
 advtrains.fpath=minetest.get_worldpath().."/advtrains"
 dofile(advtrains.modpath.."/log.lua")
@@ -219,6 +222,8 @@ function advtrains.avt_load()
 				advtrains.atc.load_data(tbl.atc)
 				if advtrains.interlocking then
 					advtrains.interlocking.db.load(tbl.interlocking)
+				else
+					MDS_interlocking = tbl.interlocking
 				end
 				--remove wagon_save entries that are not part of a train
 				local todel=advtrains.merge_tables(advtrains.wagon_save)
@@ -318,6 +323,8 @@ advtrains.avt_save = function(remove_players_from_wagons)
 	local il_save
 	if advtrains.interlocking then
 		il_save = advtrains.interlocking.db.save()
+	else
+		il_save = MDS_interlocking
 	end
 	local save_tbl={
 		trains = tmp_trains,
