@@ -349,3 +349,83 @@ function advtrains.insert_once(tab, elem, equalfunc)
 	tab[#tab+1] = elem
 	return true
 end
+
+local hext = { [0]="0",[1]="1",[2]="2",[3]="3",[4]="4",[5]="5",[6]="6",[7]="7",[8]="8",[9]="9",[10]="A",[11]="B",[12]="C",[13]="D",[14]="E",[15]="F"}
+local dect = { ["0"]=0,["1"]=1,["2"]=2,["3"]=3,["4"]=4,["5"]=5,["6"]=6,["7"]=7,["8"]=8,["9"]=9,["A"]=10,["B"]=11,["C"]=12,["D"]=13,["E"]=14,["F"]=15}
+
+local f = atfloor
+
+local function hex(i)
+	local x=i+32768
+	local c4 = x % 16
+	x = f(x / 16)
+	local c3 = x % 16
+	x = f(x / 16)
+	local c2 = x % 16
+	x = f(x / 16)
+	local c1 = x % 16
+	return (hext[c1]) .. (hext[c2]) .. (hext[c3]) .. (hext[c4])
+end
+
+local function c(s,i) return dect[string.sub(s,i,i)] end
+
+local function dec(s)
+	return (c(s,1)*4096 + c(s,2)*256 + c(s,3)*16 + c(s,4))-32768
+end
+-- Takes a position vector and outputs a encoded value suitable as table index
+-- This is essentially a hexadecimal representation of the position (+32768)
+-- Order (YYY)YXXXXZZZZ
+function advtrains.encode_pos(pos)
+	return hex(pos.y) .. hex(pos.x) .. hex(pos.z)
+end
+
+-- decodes a position encoded with encode_pos
+function advtrains.decode_pos(pts)
+	local stry = string.sub(pts, 1,4)
+	local strx = string.sub(pts, 5,8)
+	local strz = string.sub(pts, 9,12)
+	return vector.new(dec(strx), dec(stry), dec(strz))
+end
+
+--[[ Benchmarking code
+local tdt = {}
+local tlt = {}
+local tet = {}
+
+for i=1,1000000 do
+	tdt[i] = vector.new(math.random(-65536, 65535), math.random(-65536, 65535), math.random(-65536, 65535))
+	if i%1000 == 0 then
+		tlt[#tlt+1] = tdt[i]
+	end
+end
+
+local t1=os.clock()
+for i=1,1000000 do
+	local pe = advtrains.encode_pos(tdt[i])
+	local pb = advtrains.decode_pos(pe)
+	tet[pe] = i
+end
+for i,v in ipairs(tlt) do
+	local lk = tet[advtrains.encode_pos(v)]
+end
+atdebug("endec",os.clock()-t1,"s")
+
+tet = {}
+
+t1=os.clock()
+for i=1,1000000 do
+	local pe = minetest.pos_to_string(tdt[i])
+	local pb = minetest.string_to_pos(pe)
+	tet[pe] = i
+end
+for i,v in ipairs(tlt) do
+	local lk = tet[minetest.pos_to_string(v)]
+end
+atdebug("pts",os.clock()-t1,"s")
+
+--Results:
+--2018-11-29 16:57:08: ACTION[Main]: [advtrains]endec 1.786451 s 
+--2018-11-29 16:57:10: ACTION[Main]: [advtrains]pts 2.566377 s 
+]]
+
+
