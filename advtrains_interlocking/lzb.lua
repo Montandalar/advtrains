@@ -163,7 +163,9 @@ local function apply_control(id, train)
 	local i = 1
 	while i<=#lzb.oncoming do
 		if lzb.oncoming[i].idx < train.index then
-			train.speed_restriction = lzb.oncoming[i].spd
+			if not lzb.oncoming[i].npr then
+				train.speed_restriction = lzb.oncoming[i].spd
+			end
 			table.remove(lzb.oncoming, i)
 		else
 			i = i + 1
