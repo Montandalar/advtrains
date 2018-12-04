@@ -390,9 +390,9 @@ function advtrains.train_step_b(id, train, dtime)
 		end
 	end
 	
-	if tarvel_cap and train.tarvelocity and tarvel_cap<train.tarvelocity then
-		train.tarvelocity=tarvel_cap
-	end
+	--if tarvel_cap and train.tarvelocity and tarvel_cap<train.tarvelocity then
+	--	train.tarvelocity=tarvel_cap
+	--end
 	
 	local tmp_lever
 	
