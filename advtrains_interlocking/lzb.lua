@@ -136,6 +136,7 @@ local function look_ahead(id, train)
 					pos = spos,
 					idx = trav,
 					spd = lspd,
+					sht = lzb.travsht,
 				})
 			end
 		end
@@ -165,6 +166,7 @@ local function apply_control(id, train)
 		if lzb.oncoming[i].idx < train.index-0.5 then
 			if not lzb.oncoming[i].npr then
 				train.speed_restriction = lzb.oncoming[i].spd
+				train.is_shunt = lzb.oncoming[i].sht
 			end
 			table.remove(lzb.oncoming, i)
 		else

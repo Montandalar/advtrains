@@ -15,10 +15,10 @@ local adefunc = function(def, preset, suffix, rotation)
 			end,
 			advtrains = {
 				on_train_enter = function(pos, train_id)
+					local train = advtrains.trains[train_id]
+					--advtrains.atc.train_set_command(train, "B0 OR D8 OC D1", true)
 				end,
 				on_train_approach = function(pos,train_id, train, index)
-					--atdebug("Train approaches stop:",pos,train_id,index)
-					--TODO conditions
 					advtrains.interlocking.lzb_add_oncoming_npr(train, index, 2)
 				end,
 			},

@@ -239,8 +239,14 @@ function advtrains.interlocking.signal_rc_handler(pos, node, player, itemstack, 
 	if sigd then
 		advtrains.interlocking.show_signalling_form(sigd, pname)
 	else
-		-- permit to set aspect manually
-		minetest.show_formspec(pname, "at_il_sigasp_"..minetest.pos_to_string(pos), "field[aspect;Set Aspect ('A' to assign IP);D0D0D]")
+		local ndef = minetest.registered_nodes[node.name]
+		if ndef.advtrains and ndef.advtrains.set_aspect then
+			-- permit to set aspect manually
+			minetest.show_formspec(pname, "at_il_sigasp_"..minetest.pos_to_string(pos), "field[aspect;Set Aspect ('A' to assign IP);D0D0D]")
+		else
+			--static signal - only IP
+			advtrains.interlocking.show_ip_form(pos, pname)
+		end
 	end
 end
 
