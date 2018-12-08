@@ -46,20 +46,55 @@ local suppasp = {
 		}
 }
 
+--Rangiersignal
+local setaspectf_ra = function(rot)
+ return function(pos, node, asp)
+	if asp.shunt.free then
+		advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:ra_shuntd_"..rot, param2 = node.param2})
+	else
+		advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:ra_danger_"..rot, param2 = node.param2})
+	end
+	local meta = minetest.get_meta(pos)
+	if meta then
+		meta:set_string("infotext", minetest.serialize(asp))
+	end
+ end
+end
+
+local suppasp_ra = {
+		main = {
+			free = true,
+		},
+		dst = {
+			free = nil,
+			speed = nil,
+		},
+		shunt = {
+			free = nil,
+			proceed_as_main = false,
+		},
+		info = {
+			call_on = false,
+			dead_end = false,
+			w_speed = nil,
+		}
+}
+
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:hs")
+advtrains.trackplacer.register_tracktype("advtrains_signals_ks:ra")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:mast")
 
 for _, rtab in ipairs({
-		{rot =  "0", sbox = {-1/8, -1/2, -1/2,  1/8, 1, -1/4}, ici=true},
-		{rot = "30", sbox = {-3/8, -1/2, -1/2, -1/8, 1, -1/4},},
-		{rot = "45", sbox = {-1/2, -1/2, -1/2, -1/4, 1, -1/4},},
-		{rot = "60", sbox = {-1/2, -1/2, -3/8, -1/4, 1, -1/8},},
+		{rot =  "0", sbox = {-1/8, -1/2, -1/2,  1/8, 1/2, -1/4}, ici=true},
+		{rot = "30", sbox = {-3/8, -1/2, -1/2, -1/8, 1/2, -1/4},},
+		{rot = "45", sbox = {-1/2, -1/2, -1/2, -1/4, 1/2, -1/4},},
+		{rot = "60", sbox = {-1/2, -1/2, -3/8, -1/4, 1/2, -1/8},},
 	}) do
 	local rot = rtab.rot
 	for typ, prts in pairs({
 			danger = {asp = advtrains.interlocking.DANGER, n = "slow", ici=true},
-			slow   = {asp = { main = { free = true, speed = 6 }} , n = "free"},
-			free   = {asp = { main = { free = true, speed = -1 }} , n = "shunt"},
+			slow   = {asp = { main = { free = true, speed = 6 }, shunt = {proceed_as_main = true}} , n = "free"},
+			free   = {asp = { main = { free = true, speed = -1 }, shunt = {proceed_as_main = true}} , n = "shunt"},
 			shunt  = {asp = { main = {free = false}, shunt = {free = true} } , n = "danger"},
 		}) do
 		minetest.register_node("advtrains_signals_ks:hs_"..typ.."_"..rot, {
@@ -80,6 +115,7 @@ for _, rtab in ipairs({
 			groups = {
 				cracky = 2,
 				advtrains_signal = 2,
+				not_blocking_trains = 1,
 				save_in_at_nodedb = 1,
 				not_in_creative_inventory = (rtab.ici and prts.ici) and 0 or 1,
 			},
@@ -100,8 +136,50 @@ for _, rtab in ipairs({
 		advtrains.trackplacer.add_worked("advtrains_signals_ks:hs", typ, "_"..rot, prts.n)
 	end
 	
-	-- set new sbox clip height
-	rtab.sbox[5] = 1/2
+	
+	--Rangiersignale:
+	for typ, prts in pairs({
+			danger = {asp = { main = {free = true}, shunt = {free = false} }, n = "shuntd", ici=true},
+			shuntd = {asp = { main = {free = true}, shunt = {free = true} } , n = "danger"},
+		}) do
+		minetest.register_node("advtrains_signals_ks:ra_"..typ.."_"..rot, {
+			description = "Ks Shunting Signal",
+			drawtype = "mesh",
+			mesh = "advtrains_signals_ks_sht_smr"..rot..".obj",
+			tiles = {"advtrains_signals_ks_mast.png", "advtrains_signals_ks_head.png", "advtrains_signals_ks_head.png", "advtrains_signals_ks_ltm_"..typ..".png"},
+			
+			paramtype="light",
+			sunlight_propagates=true,
+			light_source = 4,
+			
+			paramtype2 = "facedir",
+			selection_box = {
+				type = "fixed",
+				fixed = {-1/4, -1/2, -1/4, 1/4, 0, 1/4}
+			},
+			groups = {
+				cracky = 2,
+				advtrains_signal = 2,
+				not_blocking_trains = 1,
+				save_in_at_nodedb = 1,
+				not_in_creative_inventory = (rtab.ici and prts.ici) and 0 or 1,
+			},
+			drop = "advtrains_signals_ks:ra_danger_0",
+			inventory_image = "advtrains_signals_ks_ra_inv.png",
+			sounds = default.node_sound_stone_defaults(),
+			advtrains = {
+				set_aspect = setaspectf_ra(rot),
+				supported_aspects = suppasp_ra,
+				get_aspect = function(pos, node)
+					return prts.asp
+				end,
+			},
+			on_rightclick = advtrains.interlocking.signal_rc_handler,
+			can_dig = advtrains.interlocking.signal_can_dig,
+		})
+		-- rotatable by trackworker
+		advtrains.trackplacer.add_worked("advtrains_signals_ks:ra", typ, "_"..rot, prts.n)
+	end
 	
 	minetest.register_node("advtrains_signals_ks:mast_mast_"..rot, {
 		description = "Ks Mast",
@@ -120,6 +198,7 @@ for _, rtab in ipairs({
 		},
 		groups = {
 			cracky = 2,
+			not_blocking_trains = 1,
 			not_in_creative_inventory = (rtab.ici) and 0 or 1,
 		},
 		drop = "advtrains_signals_ks:mast_mast_0",

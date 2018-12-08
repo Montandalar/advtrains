@@ -197,13 +197,14 @@ function advtrains.hud_train_format(train, flip)
 		secondLine="ATC"..b..": "..tvels..ad..(train.atc_command or "")
 	else
 		secondLine = "Manual operation"
+		if train.ctrl.lzb then
+			secondLine = "-!- Safety override -!-"
+		end
 	end
-	if train.ctrl.lzb then
-		secondLine = "-!- Safety override -!-"
-	end
+	local shtind = train.is_shunt and "S" or ">"
 	
 	topLine="  ["..mletter[fct].."]  {"..levers.."} "..doorstr[(train.door_open or 0) * fct].."  "..(train.line and "L: "..train.line or "")
-	firstLine=attrans("Speed:").." |"..string.rep("+", vel)..string.rep("_", res-vel).."|"..string.rep("_", max-res).."> "..vel_kmh.." km/h"
+	firstLine=attrans("Speed:").." |"..string.rep("+", vel)..string.rep("_", res-vel).."|"..string.rep("_", max-res)..shtind.." "..vel_kmh.." km/h"
 	if train.speed_restriction == 0 then
 		firstLine = "OVERRUN RED SIGNAL! Examine situation and reverse train to move again."
 	end

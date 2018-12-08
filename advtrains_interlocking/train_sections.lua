@@ -174,6 +174,8 @@ advtrains.te_register_on_create(function(id, train)
 		else
 			atwarn("ILDB corruption: TCB",origin," has invalid TS reference")
 		end
+		-- Make train a shunt move
+		train.is_shunt = true
 	elseif ts_id==nil then
 		atwarn("Train",id,": Unable to determine whether to block a track section!")
 	else

@@ -18,6 +18,7 @@ return {
 	},
 	shunt = {
 		free = false,
+		proceed_as_main = true
 	},
 	dst = {
 		free = true,

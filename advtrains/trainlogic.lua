@@ -1036,8 +1036,14 @@ function advtrains.invert_train(train_id)
 	end
 	advtrains.update_trainpart_properties(train_id, true)
 	
-	-- TODO: this should actually be SHUNT_MAX_SPEED, but signals and lzb is not present everywhere
-	train.speed_restriction = nil
+	-- If interlocking present, check whether this train is in a section and then set as shunt move after reversion
+	if advtrains.interlocking and train.il_sections and #train.il_sections > 0 then
+		train.is_shunt = true
+		train.speed_restriction = advtrains.SHUNT_SPEED_MAX
+	else
+		train.is_shunt = false
+		train.speed_restriction = nil
+	end
 end
 
 -- returns: train id, index of one of the trains that stand at this position.

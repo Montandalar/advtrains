@@ -3,6 +3,8 @@
 
 advtrains.interlocking = {}
 
+advtrains.SHUNT_SPEED_MAX = 6
+
 function advtrains.interlocking.sigd_equal(sigd, cmp)
 	return vector.equals(sigd.p, cmp.p) and sigd.s==cmp.s
 end

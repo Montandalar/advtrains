@@ -51,7 +51,7 @@ local ZONE_ROLL  =  2
 local ZONE_HOLD  =  5 -- added on top of ZONE_ROLL
 local ZONE_VSLOW =  3 -- When speed is <2, still allow accelerating
 
-local SHUNT_SPEED_MAX = 4
+local SHUNT_SPEED_MAX = advtrains.SHUNT_SPEED_MAX
 
 local function look_ahead(id, train)
 	
