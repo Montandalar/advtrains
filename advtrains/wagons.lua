@@ -28,8 +28,8 @@ function advtrains.create_wagon(wtype, owner)
 	return new_id
 end
 
-local function make_inv_name(self)
-	return "detached:advtrains_wgn_"..self.id
+local function make_inv_name(uid)
+	return "detached:advtrains_wgn_"..uid
 end
 
 
@@ -580,7 +580,7 @@ function wagon:on_rightclick(clicker)
 			if self.seat_groups then
 				if #self.seats==0 then
 					if self.has_inventory and self.get_inventory_formspec and advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist) then
-						minetest.show_formspec(pname, "advtrains_inv_"..self.id, self:get_inventory_formspec(pname, make_inv_name(self)))
+						minetest.show_formspec(pname, "advtrains_inv_"..self.id, self:get_inventory_formspec(pname, make_inv_name(self.id)))
 					end
 					return
 				end
@@ -714,7 +714,7 @@ function wagon:show_get_on_form(pname)
 	local data = advtrains.wagons[self.id]
 	if #self.seats==0 then
 		if self.has_inventory and self.get_inventory_formspec and advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist) then
-			minetest.show_formspec(pname, "advtrains_inv_"..self.id, self:get_inventory_formspec(pname, make_inv_name(self)))
+			minetest.show_formspec(pname, "advtrains_inv_"..self.id, self:get_inventory_formspec(pname, make_inv_name(self.id)))
 		end
 		return
 	end
@@ -912,7 +912,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 					local data = advtrains.wagons[wagon.id]
 					if fields.inv then
 						if wagon.has_inventory and wagon.get_inventory_formspec then
-							minetest.show_formspec(player:get_player_name(), "advtrains_inv_"..uid, wagon:get_inventory_formspec(player:get_player_name(), make_inv_name(self)))
+							minetest.show_formspec(player:get_player_name(), "advtrains_inv_"..uid, wagon:get_inventory_formspec(player:get_player_name(), make_inv_name(uid)))
 						end
 					elseif fields.seat then
 						local val=minetest.explode_textlist_event(fields.seat)
@@ -977,7 +977,7 @@ function wagon:seating_from_key_helper(pname, fields, no)
 		end
 	end
 	if fields.inv and self.has_inventory and self.get_inventory_formspec then
-		minetest.show_formspec(player:get_player_name(), "advtrains_inv_"..self.id, self:get_inventory_formspec(player:get_player_name(), make_inv_name(self)))
+		minetest.show_formspec(player:get_player_name(), "advtrains_inv_"..self.id, self:get_inventory_formspec(player:get_player_name(), make_inv_name(self.id)))
 	end
 	if fields.prop and data.owner==pname then
 		self:show_wagon_properties(pname)
