@@ -98,11 +98,11 @@ advtrains.register_wagon(name, prototype, description, inventory_image)
 	},
 	^- List of assignments of type list_name=size.
 	^- For every entry, an inventory list is created with the specified size.
-	get_inventory_formspec = function(self, player_name)
+	get_inventory_formspec = function(self, player_name, inventory_name)
 		return "<a formspec>"
 	end,
 	^- Function that should return the formspec to be displayed when <player> requests to open the wagon's inventory
-	^- Use "list[detached:advtrains_wgn_"..self.id..";<list_name>;<X>,<Y>;<W>,<H>;<Start>]" to display a wagon's inventory list.
+	^- Use "list["..inventory_name..";<list_name>;<X>,<Y>;<W>,<H>;<Start>]" to display a wagon's inventory list.
 
 	custom_on_step = function(self, dtime) end
 	^- optional: Execute custom code on every step

@@ -92,9 +92,9 @@ advtrains.register_wagon("wagon_tank", {
 	collisionbox = {-1.0,-0.5,-1.0, 1.0,2.5,1.0},
 	drops={"default:steelblock 4"},
 	has_inventory = true,
-	get_inventory_formspec = function(self)
+	get_inventory_formspec = function(self, pname, invname)
 		return "size[8,11]"..
-			"list[detached:advtrains_wgn_"..self.id..";box;0,0;8,3;]"..
+			"list["..invname..";box;0,0;8,3;]"..
 			"list[current_player;main;0,5;8,4;]"..
 			"listring[]"
 	end,
@@ -114,9 +114,9 @@ advtrains.register_wagon("wagon_wood", {
 	collisionbox = {-1.0,-0.5,-1.0, 1.0,2.5,1.0},
 	drops={"default:steelblock 4"},
 	has_inventory = true,
-	get_inventory_formspec = function(self)
+	get_inventory_formspec = function(self, pname, invname)
 		return "size[8,11]"..
-			"list[detached:advtrains_wgn_"..self.id..";box;0,0;8,3;]"..
+			"list["..invname..";box;0,0;8,3;]"..
 			"list[current_player;main;0,5;8,4;]"..
 			"listring[]"
 	end,
