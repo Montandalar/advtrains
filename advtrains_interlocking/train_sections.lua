@@ -85,19 +85,20 @@ local function setsection(tid, train, ts_id, ts, sigd)
 			atwarn("Train",tid,"hit route",ts.route.rsn,"!")
 			advtrains.interlocking.route.cancel_route_from(ts.route.origin)
 			atwarn("Route was cancelled.")
-		end
-		-- train entered route regularily. Reset route and signal
-		tcbs.route_committed = nil
-		tcbs.route_comitted = nil -- TODO compatibility cleanup
-		tcbs.aspect = nil
-		tcbs.route_origin = nil
-		advtrains.interlocking.update_signal_aspect(tcbs)
-		if tcbs.signal and sigd_equal(ts.route.entry, ts.route.origin) then
-			if tcbs.route_auto and tcbs.routeset then
-				--atdebug("Resetting route (",ts.route.origin,")")
-				advtrains.interlocking.route.update_route(ts.route.origin, tcbs)
-			else
-				tcbs.routeset = nil
+		else
+			-- train entered route regularily. Reset route and signal
+			tcbs.route_committed = nil
+			tcbs.route_comitted = nil -- TODO compatibility cleanup
+			tcbs.aspect = nil
+			tcbs.route_origin = nil
+			advtrains.interlocking.update_signal_aspect(tcbs)
+			if tcbs.signal and sigd_equal(ts.route.entry, ts.route.origin) then
+				if tcbs.route_auto and tcbs.routeset then
+					--atdebug("Resetting route (",ts.route.origin,")")
+					advtrains.interlocking.route.update_route(ts.route.origin, tcbs)
+				else
+					tcbs.routeset = nil
+				end
 			end
 		end
 		ts.route = nil

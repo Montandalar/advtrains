@@ -222,6 +222,12 @@ local callbacks_remove, run_callbacks_remove = mkcallback("remove")
 -- - save files were loaded
 -- Additionally, this gets called outside the step cycle to initialize and/or remove a train, then occ_write_mode is set.
 function advtrains.train_ensure_init(id, train)
+	if not train then
+		atwarn("train_ensure_init: Called with id =",id,"but a nil train!")
+		atwarn(debug.traceback())
+		return nil
+	end
+	
 	train.dirty = true
 	if train.no_step then return nil end
 
