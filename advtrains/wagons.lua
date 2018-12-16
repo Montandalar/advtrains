@@ -636,7 +636,7 @@ function wagon:get_on(clicker, seatno)
 	atprint("get_on: attaching",clicker:get_player_name())
 	data.seatp[seatno] = clicker:get_player_name()
 	self.seatpc[seatno] = clicker:get_player_control_bits()
-	advtrains.player_to_train_mapping[clicker:get_player_name()]=self.train_id
+	advtrains.player_to_train_mapping[clicker:get_player_name()]=data.train_id
 	clicker:set_attach(self.object, "", self.seats[seatno].attach_offset, {x=0,y=0,z=0})
 	clicker:set_eye_offset(self.seats[seatno].view_offset, self.seats[seatno].view_offset)
 end

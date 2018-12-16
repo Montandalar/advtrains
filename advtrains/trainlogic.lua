@@ -108,7 +108,7 @@ function advtrains.tp_player_to_train(player)
 		--set the player to the train position.
 		--minetest will emerge the area and load the objects, which then will call reattach_all().
 		--because player is in mapping, it will not be subject to dying.
-		player:setpos(train.last_pos_prev)
+		player:setpos(train.last_pos)
 	end
 end
 minetest.register_on_joinplayer(function()
