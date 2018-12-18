@@ -28,6 +28,14 @@ minetest.register_privilege("railway_operator", {
 -- there is a configuration option "allow_build_only_owner". If this is active, a player having track_builder can only build rails and operate signals/turnouts in an area explicitly belonging to him
 -- (checked using a dummy player called "*dummy*" (which is not an allowed player name))
 
+
+-- Protection ranges
+local npr_r = tonumber(minetest.settings:get("advtrains_prot_range_side")) or 1
+local npr_vr = tonumber(minetest.settings:get("advtrains_prot_range_up")) or 3
+local npr_vrd = tonumber(minetest.settings:get("advtrains_prot_range_down")) or 1
+
+local boo = minetest.settings:get_bool("advtrains_allow_build_to_owner")
+
 --[[
 Protection/privilege concept:
 Tracks:
@@ -58,8 +66,6 @@ Wagon coupling:
 *"protected from" means the player is not allowed to do things, while "protected by" means that the player is (one of) the owner(s) of this area
 
 ]]--
-
-local boo = minetest.settings:get_bool("advtrains_allow_build_to_owner")
 
 -- temporarily prevent scanning for neighboring rail nodes recursively
 local nocheck
@@ -92,10 +98,9 @@ minetest.is_protected = function(pos, pname)
 		return not advtrains.check_track_protection(pos, pname, nil, false)
 	end
 	
-	local r, vr = 1, 3
 	local nodes = minetest.find_nodes_in_area(
-		{x = pos.x - r, y = pos.y - vr, z = pos.z - r},
-		{x = pos.x + r, y = pos.y + 1, z = pos.z + r},
+		{x = pos.x - npr_r, y = pos.y - npr_vr, z = pos.z - npr_r},
+		{x = pos.x + npr_r, y = pos.y + npr_vrd, z = pos.z + npr_r},
 		{"group:advtrains_track"})
 	for _,npos in ipairs(nodes) do
 		if not advtrains.check_track_protection(npos, pname, pos) then
