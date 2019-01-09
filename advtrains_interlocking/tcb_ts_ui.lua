@@ -568,7 +568,14 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 		if not tcbs.route_origin then
 			local strtab = {}
 			for idx, route in ipairs(tcbs.routes) do
-				strtab[#strtab+1] = minetest.formspec_escape(route.name)
+				local clr = ""
+				if route.ars then
+					clr = "#FF5555"
+					if route.ars.default then
+						clr = "#55FF55"
+					end
+				end
+				strtab[#strtab+1] = clr .. minetest.formspec_escape(route.name)
 			end
 			form = form.."label[0.5,2.5;Routes:]"
 			form = form.."textlist[0.5,3;5,3;rtelist;"..table.concat(strtab, ",").."]"
@@ -576,9 +583,7 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 				form = form.."button[0.5,6;  5,1;setroute;Set Route]"
 				form = form.."button[0.5,7;2,1;dsproute;Show]"
 				if hasprivs then
-					form = form.."button[2.5,7;1,1;delroute;Delete]"
-					form = form.."button[3.5,7;1,1;editroute;Rename]"
-					form = form.."button[4.5,7;1,1;asproute;Aspect]"
+					form = form.."button[3.5,7;2,1;editroute;Edit]"
 				end
 			end
 			if hasprivs then
@@ -657,25 +662,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 					minetest.after(10, function() advtrains.interlocking.clear_visu_context("disp_"..t) end)
 				end
 				if fields.editroute and hasprivs then
-					local rte = tcbs.routes[sel_rte]
-					minetest.show_formspec(pname, formname.."_renroute_"..sel_rte, "field[name;Enter new route name;"..rte.name.."]")
+					advtrains.interlocking.show_route_edit_form(pname, sigd, sel_rte)
+					--local rte = tcbs.routes[sel_rte]
+					--minetest.show_formspec(pname, formname.."_renroute_"..sel_rte, "field[name;Enter new route name;"..rte.name.."]")
 					return
-				end
-				if fields.asproute and hasprivs then
-					local rte = tcbs.routes[sel_rte]
-					local suppasp = advtrains.interlocking.signal_get_supported_aspects(tcbs.signal)
-					
-					local callback = function(pname, asp)
-						rte.aspect = asp
-						advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
-					end
-					
-					advtrains.interlocking.show_signal_aspect_selector(pname, suppasp, rte.name, callback, rte.aspect)
-					return
-				end
-				if fields.delroute and hasprivs then
-					table.remove(tcbs.routes, sel_rte)
-					sel_rte = nil
 				end
 			end
 		end
