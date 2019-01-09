@@ -771,7 +771,8 @@ function wagon:show_bordcom(pname)
 	local form = "size[11,9]label[0.5,0;AdvTrains Boardcom v0.1]"
 	form=form.."textarea[0.5,1.5;7,1;text_outside;"..attrans("Text displayed outside on train")..";"..(train.text_outside or "").."]"
 	form=form.."textarea[0.5,3;7,1;text_inside;"..attrans("Text displayed inside train")..";"..(train.text_inside or "").."]"
-	form=form.."field[7.5,3.2;2,1;line;"..attrans("Line")..";"..(train.line or "").."]"
+	form=form.."field[7.5,1.75;3,1;line;"..attrans("Line")..";"..(train.line or "").."]"
+	form=form.."field[7.5,3.25;3,1;routingcode;"..attrans("Routingcode")..";"..(train.routingcode or "").."]"
 	--row 5 : train overview and autocoupling
 	if train.velocity==0 then
 		form=form.."label[0.5,4.5;Train overview /coupling control:]"
@@ -862,6 +863,13 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 			train.line=fields.line
 		else
 			train.line=nil
+		end
+	end
+	if fields.routingcode then
+		if fields.routingcode~="" then
+			train.routingcode=fields.routingcode
+		else
+			train.routingcode=nil
 		end
 	end
 	for i, tpid in ipairs(train.trainparts) do
