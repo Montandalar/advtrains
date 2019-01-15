@@ -210,8 +210,11 @@ over new with setting up track sections.
 
 \subsection{Interlocking patterns}
 
-This section is supposed to show some examples on how you should set
-up track sections on certain track configurations.
+Have a look at the following images. They show you how you can set
+up sections so that reasonable train moves are possible.
+
+You should settle on a naming scheme for your sections. This way,
+you can determine the source of an issue faster
 
 \section{Signals and routes}
 
@@ -223,7 +226,7 @@ There are 2 types of signals:
 \item Static signals always display the same information to the train. This
 can be a speed restriction (or the end of one), a disallowal to proceed
 as shunt move or similar things. In most cases, these are signs.
-\item Variable signals are what most people would call a ``signal''. Its
+\item Dynamic signals are what most people would call a ``signal''. Its
 function is to inform trains about whether and at which speed they
 can proceed into the next section safely.
 \end{itemize}
@@ -246,7 +249,7 @@ different ways to configure this. Signals integrated into advtrains
 behave as follows:
 \begin{itemize}
 \item Static signals and all red-green light signals from core advtrains
-that are not assigned to a TCB can be configured by holding the ``Sneak''
+that are not assigned to a TCB can be configured by holding the ``Use''
 key and then right-clicking the signal
 \item All signals that are assigned to a TCB can be configured by first
 right-clicking them, then selecting ``Influence Point'' in the signalling
@@ -264,12 +267,27 @@ The advtrains-internal train safety system ensures that the train
 always obeys any restrictions imposed by signals, if (and only if)
 the influence point is set properly.
 
-\subsection{Main and Shunt signals}
+\subsection{Signal Aspects}
 
 While static signals are mainly used for speed restrictions, the interesting
 ones are variable signals. Of course, you can always control any variable
 signal by traditional means (mesecons, digiline, right-click) if the
 signal allows it, but that misses the point of this interlocking system.
+
+A signal aspect is a piece of information that a signal shows to the
+train driver. It contains information about whether and at what speed
+the driver may proceed at the signal.
+
+Every signal, both static and dynamic ones, imposes a certain aspect
+to trains passing the signal. For static signals, this is always the
+same aspect, such as ``Proceed at speed of 8'' or ``Shunt moves
+may not pass''. Dynamic signals, however, can display multiple different
+aspects. The default for them is always as restrictive as possible,
+mostly ``Halt!''.
+
+You should know that both static and dynamic signals use exactly the
+same properties for signal aspects. There is no difference in the
+meaning of the aspect definitions.
 
 In the following sections, we will talk about main signals. By this,
 we mean a variable signal that can display both a ``Danger'' aspect
@@ -277,6 +295,37 @@ we mean a variable signal that can display both a ``Danger'' aspect
 aspect (train may proceed as train/shunt move, with optional speed
 restriction), which act as an ``entry signal'' for one or multiple
 routes.
+
+\subsection{Train moves and Shunt Moves}
+\begin{itemize}
+\item A ``Train move'' is a train that is running, going to run on or
+coming from a main line between stations, passing through or stopping
+at a station. Train moves can expect that there are no obstacles on
+the route and they can proceed at the maximum permitted speed of the
+line. This is the regular operation mode for trains. Shunt signals
+have no meaning for train moves.
+\item A ``Shunt move'' is a train that moves within a station and/or is
+coupling or decoupling wagons or engines. A shunt move may never leave
+a station except into a siding. Also, shunt moves may drive at a maximum
+speed of 6 speed units, because it is usually not ensured that the
+path is free of obstacles. (however, advtrains ensures that every
+route is free of railway vehicles, even shunt routes)
+\end{itemize}
+There are also 2 general types of signals: Main signals and Shunt
+signals. While main signals have a meaning for all types of trains,
+Shunt signals only have to be followed by shunt moves. Usually, Shunt
+signals that are on a train move route are set to a Proceed aspect
+as well.
+
+When a train reverses, its mode automatically changes to ``shunt
+move'' until it passes a main signal that shows ``Proceed as train
+move'', which is usually designated by a green light. From this point
+on, it can accelerate to maximum permitted speed.
+
+Some main signals, like the ones from the Ks signals mod included
+by default, can also display ``Proceed as shunt move'', which is
+designated by 2 white lights along with the red light. Once a train
+passes this signal, it becomes a shunt move.
 
 \subsection{The concept of routes}
 
@@ -384,13 +433,7 @@ so it doesn't include the siding section itself:
 
 The Sht2 route then needs to show a shunt aspect, which instructs
 the driver to proceed slowly and watch out for vehicles on the route.
-To show a ``free'' aspect here would be wrong, because that would
-mean that the track is free until the next main signal, which it is
-clearly not.
-
-\textit{Note that advtrains\_interlocking currently does not allow
-to set individual aspects for routes, this is a feature still to be
-implemented soon.}
+See later on for how to set this up.
 
 Shunt routes like this are, so far, the only exception to the ``Routes
 should end at a signal facing the same direction'' rule.
@@ -466,10 +509,6 @@ final section using this method.
 \end{itemize}
 A few hints:
 \begin{itemize}
-\item If one turnout should be locked by more than one section, set the
-lock only in the \texttt{\textbf{last}} of those sections. Locking
-the same turnout in multiple sections of a single route results in
-undefined behavior!
 \item If you accidentally advanced the route wrongly, you can use the ``Step
 back one section'' button to undo this.
 \item If you want to stop programming the entire route without saving it,
@@ -484,6 +523,56 @@ punch.
 because the system won't be able to determine the final TCB of the
 route then.
 \end{itemize}
+
+\subsection{Route information screen}
+
+\includegraphics[width=10cm]{10_home_moritz_Home_Projekte_Minetest_minetest_____lyx_img_Bildschirmfoto_2019-01-15_19-28-09.png}
+
+This is the screen that appears when you click ``Edit Route''. It
+lets you change the route name and delete the route. Also, it shows
+a summary of the route and its elements.
+
+The route summary lists information per track section on the route,
+so the line starting with ``1'' is the first section of the route.
+
+The ARS rule list and its purpose is explained later.
+
+\subsection{Specifying signal aspects}
+
+By default, newly programmed routes show an aspect that comes closest
+to ``Proceed at maximum speed''. However, it can be desirable to
+change this behavior, like when the route passes a diverging turnout,
+the train should be signalled to drive slower, or the route is a shunt
+route and therefore only ``Shunting allowed'' should be shown.
+
+This is the purpose of the ``Change Aspect'' button in the route
+info screen.
+
+Signal aspects in advtrains consist of 4 sections: main (Information
+for train moves), dst (Distant signal information, not implemented
+yet), shunt (Information for shunt moves) and info (additional information,
+currently not in use).
+\begin{itemize}
+\item Train may proceed as train move at maximum speed: ``main: free, speed
+-1''
+\item Train may proceed as train move at speed of 8: ``main: free, speed
+8''
+\item Train may proceed as shunt move: ``shunt: free''
+\end{itemize}
+There's a field in the ``shunt'' part of signal aspects that is
+not displayed in the GUI, but is of potential interest to developers
+of signal addons: shunt.proceed\_as\_main.
+\begin{itemize}
+\item A train move can always become a shunt move by passing a signal that
+shows ``Halt for train moves, shunting permitted''
+\item A shunt move can only pass a signal saying ``Proceed as train move,
+shunting not permitted'' when proceed\_as\_main is true.
+\end{itemize}
+The property is used by the Limit Of Shunt sign, where proceed\_as\_main
+is set to false. Shunt moves have to stop in front of it, while train
+moves are signalled ``Proceed''. Regular main signals that show
+``green'' have the field set to true, so that all trains can pass
+it.
 
 \section{Interlocking system operation}
 
@@ -512,9 +601,6 @@ system in this mod. If a red signal is overrun, the train brakes using
 emergency brake (``BB'') and can not be moved any further. You should
 then examine the situation and drive the train backwards out of the
 section.
-
-As of now, changing the driving direction of a train always clears
-any imposed speed restrictions.
 
 \subsection{Simple route setting and cancelling}
 
@@ -552,13 +638,96 @@ can also be useful on a line with high traffic, when there's a low-frequented
 access to a siding. You'd enable automatic working for the main route
 and cancel it only when you need a train to go into the siding.
 
+\subsection{Automatic Route Setting (ARS)}
+
+As interlocking systems evolved, the goal always was to offload work
+from the human to the system, automating things. Modern interlocking
+systems can automatically set routes based on a pre-programmed routing
+table for each particular train. Since one outstanding feature of
+Advtrains is it's high degree of automation, it has a similar system
+to automatically set routes for a train depending on certain parameters.
+
+Every train in Advtrains has 2 internal properties that can be set
+through the Onboard Computer of every engine in the train, the ``Line''
+and the ``Routing Code''
+\begin{itemize}
+\item The ``Line'' property is supposed to distinguish trains of multiple
+lines that share a track.
+\item The ``Routing Code'' property is supposed to tell the target of
+a train or which route it should take to reach the target
+\end{itemize}
+Examples:
+
+\includegraphics{11_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_arslin_ex1.png}
+
+Both lines share the section between Blackbirdshire and Parktown.
+To divert them again, they can save their line number in the ``Line''
+field.
+
+\includegraphics{12_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_arslin_ex2.png}
+
+Some trains should go to B, some to C, the direction can be set with
+a routing code.
+
+One single routing code should not contain spaces. You can set multiple
+routing codes by just separating them with spaces in the Routing Code
+field. So, ``Stn Ori'' would be matched by ARS rules either containing
+``Stn'' or ``Ori''. This does not work for lines.
+
+\subsubsection{Writing ARS Rules}
+
+Every route of every signal can be given a set of ARS rules. A single
+ARS rule can either match a line or a routing code (combinations,
+e.g. and's, are not yet supported). The first rule in the first route
+that matches any of the properties of the train is selected, and that
+route is set for the train.
+
+\includegraphics{13_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_ars_ex1.png}
+
+You can add an asterisk (``{*}'') to the ARS rules of one route.
+That route then becomes the default route.
+
+If no explicit ARS rule matches the train, then the default route
+is chosen and set. If there is no default route, nothing happens and
+the signal remains red.
+
+\subsubsection{Using ARS}
+
+In contrast to Automatic working, where the route is re-set immediately
+after the train passed, ARS sets the route only when the train approaches
+the signal, e.g. is just about to start braking in front of it.
+
+At any place where one of the following things take place, you should
+use the ARS system in favor of Automatic Working:
+\begin{itemize}
+\item A main line diverts into 2 or more lines: Using ARS, you can direct
+the trains along the line where they should go
+\item Two or more main lines join into one: You cannot use automatic working
+here, because all routes are tried to be set at the same time and
+it is a matter of luck which one ``wins''. In a bad situation, you
+have a train coming from A, but it cannot proceed because Signal B
+has won the ``route race'' into the shared section, even if there's
+no train coming from B. Using ARS, by just specifying the ``default
+route'' by a {*}, the inward route is only set when a train approaches.
+\item Complex intersections, which are probably a combination of the above
+two
+\item sometimes-used branching tracks on which only certain trains (with
+certain routing code or line) should head off, like the entrance to
+a factory where only one specific goods train should drive in.
+\end{itemize}
+In the route overview, you can see some information on the ARS settings:
+All routes that have ARS rules are highlighted red, the ``default
+route'' is highlighted green.
+
+ARS does not affect signals which already have a route set, and signals
+which are operating under ``Automatic Working''.
+
 \section{Final notes}
 
 The interlocking system is mainly finished, though there are still
 some plans and ideas. They include:
 \begin{itemize}
 \item Signalbox panels, as revival of itrainmap
-\item Individual signal aspects for routes
 \item Distant signals
 \item On-Train head-up display for oncoming signals (they have something
 like this in Czech Republic, I forgot how it's called.)

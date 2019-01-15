@@ -46,22 +46,6 @@ htfcss: ecss  font-family: sans-serif;
 htfcss: ecff  font-family: fantasy;
 htfcss: ecti  font-style: italic;
 htfcss: ectt  font-family: monospace;
-htfcss: ecbx  font-weight: bold;
-htfcss: ecsx  font-weight: bold;
-htfcss: ecbi  font-weight: bold;   font-style: italic;
-htfcss: ecit  font-style: italic; font-family: monospace;
-htfcss: ecss  font-family: sans-serif;
-htfcss: ecff  font-family: fantasy;
-htfcss: ecti  font-style: italic;
-htfcss: ectt  font-family: monospace;
-htfcss: ecbx  font-weight: bold;
-htfcss: ecsx  font-weight: bold;
-htfcss: ecbi  font-weight: bold;   font-style: italic;
-htfcss: ecit  font-style: italic; font-family: monospace;
-htfcss: ecss  font-family: sans-serif;
-htfcss: ecff  font-family: fantasy;
-htfcss: ecti  font-style: italic;
-htfcss: ectt  font-family: monospace;
 File: interlocking.html
 File: interlocking.css
 File: interlocking.tmp
@@ -169,6 +153,10 @@ File: 6_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_im
 File: 7_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_route_ex2.png
 File: 8_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_assign_signal.png
 File: 9_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_route_ex3.png
+File: 10_home_moritz_Home_Projekte_Minetest_minetest_____lyx_img_Bildschirmfoto_2019-01-15_19-28-09.png
+File: 11_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_arslin_ex1.png
+File: 12_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_arslin_ex2.png
+File: 13_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_ars_ex1.png
 --- characters ---
 Font("ecrm","1000","10","100")
 Font("ecsx","1728","17","100")
@@ -176,5 +164,3 @@ Font("ecst","1440","14","100")
 Font("ecsx","1200","12","100")
 Font("ecsx","1000","10","100")
 Font("ecbx","1000","10","100")
-Font("ecti","1000","10","100")
-Font("ectt","1000","10","100")

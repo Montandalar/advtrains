@@ -615,8 +615,14 @@ Interlocking patterns
 \end_layout
 
 \begin_layout Standard
-This section is supposed to show some examples on how you should set up
- track sections on certain track configurations.
+Have a look at the following images.
+ They show you how you can set up sections so that reasonable train moves
+ are possible.
+\end_layout
+
+\begin_layout Standard
+You should settle on a naming scheme for your sections.
+ This way, you can determine the source of an issue faster
 \end_layout
 
 \begin_layout Section
@@ -641,7 +647,7 @@ Static signals always display the same information to the train.
 \end_layout
 
 \begin_layout Itemize
-Variable signals are what most people would call a 
+Dynamic signals are what most people would call a 
 \begin_inset Quotes eld
 \end_inset
 
@@ -738,7 +744,7 @@ The advtrains-internal train safety system ensures that the train always
 \end_layout
 
 \begin_layout Subsection
-Main and Shunt signals
+Signal Aspects
 \end_layout
 
 \begin_layout Standard
@@ -747,6 +753,51 @@ While static signals are mainly used for speed restrictions, the interesting
  Of course, you can always control any variable signal by traditional means
  (mesecons, digiline, right-click) if the signal allows it, but that misses
  the point of this interlocking system.
+\end_layout
+
+\begin_layout Standard
+A signal aspect is a piece of information that a signal shows to the train
+ driver.
+ It contains information about whether and at what speed the driver may
+ proceed at the signal.
+\end_layout
+
+\begin_layout Standard
+Every signal, both static and dynamic ones, imposes a certain aspect to
+ trains passing the signal.
+ For static signals, this is always the same aspect, such as 
+\begin_inset Quotes eld
+\end_inset
+
+Proceed at speed of 8
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+Shunt moves may not pass
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Dynamic signals, however, can display multiple different aspects.
+ The default for them is always as restrictive as possible, mostly 
+\begin_inset Quotes eld
+\end_inset
+
+Halt!
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+You should know that both static and dynamic signals use exactly the same
+ properties for signal aspects.
+ There is no difference in the meaning of the aspect definitions.
 \end_layout
 
 \begin_layout Standard
@@ -777,6 +828,88 @@ entry signal
 \end_inset
 
  for one or multiple routes.
+\end_layout
+
+\begin_layout Subsection
+Train moves and Shunt Moves
+\end_layout
+
+\begin_layout Itemize
+A 
+\begin_inset Quotes eld
+\end_inset
+
+Train move
+\begin_inset Quotes erd
+\end_inset
+
+ is a train that is running, going to run on or coming from a main line
+ between stations, passing through or stopping at a station.
+ Train moves can expect that there are no obstacles on the route and they
+ can proceed at the maximum permitted speed of the line.
+ This is the regular operation mode for trains.
+ Shunt signals have no meaning for train moves.
+\end_layout
+
+\begin_layout Itemize
+A 
+\begin_inset Quotes eld
+\end_inset
+
+Shunt move
+\begin_inset Quotes erd
+\end_inset
+
+ is a train that moves within a station and/or is coupling or decoupling
+ wagons or engines.
+ A shunt move may never leave a station except into a siding.
+ Also, shunt moves may drive at a maximum speed of 6 speed units, because
+ it is usually not ensured that the path is free of obstacles.
+ (however, advtrains ensures that every route is free of railway vehicles,
+ even shunt routes)
+\end_layout
+
+\begin_layout Standard
+There are also 2 general types of signals: Main signals and Shunt signals.
+ While main signals have a meaning for all types of trains, Shunt signals
+ only have to be followed by shunt moves.
+ Usually, Shunt signals that are on a train move route are set to a Proceed
+ aspect as well.
+\end_layout
+
+\begin_layout Standard
+When a train reverses, its mode automatically changes to 
+\begin_inset Quotes eld
+\end_inset
+
+shunt move
+\begin_inset Quotes erd
+\end_inset
+
+ until it passes a main signal that shows 
+\begin_inset Quotes eld
+\end_inset
+
+Proceed as train move
+\begin_inset Quotes erd
+\end_inset
+
+, which is usually designated by a green light.
+ From this point on, it can accelerate to maximum permitted speed.
+\end_layout
+
+\begin_layout Standard
+Some main signals, like the ones from the Ks signals mod included by default,
+ can also display 
+\begin_inset Quotes eld
+\end_inset
+
+Proceed as shunt move
+\begin_inset Quotes erd
+\end_inset
+
+, which is designated by 2 white lights along with the red light.
+ Once a train passes this signal, it becomes a shunt move.
 \end_layout
 
 \begin_layout Subsection
@@ -1019,23 +1152,7 @@ The solution is to program a second route into the siding, but with the
 \begin_layout Standard
 The Sht2 route then needs to show a shunt aspect, which instructs the driver
  to proceed slowly and watch out for vehicles on the route.
- To show a 
-\begin_inset Quotes eld
-\end_inset
-
-free
-\begin_inset Quotes erd
-\end_inset
-
- aspect here would be wrong, because that would mean that the track is free
- until the next main signal, which it is clearly not.
-\end_layout
-
-\begin_layout Standard
-
-\shape italic
-Note that advtrains_interlocking currently does not allow to set individual
- aspects for routes, this is a feature still to be implemented soon.
+ See later on for how to set this up.
 \end_layout
 
 \begin_layout Standard
@@ -1222,19 +1339,6 @@ A few hints:
 \end_layout
 
 \begin_layout Itemize
-If one turnout should be locked by more than one section, set the lock only
- in the 
-\family typewriter
-\series bold
-last
-\family default
-\series default
- of those sections.
- Locking the same turnout in multiple sections of a single route results
- in undefined behavior!
-\end_layout
-
-\begin_layout Itemize
 If you accidentally advanced the route wrongly, you can use the 
 \begin_inset Quotes eld
 \end_inset
@@ -1280,6 +1384,196 @@ Finish in NEXT section
 \begin_layout Itemize
 The third button does NOT work on sections with more than 2 exits, because
  the system won't be able to determine the final TCB of the route then.
+\end_layout
+
+\begin_layout Subsection
+Route information screen
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename lyx_img/Bildschirmfoto_2019-01-15_19-28-09.png
+	width 10cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This is the screen that appears when you click 
+\begin_inset Quotes eld
+\end_inset
+
+Edit Route
+\begin_inset Quotes erd
+\end_inset
+
+.
+ It lets you change the route name and delete the route.
+ Also, it shows a summary of the route and its elements.
+\end_layout
+
+\begin_layout Standard
+The route summary lists information per track section on the route, so the
+ line starting with 
+\begin_inset Quotes eld
+\end_inset
+
+1
+\begin_inset Quotes erd
+\end_inset
+
+ is the first section of the route.
+\end_layout
+
+\begin_layout Standard
+The ARS rule list and its purpose is explained later.
+\end_layout
+
+\begin_layout Subsection
+Specifying signal aspects
+\end_layout
+
+\begin_layout Standard
+By default, newly programmed routes show an aspect that comes closest to
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Proceed at maximum speed
+\begin_inset Quotes erd
+\end_inset
+
+.
+ However, it can be desirable to change this behavior, like when the route
+ passes a diverging turnout, the train should be signalled to drive slower,
+ or the route is a shunt route and therefore only 
+\begin_inset Quotes eld
+\end_inset
+
+Shunting allowed
+\begin_inset Quotes erd
+\end_inset
+
+ should be shown.
+\end_layout
+
+\begin_layout Standard
+This is the purpose of the 
+\begin_inset Quotes eld
+\end_inset
+
+Change Aspect
+\begin_inset Quotes erd
+\end_inset
+
+ button in the route info screen.
+\end_layout
+
+\begin_layout Standard
+Signal aspects in advtrains consist of 4 sections: main (Information for
+ train moves), dst (Distant signal information, not implemented yet), shunt
+ (Information for shunt moves) and info (additional information, currently
+ not in use).
+\end_layout
+
+\begin_layout Itemize
+Train may proceed as train move at maximum speed: 
+\begin_inset Quotes eld
+\end_inset
+
+main: free, speed -1
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Train may proceed as train move at speed of 8: 
+\begin_inset Quotes eld
+\end_inset
+
+main: free, speed 8
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Train may proceed as shunt move: 
+\begin_inset Quotes eld
+\end_inset
+
+shunt: free
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There's a field in the 
+\begin_inset Quotes eld
+\end_inset
+
+shunt
+\begin_inset Quotes erd
+\end_inset
+
+ part of signal aspects that is not displayed in the GUI, but is of potential
+ interest to developers of signal addons: shunt.proceed_as_main.
+\end_layout
+
+\begin_layout Itemize
+A train move can always become a shunt move by passing a signal that shows
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Halt for train moves, shunting permitted
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+A shunt move can only pass a signal saying 
+\begin_inset Quotes eld
+\end_inset
+
+Proceed as train move, shunting not permitted
+\begin_inset Quotes erd
+\end_inset
+
+ when proceed_as_main is true.
+\end_layout
+
+\begin_layout Standard
+The property is used by the Limit Of Shunt sign, where proceed_as_main is
+ set to false.
+ Shunt moves have to stop in front of it, while train moves are signalled
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Proceed
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Regular main signals that show 
+\begin_inset Quotes eld
+\end_inset
+
+green
+\begin_inset Quotes erd
+\end_inset
+
+ have the field set to true, so that all trains can pass it.
 \end_layout
 
 \begin_layout Section
@@ -1353,11 +1647,6 @@ BB
  of the section.
 \end_layout
 
-\begin_layout Standard
-As of now, changing the driving direction of a train always clears any imposed
- speed restrictions.
-\end_layout
-
 \begin_layout Subsection
 Simple route setting and cancelling
 \end_layout
@@ -1429,6 +1718,270 @@ d access to a siding.
  you need a train to go into the siding.
 \end_layout
 
+\begin_layout Subsection
+Automatic Route Setting (ARS)
+\end_layout
+
+\begin_layout Standard
+As interlocking systems evolved, the goal always was to offload work from
+ the human to the system, automating things.
+ Modern interlocking systems can automatically set routes based on a pre-program
+med routing table for each particular train.
+ Since one outstanding feature of Advtrains is it's high degree of automation,
+ it has a similar system to automatically set routes for a train depending
+ on certain parameters.
+\end_layout
+
+\begin_layout Standard
+Every train in Advtrains has 2 internal properties that can be set through
+ the Onboard Computer of every engine in the train, the 
+\begin_inset Quotes eld
+\end_inset
+
+Line
+\begin_inset Quotes erd
+\end_inset
+
+ and the 
+\begin_inset Quotes eld
+\end_inset
+
+Routing Code
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+The 
+\begin_inset Quotes eld
+\end_inset
+
+Line
+\begin_inset Quotes erd
+\end_inset
+
+ property is supposed to distinguish trains of multiple lines that share
+ a track.
+\end_layout
+
+\begin_layout Itemize
+The 
+\begin_inset Quotes eld
+\end_inset
+
+Routing Code
+\begin_inset Quotes erd
+\end_inset
+
+ property is supposed to tell the target of a train or which route it should
+ take to reach the target
+\end_layout
+
+\begin_layout Standard
+Examples:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename lyx_img/arslin_ex1.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Both lines share the section between Blackbirdshire and Parktown.
+ To divert them again, they can save their line number in the 
+\begin_inset Quotes eld
+\end_inset
+
+Line
+\begin_inset Quotes erd
+\end_inset
+
+ field.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename lyx_img/arslin_ex2.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Some trains should go to B, some to C, the direction can be set with a routing
+ code.
+\end_layout
+
+\begin_layout Standard
+One single routing code should not contain spaces.
+ You can set multiple routing codes by just separating them with spaces
+ in the Routing Code field.
+ So, 
+\begin_inset Quotes eld
+\end_inset
+
+Stn Ori
+\begin_inset Quotes erd
+\end_inset
+
+ would be matched by ARS rules either containing 
+\begin_inset Quotes eld
+\end_inset
+
+Stn
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+Ori
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This does not work for lines.
+\end_layout
+
+\begin_layout Subsubsection
+Writing ARS Rules
+\end_layout
+
+\begin_layout Standard
+Every route of every signal can be given a set of ARS rules.
+ A single ARS rule can either match a line or a routing code (combinations,
+ e.g.
+ and's, are not yet supported).
+ The first rule in the first route that matches any of the properties of
+ the train is selected, and that route is set for the train.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename lyx_img/ars_ex1.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+You can add an asterisk (
+\begin_inset Quotes eld
+\end_inset
+
+*
+\begin_inset Quotes erd
+\end_inset
+
+) to the ARS rules of one route.
+ That route then becomes the default route.
+\end_layout
+
+\begin_layout Standard
+If no explicit ARS rule matches the train, then the default route is chosen
+ and set.
+ If there is no default route, nothing happens and the signal remains red.
+\end_layout
+
+\begin_layout Subsubsection
+Using ARS
+\end_layout
+
+\begin_layout Standard
+In contrast to Automatic working, where the route is re-set immediately
+ after the train passed, ARS sets the route only when the train approaches
+ the signal, e.g.
+ is just about to start braking in front of it.
+\end_layout
+
+\begin_layout Standard
+At any place where one of the following things take place, you should use
+ the ARS system in favor of Automatic Working:
+\end_layout
+
+\begin_layout Itemize
+A main line diverts into 2 or more lines: Using ARS, you can direct the
+ trains along the line where they should go
+\end_layout
+
+\begin_layout Itemize
+Two or more main lines join into one: You cannot use automatic working here,
+ because all routes are tried to be set at the same time and it is a matter
+ of luck which one 
+\begin_inset Quotes eld
+\end_inset
+
+wins
+\begin_inset Quotes erd
+\end_inset
+
+.
+ In a bad situation, you have a train coming from A, but it cannot proceed
+ because Signal B has won the 
+\begin_inset Quotes eld
+\end_inset
+
+route race
+\begin_inset Quotes erd
+\end_inset
+
+ into the shared section, even if there's no train coming from B.
+ Using ARS, by just specifying the 
+\begin_inset Quotes eld
+\end_inset
+
+default route
+\begin_inset Quotes erd
+\end_inset
+
+ by a *, the inward route is only set when a train approaches.
+\end_layout
+
+\begin_layout Itemize
+Complex intersections, which are probably a combination of the above two
+\end_layout
+
+\begin_layout Itemize
+sometimes-used branching tracks on which only certain trains (with certain
+ routing code or line) should head off, like the entrance to a factory where
+ only one specific goods train should drive in.
+\end_layout
+
+\begin_layout Standard
+In the route overview, you can see some information on the ARS settings:
+ All routes that have ARS rules are highlighted red, the 
+\begin_inset Quotes eld
+\end_inset
+
+default route
+\begin_inset Quotes erd
+\end_inset
+
+ is highlighted green.
+\end_layout
+
+\begin_layout Standard
+ARS does not affect signals which already have a route set, and signals
+ which are operating under 
+\begin_inset Quotes eld
+\end_inset
+
+Automatic Working
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
 \begin_layout Section
 Final notes
 \end_layout
@@ -1441,10 +1994,6 @@ The interlocking system is mainly finished, though there are still some
 
 \begin_layout Itemize
 Signalbox panels, as revival of itrainmap
-\end_layout
-
-\begin_layout Itemize
-Individual signal aspects for routes
 \end_layout
 
 \begin_layout Itemize

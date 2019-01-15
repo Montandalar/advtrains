@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=latex 2018.8.26)  15 OCT 2018 22:04
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=latex 2018.10.18)  15 JAN 2019 21:06
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -483,46 +483,73 @@ _Home_Projekte_Minetest_minetest_m____lyx_img_Bildschirmfoto_2018-08-30_14-51-2
 l. 173 --- needs --- 5_home_moritz_Home_Projekte_Minetest_minetest_m____lyx_img
 _Bildschirmfoto_2018-08-30_14-51-25.png ---
 [5] [6] [7]
-l.295 --- TeX4ht warning --- File `"6_home_moritz_Home_Projekte_Minetest_minete
+l.344 --- TeX4ht warning --- File `"6_home_moritz_Home_Projekte_Minetest_minete
 st_mods_advtrains_assets_lyx_img_route_ex1.xbb"' not found ---
-l.295 --- TeX4ht warning --- Cannot determine size of graphic in "6_home_moritz
+l.344 --- TeX4ht warning --- Cannot determine size of graphic in "6_home_moritz
 _Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_route_ex1.xbb" (
 no BoundingBox) ---
-l. 295 --- needs --- 6_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrai
+l. 344 --- needs --- 6_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrai
 ns_assets_lyx_img_route_ex1.png ---
-l.321 --- TeX4ht warning --- File `"7_home_moritz_Home_Projekte_Minetest_minete
+[8]
+l.370 --- TeX4ht warning --- File `"7_home_moritz_Home_Projekte_Minetest_minete
 st_mods_advtrains_assets_lyx_img_route_ex2.xbb"' not found ---
-l.321 --- TeX4ht warning --- Cannot determine size of graphic in "7_home_moritz
+l.370 --- TeX4ht warning --- Cannot determine size of graphic in "7_home_moritz
 _Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_route_ex2.xbb" (
 no BoundingBox) ---
-l. 321 --- needs --- 7_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrai
+l. 370 --- needs --- 7_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrai
 ns_assets_lyx_img_route_ex2.png ---
-l.352 --- TeX4ht warning --- File `"8_home_moritz_Home_Projekte_Minetest_minete
+l.401 --- TeX4ht warning --- File `"8_home_moritz_Home_Projekte_Minetest_minete
 st_mods_advtrains_assets_lyx_img_assign_signal.xbb"' not found ---
-l.352 --- TeX4ht warning --- Cannot determine size of graphic in "8_home_moritz
+l.401 --- TeX4ht warning --- Cannot determine size of graphic in "8_home_moritz
 _Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_assign_signal.xb
 b" (no BoundingBox) ---
-l. 352 --- needs --- 8_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrai
+l. 401 --- needs --- 8_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrai
 ns_assets_lyx_img_assign_signal.png ---
-[8]
-l.383 --- TeX4ht warning --- File `"9_home_moritz_Home_Projekte_Minetest_minete
+l.432 --- TeX4ht warning --- File `"9_home_moritz_Home_Projekte_Minetest_minete
 st_mods_advtrains_assets_lyx_img_route_ex3.xbb"' not found ---
-l.383 --- TeX4ht warning --- Cannot determine size of graphic in "9_home_moritz
+l.432 --- TeX4ht warning --- Cannot determine size of graphic in "9_home_moritz
 _Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_route_ex3.xbb" (
 no BoundingBox) ---
-l. 383 --- needs --- 9_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrai
+l. 432 --- needs --- 9_home_moritz_Home_Projekte_Minetest_minetest_mods_advtrai
 ns_assets_lyx_img_route_ex3.png ---
-[9]
-LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 470.
-[10] [11] [12] (./interlocking.aux) ) 
+[9] [10]
+l.529 --- TeX4ht warning --- File `"10_home_moritz_Home_Projekte_Minetest_minet
+est_____lyx_img_Bildschirmfoto_2019-01-15_19-28-09.xbb"' not found ---
+l.529 --- TeX4ht warning --- Cannot determine size of graphic in "10_home_morit
+z_Home_Projekte_Minetest_minetest_____lyx_img_Bildschirmfoto_2019-01-15_19-28-0
+9.xbb" (no BoundingBox) ---
+l. 529 --- needs --- 10_home_moritz_Home_Projekte_Minetest_minetest_____lyx_img
+_Bildschirmfoto_2019-01-15_19-28-09.png ---
+[11] [12]
+l.661 --- TeX4ht warning --- File `"11_home_moritz_Home_Projekte_Minetest_minet
+est_mods_advtrains_assets_lyx_img_arslin_ex1.xbb"' not found ---
+l.661 --- TeX4ht warning --- Cannot determine size of graphic in "11_home_morit
+z_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_arslin_ex1.xbb"
+ (no BoundingBox) ---
+l. 661 --- needs --- 11_home_moritz_Home_Projekte_Minetest_minetest_mods_advtra
+ins_assets_lyx_img_arslin_ex1.png ---
+l.667 --- TeX4ht warning --- File `"12_home_moritz_Home_Projekte_Minetest_minet
+est_mods_advtrains_assets_lyx_img_arslin_ex2.xbb"' not found ---
+l.667 --- TeX4ht warning --- Cannot determine size of graphic in "12_home_morit
+z_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_arslin_ex2.xbb"
+ (no BoundingBox) ---
+l. 667 --- needs --- 12_home_moritz_Home_Projekte_Minetest_minetest_mods_advtra
+ins_assets_lyx_img_arslin_ex2.png ---
+l.685 --- TeX4ht warning --- File `"13_home_moritz_Home_Projekte_Minetest_minet
+est_mods_advtrains_assets_lyx_img_ars_ex1.xbb"' not found ---
+l.685 --- TeX4ht warning --- Cannot determine size of graphic in "13_home_morit
+z_Home_Projekte_Minetest_minetest_mods_advtrains_assets_lyx_img_ars_ex1.xbb" (n
+o BoundingBox) ---
+l. 685 --- needs --- 13_home_moritz_Home_Projekte_Minetest_minetest_mods_advtra
+ins_assets_lyx_img_ars_ex1.png ---
+[13] [14] (./interlocking.aux) ) 
 Here is how much of TeX's memory you used:
- 5165 strings out of 494848
- 63469 string characters out of 6179106
- 253312 words of memory out of 5000000
- 8381 multiletter control sequences out of 15000+600000
- 15892 words of font info for 33 fonts, out of 8000000 for 9000
+ 5182 strings out of 494848
+ 65027 string characters out of 6179105
+ 253348 words of memory out of 5000000
+ 8396 multiletter control sequences out of 15000+600000
+ 14893 words of font info for 31 fonts, out of 8000000 for 9000
  59 hyphenation exceptions out of 8191
  28i,6n,29p,763b,465s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on interlocking.dvi (12 pages, 52488 bytes).
+Output written on interlocking.dvi (14 pages, 65604 bytes).
