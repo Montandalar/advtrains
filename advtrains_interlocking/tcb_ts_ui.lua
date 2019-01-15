@@ -561,6 +561,7 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 		else
 			form = form.."label[0.5,7  ;Automatic Working is active.]"
 			form = form.."label[0.5,7.3;Route is re-set when a train passed.]"
+			form = form.."button[0.5,7.7;  5,1;noauto;Disable Automatic Working]"
 		end
 		
 		form = form.."button[0.5,6;  5,1;cancelroute;Cancel Route]"
@@ -693,6 +694,9 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		
 		if fields.auto then
 			tcbs.route_auto = true
+		end
+		if fields.noauto then
+			tcbs.route_auto = false
 		end
 		
 		advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
