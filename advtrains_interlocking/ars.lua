@@ -27,16 +27,17 @@ local il = advtrains.interlocking
 local function find_rtematch(routes, train)
 	local default
 	local line = train.line
-	local routingcode
+	local routingcode = train.routingcode
 	for rteid, route in ipairs(routes) do
 		if route.ars then
 			if route.ars.default then
 				default = rteid
 			else
 				for arskey, arsent in ipairs(route.ars) do
+					--atdebug(arsent, line, routingcode)
 					if arsent.ln and line and arsent.ln == line then
 						return rteid
-					elseif arsent.rc and routingcode and string.match(" "..routingcode.." ", " "..arsent.rc.." ", nil, true) then
+					elseif arsent.rc and routingcode and string.find(" "..routingcode.." ", " "..arsent.rc.." ", nil, true) then
 						return rteid
 					end
 				end
