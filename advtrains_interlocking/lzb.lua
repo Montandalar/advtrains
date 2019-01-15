@@ -4,7 +4,7 @@
 
 local function approach_callback(parpos, train_id, train, index)
 	local pos = advtrains.round_vector_floor_y(parpos)
-
+	
 	local node=pnode or advtrains.ndb.get_node(pos)
 	local ndef=minetest.registered_nodes[node.name]
 	if ndef and ndef.advtrains and ndef.advtrains.on_train_approach then
@@ -88,6 +88,14 @@ local function look_ahead(id, train)
 			
 			-- check for signal
 			local asp, spos = il.db.get_ip_signal_asp(pts, cn)
+			
+			-- do ARS if needed
+			if spos then
+				local sigd = il.db.get_sigd_for_signal(spos)
+				if sigd then
+					il.ars_check(sigd, train)
+				end
+			end
 			--atdebug("trav: ",pos, cn, asp, spos, "travsht=", lzb.travsht)
 			if asp then
 				local nspd = 0

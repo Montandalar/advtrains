@@ -262,7 +262,10 @@ end
 
 -- TCBS Routesetting helper: generic update function for
 -- route setting
-
+-- Call this function to set and cancel routes!
+-- sigd, tcbs: self-explanatory
+-- newrte: If a new route should be set, the route index of it (in tcbs.routes). nil otherwise
+-- cancel: true in combination with newrte=nil causes cancellation of the current route.
 function ilrs.update_route(sigd, tcbs, newrte, cancel)
 	-- in general, always show danger signal
 	tcbs.aspect = nil
