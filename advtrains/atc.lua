@@ -21,7 +21,7 @@ end
 
 --general
 function atc.train_set_command(train, command, arrow)
-	atc.train_reset_command(train)
+	atc.train_reset_command(train, true)
 	train.atc_delay = 0
 	train.atc_arrow = arrow
 	train.atc_command = command
@@ -67,13 +67,17 @@ function atc.send_command(pos, par_tid)
 	return false
 end
 
-function atc.train_reset_command(train)
+-- Resets any ATC commands the train is currently executing, including the target speed (tarvelocity) it is instructed to hold
+-- if keep_tarvel is set, does not clear the tarvelocity
+function atc.train_reset_command(train, keep_tarvel)
 	train.atc_command=nil
 	train.atc_delay=nil
 	train.atc_brake_target=nil
 	train.atc_wait_finish=nil
 	train.atc_arrow=nil
-	train.tarvelocity=nil
+	if not keep_tarvel then
+		train.tarvelocity=nil
+	end
 end
 
 --nodes
@@ -261,7 +265,7 @@ function atc.execute_atc_command(id, train)
 		while nest>=0 do
 			if pos>#rest then
 				atwarn(sid(id), attrans("ATC command syntax error: I statement not closed: @1",command))
-				atc.train_reset_command(train)
+				atc.train_reset_command(train, true)
 				return
 			end
 			local char=string.sub(rest, pos, pos)
@@ -304,7 +308,7 @@ function atc.execute_atc_command(id, train)
 		end
 	end
 	atwarn(sid(id), attrans("ATC command parse error: Unknown command: @1", command))
-	atc.train_reset_command(train)
+	atc.train_reset_command(train, true)
 end
 
 
