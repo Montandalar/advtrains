@@ -173,7 +173,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				advtrains.interlocking.show_route_edit_form(pname, sigd, routeid)
 			end
 			
-			advtrains.interlocking.show_signal_aspect_selector(pname, suppasp, route.name, callback, rte.aspect)
+			advtrains.interlocking.show_signal_aspect_selector(pname, suppasp, route.name, callback, route.aspect)
 			return
 		end
 		if fields.delete then
