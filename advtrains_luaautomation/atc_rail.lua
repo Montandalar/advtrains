@@ -63,6 +63,16 @@ function r.fire_event(pos, evtdata)
 		get_line = function()
 			return train.line
 		end,
+		set_rc = function(rc)
+			if type(rc)~="string"then
+				return false
+			end
+			train.routingcode = rc
+			return true
+		end,
+		get_rc = function()
+			return train.routingcode
+		end,
 		atc_reset = function(cmd)
 			if not train_id then return false end
 			assertt(cmd, "string")

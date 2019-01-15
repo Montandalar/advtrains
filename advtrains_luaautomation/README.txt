@@ -147,6 +147,7 @@ The Lua-controlled ATC rails are the only components that can actually interface
 
 {type="train", train=true, id="<train_id>"}
 This event is fired when a train enters the rail. The field 'id' is the unique train ID, which is 6-digit random numerical string.
+If the world contains trains from an older advtrains version, this string may be longer and contain a dot (.)
 
 {type="int", int=true, msg=<message>}
 Fired when an interrupt set by the 'interrupt' function runs out. 'message' is the message passed to the interrupt function.
@@ -177,10 +178,16 @@ get_line()
 	Returns the "Line" property of the train (a string).
 	This can be used to distinguish between trains of different lines and route them appropriately.
 	The interlocking system also uses this property for Automatic Routesetting.
-set_line(number)
+set_line(line)
 	Sets the "Line" property of the train (a string).
 	If the first digit of this string is a number (0-9), any subway wagons on the train will have this one displayed as line number
 	(where "0" is actually shown as Line 10 on the train)
+get_rc()
+	Returns the "Routingcode" property of the train (a string).
+	The interlocking system uses this property for Automatic Routesetting.
+set_rc(routingcode)
+	Sets the "Routingcode" property of the train (a string).
+	The interlocking system uses this property for Automatic Routesetting.
 
 # Operator panel
 This simple node executes its actions when punched. It can be used to change a switch and update the corresponding signals or similar applications.
