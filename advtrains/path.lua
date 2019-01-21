@@ -124,6 +124,7 @@ end
 -- This function should be 'atprint', 'atlog', 'atwarn' or 'atdebug', because it needs to use print_concat_table
 function advtrains.path_print(train, printf)
 	if not train.path then
+		printf("path_print: tid =",train.train_id," index =",train.index," end_index =",train.end_index," vel =",train.velocity)
 		printf("path_print: Path is invalidated/inexistant.")
 		return
 	end

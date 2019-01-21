@@ -629,11 +629,24 @@ advtrains.te_register_on_update(function(id, train)
 		old_index = old_index + 1
 		local pos = advtrains.round_vector_floor_y(advtrains.path_get(train,old_index))
 		tnc_call_enter_callback(pos, id, train, old_index)
+		
+		if not train.path then
+		atwarn(id,"@register_on_update missing path")
+		atwarn(advtrains.dbg_last_pathclear)
+		return
+	end
 	end
 	while old_end_index < new_end_index do
 		local pos = advtrains.round_vector_floor_y(advtrains.path_get(train,old_end_index))
 		tnc_call_leave_callback(pos, id, train, old_end_index)
 		old_end_index = old_end_index + 1
+		
+		if not train.path then
+		atwarn(id,"@register_on_update missing path")
+		atwarn(advtrains.dbg_last_pathclear)
+		return
+	end
+		
 	end
 	train.tnc.old_index = new_index
 	train.tnc.old_end_index = new_end_index
