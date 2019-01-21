@@ -117,6 +117,7 @@ function advtrains.path_invalidate(train)
 	train.path_req_b=0
 	
 	train.dirty = true
+	advtrains.dbg_last_pathclear = "LAST PATH_INVALIDATE: "..debug.traceback()
 end
 
 -- Prints a path using the passed print function
