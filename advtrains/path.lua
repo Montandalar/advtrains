@@ -126,6 +126,7 @@ function advtrains.path_print(train, printf)
 		printf("path_print: Path is invalidated/inexistant.")
 		return
 	end
+	printf("path_print: tid =",train.train_id," index =",train.index," end_index =",train.end_index," vel =",train.velocity)
 	printf("i:	CP	Position	Dir	CN		->Dist->")
 	for i = train.path_ext_b, train.path_ext_f do
 		if i==train.path_trk_b then
