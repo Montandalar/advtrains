@@ -298,7 +298,7 @@ function advtrains.train_ensure_init(id, train)
 end
 
 function advtrains.train_step_b(id, train, dtime)
-	if train.no_step or train.wait_for_path then return end
+	if train.no_step or train.wait_for_path or not train.path then return end
 	
 	-- in this code, we check variables such as path_trk_? and path_dist. We need to ensure that the path is known for the whole 'Train' zone
 	advtrains.path_get(train, atfloor(train.index + 2))
@@ -473,7 +473,7 @@ function advtrains.train_step_b(id, train, dtime)
 end
 
 function advtrains.train_step_c(id, train, dtime)
-if train.no_step or train.wait_for_path then return end
+if train.no_step or train.wait_for_path or not train.path then return end
 	
 	-- all location/extent-critical actions have been done.
 	-- calculate the new occupation window
