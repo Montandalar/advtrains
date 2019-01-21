@@ -257,6 +257,10 @@ advtrains.te_register_on_new_path(function(id, train)
 end)
 
 advtrains.te_register_on_update(function(id, train)
+	if not train.path or not train.lzb then
+		atprint("LZB run: no path on train, skip step")
+		return
+	end
 	look_ahead(id, train)
 	apply_control(id, train)
 end)
