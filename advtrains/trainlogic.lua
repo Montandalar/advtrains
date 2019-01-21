@@ -473,11 +473,14 @@ function advtrains.train_step_b(id, train, dtime)
 end
 
 function advtrains.train_step_c(id, train, dtime)
-if train.no_step or train.wait_for_path or not train.path then return end
+	if train.no_step or train.wait_for_path or not train.path then return end
 	
 	-- all location/extent-critical actions have been done.
 	-- calculate the new occupation window
 	run_callbacks_update(id, train)
+	
+	-- Return if something(TM) damaged the path
+	if train.no_step or train.wait_for_path or not train.path then return end
 	
 	advtrains.path_clear_unused(train)
 	
