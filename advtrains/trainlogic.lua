@@ -185,6 +185,10 @@ function advtrains.get_acceleration(train, lever)
 	local acc_all = t_accel_all[lever]
 	local acc_eng = t_accel_eng[lever]
 	local nwagons = #train.trainparts
+	if nwagons == 0 then
+		-- empty train! avoid division through zero
+		return -1
+	end
 	local acc = acc_all + (acc_eng*train.locomotives_in_train)/nwagons
 	return acc
 end
