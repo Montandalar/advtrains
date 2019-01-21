@@ -454,8 +454,16 @@ function advtrains.train_step_b(id, train, dtime)
 	end
 	
 	--- 4. move train ---
-	
+	local oi = train.index
 	train.index=train.index and train.index+((train.velocity/(train.path_dist[math.floor(train.index)] or 1))*dtime) or 0
+	if train.index ~= train.index then -- This is a check whether index is "NaN" https://stackoverflow.com/questions/37753694/lua-check-if-a-number-value-is-nan
+		atwarn("Index of train is NaN!")
+		advtrains.path_print(train, atwarn)
+		atwarn("Calculation index=",oi,"+(",train.velocity,"/",train.path_dist[math.floor(train.index)],"*",dtime)
+		advtrains.path_invalidate(train)
+		train.wait_for_path = true
+		return
+	end
 	recalc_end_index(train)
 
 end
