@@ -41,25 +41,38 @@ The traverser stops at signals that result in spd==0, because changes beyond the
 
 local il = advtrains.interlocking
 
-local BRAKE_SPACE = 10
-local AWARE_ZONE  = 50
+local params = {
+	BRAKE_SPACE = 10,
+	AWARE_ZONE  = 50,
 
-local ADD_STAND  =  2.5
-local ADD_SLOW   =  1.5
-local ADD_FAST   =  7
-local ZONE_ROLL  =  2
-local ZONE_HOLD  =  5 -- added on top of ZONE_ROLL
-local ZONE_VSLOW =  3 -- When speed is <2, still allow accelerating
+	ADD_STAND  =  2.5,
+	ADD_SLOW   =  1.5,
+	ADD_FAST   =  7,
+	ZONE_ROLL  =  2,
+	ZONE_HOLD  =  5, -- added on top of ZONE_ROLL
+	ZONE_VSLOW =  3, -- When speed is <2, still allow accelerating
 
-local SHUNT_SPEED_MAX = advtrains.SHUNT_SPEED_MAX
+	DST_FACTOR =  1.5,
+
+	SHUNT_SPEED_MAX = advtrains.SHUNT_SPEED_MAX,
+}
+
+function advtrains.interlocking.set_lzb_param(par, val)
+	if params[par] and tonumber(val) then
+		params[par] = tonumber(val)
+	else
+		error("Inexistant param or not a number")
+	end
+end
+
 
 local function look_ahead(id, train)
 	
 	local acc = advtrains.get_acceleration(train, 1)
 	local vel = train.velocity
-	local brakedst = -(vel*vel) / (2*acc)
+	local brakedst = ( -(vel*vel) / (2*acc) ) * params.DST_FACTOR
 	
-	local brake_i = advtrains.path_get_index_by_offset(train, train.index, brakedst + BRAKE_SPACE)
+	local brake_i = advtrains.path_get_index_by_offset(train, train.index, brakedst + params.BRAKE_SPACE)
 	--local aware_i = advtrains.path_get_index_by_offset(train, brake_i, AWARE_ZONE)
 	
 	local lzb = train.lzb
@@ -103,7 +116,7 @@ local function look_ahead(id, train)
 				if lzb.travsht then
 					--shunt move
 					if asp.shunt.free then
-						nspd = SHUNT_SPEED_MAX
+						nspd = params.SHUNT_SPEED_MAX
 					elseif asp.shunt.proceed_as_main and asp.main.free then
 						nspd = asp.main.speed
 						lzb.travsht = false
@@ -113,7 +126,7 @@ local function look_ahead(id, train)
 					if asp.main.free then
 						nspd = asp.main.speed
 					elseif asp.shunt.free then
-						nspd = SHUNT_SPEED_MAX
+						nspd = params.SHUNT_SPEED_MAX
 						lzb.travsht = true
 					end
 				end
@@ -190,12 +203,12 @@ local function apply_control(id, train)
 			local f = (v1-v0) / a
 			local s = v0*f + a*f*f/2
 			
-			local st = s + ADD_SLOW
+			local st = s + params.ADD_SLOW
 			if v0 > 3 then
-				st = s + ADD_FAST
+				st = s + params.ADD_FAST
 			end
 			if v0<=0 then
-				st = s + ADD_STAND
+				st = s + params.ADD_STAND
 			end
 			
 			local i = advtrains.path_get_index_by_offset(train, it.idx, -st)
@@ -208,13 +221,13 @@ local function apply_control(id, train)
 				return
 			end
 			
-			i = advtrains.path_get_index_by_offset(train, i, -ZONE_ROLL)
+			i = advtrains.path_get_index_by_offset(train, i, -params.ZONE_ROLL)
 			if i <= train.index and v0>1 then
 				-- roll control
 				train.ctrl.lzb = 2
 				return
 			end
-			i = advtrains.path_get_index_by_offset(train, i, -ZONE_HOLD)
+			i = advtrains.path_get_index_by_offset(train, i, -params.ZONE_HOLD)
 			if i <= train.index and v0>1 then
 				-- hold speed
 				train.ctrl.lzb = 3
