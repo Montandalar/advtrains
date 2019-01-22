@@ -103,14 +103,16 @@ function atil.show_route_edit_form(pname, sigd, routeid)
 		c_rseg = route[i]
 		c_lckp = {}
 		
-		itab(""..i.." Entry "..sigd_to_string(c_sigd).." -> Sec. "..c_ts.name.." -> Exit "..(c_rseg.next and sigd_to_string(c_rseg.next) or "END"))
+		itab(""..i.." Entry "..sigd_to_string(c_sigd).." -> Sec. "..(c_ts and c_ts.name or "-").." -> Exit "..(c_rseg.next and sigd_to_string(c_rseg.next) or "END"))
 		
-		for pts, state in pairs(c_rseg.locks) do
-			
-			local pos = minetest.string_to_pos(pts)
-			itab("  Lock: "..pts.." -> "..state)
-			if not advtrains.is_passive(pos) then
-				itab("-!- No passive component at "..pts..". Please reconfigure route!")
+		if c_rseg.locks then
+			for pts, state in pairs(c_rseg.locks) do
+				
+				local pos = minetest.string_to_pos(pts)
+				itab("  Lock: "..pts.." -> "..state)
+				if not advtrains.is_passive(pos) then
+					itab("-!- No passive component at "..pts..". Please reconfigure route!")
+				end
 			end
 		end
 		-- advance
