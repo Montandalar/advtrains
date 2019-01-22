@@ -130,7 +130,7 @@ function atil.show_route_edit_form(pname, sigd, routeid)
 	form = form.."button[3.5,6;2,1;aspect;Signal Aspect]"
 	form = form.."button[5.5,6;2,1;delete;Delete Route]"
 	
-	atdebug(route.ars)
+	--atdebug(route.ars)
 	form = form.."textarea[1,7.3;5.2,3;ars;ARS Rule List;"..ars_to_text(route.ars).."]"
 	form = form.."button[6,7.7;1,1;savears;Save]"
 	

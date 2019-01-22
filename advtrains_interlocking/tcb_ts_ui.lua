@@ -182,8 +182,11 @@ local function mktcbformspec(tcbs, btnpref, offset, pname)
 	if ts then
 		form = form.."label[0.5,"..offset..";Side "..btnpref..": "..ts.name.."]"
 		form = form.."button[0.5,"..(offset+0.5)..";5,1;"..btnpref.."_gotots;Show track section]"
-		form = form.."button[0.5,"..(offset+1.5)..";2.5,1;"..btnpref.."_update;Update near TCBs]"
-		form = form.."button[3  ,"..(offset+1.5)..";2.5,1;"..btnpref.."_remove;Remove from section]"
+		if ildb.may_modify_tcbs(tcbs) then
+			-- Note: the security check to prohibit those actions is located in database.lua in the corresponding functions.
+			form = form.."button[0.5,"..(offset+1.5)..";2.5,1;"..btnpref.."_update;Update near TCBs]"
+			form = form.."button[3  ,"..(offset+1.5)..";2.5,1;"..btnpref.."_remove;Remove from section]"
+		end
 	else
 		tcbs.ts_id = nil
 		form = form.."label[0.5,"..offset..";Side "..btnpref..": ".."End of interlocking]"
@@ -323,22 +326,30 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 	end
 	
 	form = form.."textlist[0.5,3;5,3;tcblist;"..table.concat(strtab, ",").."]"
-	if players_link_ts[pname] then
-		local other_id = players_link_ts[pname]
-		local other_ts = ildb.get_ts(other_id)
-		if other_ts then
-			form = form.."button[5.5,3;3.5,1;mklink;Join with "..other_ts.name.."]"
-			form = form.."button[9  ,3;0.5,1;cancellink;X]"
+	
+	if ildb.may_modify_ts(ts) then
+		
+		if players_link_ts[pname] then
+			local other_id = players_link_ts[pname]
+			local other_ts = ildb.get_ts(other_id)
+			if other_ts then
+				if ildb.may_modify_ts(other_ts) then
+					form = form.."button[5.5,3;3.5,1;mklink;Join with "..other_ts.name.."]"
+					form = form.."button[9  ,3;0.5,1;cancellink;X]"
+				end
+			end
+		else
+			form = form.."button[5.5,3;4,1;link;Join into other section]"
+			hint = 1
+		end
+		form = form.."button[5.5,4;4,1;dissolve;Dissolve Section]"
+		form = form.."tooltip[dissolve;This will remove the track section and set all its end points to End Of Interlocking]"
+		if sel_tcb then
+			form = form.."button[5.5,5;4,1;del_tcb;Unlink selected TCB]"
+			hint = 2
 		end
 	else
-		form = form.."button[5.5,3;4,1;link;Join into other section]"
-		hint = 1
-	end
-	form = form.."button[5.5,4;4,1;dissolve;Dissolve Section]"
-	form = form.."tooltip[dissolve;This will remove the track section and set all its end points to End Of Interlocking]"
-	if sel_tcb then
-		form = form.."button[5.5,5;4,1;del_tcb;Unlink selected TCB]"
-		hint = 2
+		hint=3
 	end
 	
 	if ts.route then
@@ -360,6 +371,8 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 		form = form.."label[0.5,0.75;Use the 'Join' button to designate rail crosses and link not listed far-away TCBs]"
 	elseif hint == 2 then
 		form = form.."label[0.5,0.75;Unlinking a TCB will set it to non-interlocked mode.]"
+	elseif hint == 3 then
+		form = form.."label[0.5,0.75;You cannot modify track sections when a route is set or a train is on the section.]"
 		--form = form.."label[0.5,1;Trying to unlink a TCB directly connected to this track will not work.]"
 	end
 	
@@ -392,27 +405,31 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			sel_tcb = tpsi
 		end
 		
-		if players_link_ts[pname] then
-			if fields.cancellink then
-				players_link_ts[pname] = nil
-			elseif fields.mklink then
-				ildb.link_track_sections(players_link_ts[pname], ts_id)
-				players_link_ts[pname] = nil
+		if ildb.may_modify_ts(ts) then
+			if players_link_ts[pname] then
+				if fields.cancellink then
+					players_link_ts[pname] = nil
+				elseif fields.mklink then
+					ildb.link_track_sections(players_link_ts[pname], ts_id)
+					players_link_ts[pname] = nil
+				end
 			end
-		end
-		
-		if fields.del_tcb and sel_tcb and sel_tcb > 0 and sel_tcb <= #ts.tc_breaks then
-			ildb.remove_from_interlocking(ts.tc_breaks[sel_tcb])
-			sel_tcb = nil
-		end
-		
-		if fields.link then
-			players_link_ts[pname] = ts_id
-		end
-		if fields.dissolve then
-			ildb.dissolve_ts(ts_id)
-			minetest.close_formspec(pname, formname)
-			return
+			
+			if fields.del_tcb and sel_tcb and sel_tcb > 0 and sel_tcb <= #ts.tc_breaks then
+				if not ildb.remove_from_interlocking(ts.tc_breaks[sel_tcb]) then
+					minetest.chat_send_player(pname, "Please unassign signal first!")
+				end
+				sel_tcb = nil
+			end
+			
+			if fields.link then
+				players_link_ts[pname] = ts_id
+			end
+			if fields.dissolve then
+				ildb.dissolve_ts(ts_id)
+				minetest.close_formspec(pname, formname)
+				return
+			end
 		end
 		
 		if fields.setname then

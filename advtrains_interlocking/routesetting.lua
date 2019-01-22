@@ -226,14 +226,22 @@ function ilrs.cancel_route_from(sigd)
 	while c_sigd do
 		--atdebug("cancel_route_from: at sigd",c_sigd)
 		c_tcbs = ildb.get_tcbs(c_sigd)
+		if not c_tcbs then
+			atwarn("Failed to cancel route, no TCBS at",c_sigd)
+			return false
+		end
 		c_ts_id = c_tcbs.ts_id
+		if not c_tcbs then
+			atwarn("Failed to cancel route, end of interlocking at",c_sigd)
+			return false
+		end
 		c_ts = ildb.get_ts(c_ts_id)
 		
 		if not c_ts
 			or not c_ts.route
 			or not sigd_equal(c_ts.route.entry, c_sigd) then
 			--atdebug("cancel_route_from: abort (eoi/no route):")
-			return
+			return false
 		end
 		
 		--atdebug("cancelling",c_ts.route.rsn)
@@ -258,6 +266,7 @@ function ilrs.cancel_route_from(sigd)
 		minetest.after(0, advtrains.interlocking.route.update_waiting, "ts", c_ts_id)
 	end
 	--atdebug("cancel_route_from: done (no final sigd)")
+	return true
 end
 
 -- TCBS Routesetting helper: generic update function for

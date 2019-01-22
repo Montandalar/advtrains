@@ -304,6 +304,9 @@ local function merge_ts(root_id, merge_id)
 	if not mts then return end -- This may be the case when sync_tcb_neighbors
 	-- inserts the same id twice. do nothing.
 	
+	if not ildb.may_modify_ts(rts) then return false end
+	if not ildb.may_modify_ts(mts) then return false end
+	
 	-- cobble together the list of TCBs
 	for _, msigd in ipairs(mts.tc_breaks) do
 		local tcbs = ildb.get_tcbs(msigd)
@@ -384,12 +387,14 @@ end
 
 function ildb.remove_from_interlocking(sigd)
 	local tcbs = ildb.get_tcbs(sigd)
+	if not ildb.may_modify_tcbs(tcbs) then return false end
+	
 	if tcbs.ts_id then
 		local tsid = tcbs.ts_id
 		local ts = ildb.get_ts(tsid)
 		if not ts then
 			tcbs.ts_id = nil
-			return
+			return true
 		end
 		
 		-- remove entry from the list
@@ -411,24 +416,54 @@ function ildb.remove_from_interlocking(sigd)
 		end
 	end
 	advtrains.interlocking.show_tcb_marker(sigd.p)
+	return true
 end
 
 function ildb.remove_tcb(pos)
 	local pts = advtrains.roundfloorpts(pos)
 	if not track_circuit_breaks[pts] then return end
 	for connid=1,2 do
-		ildb.remove_from_interlocking({p=pos, s=connid})
+		if not ildb.remove_from_interlocking({p=pos, s=connid}) then
+			return false
+		end
 	end
 	track_circuit_breaks[pts] = nil
+	return true
 end
 
 function ildb.dissolve_ts(ts_id)
 	local ts = ildb.get_ts(ts_id)
+	if not ildb.may_modify_ts(ts) then return false end
 	local tcbr = advtrains.merge_tables(ts.tc_breaks)
 	for _,sigd in ipairs(tcbr) do
 		ildb.remove_from_interlocking(sigd)
 	end
 	-- Note: ts gets removed in the moment of the removal of the last TCB.
+	return true
+end
+
+-- Returns true if it is allowed to modify any property of a track section, such as
+-- - removing TCBs
+-- - merging and dissolving sections
+-- As of now the action will be denied if a route is set or if a train is in the section.
+function ildb.may_modify_ts(ts)
+	if ts.route or ts.route_post or #ts.trains>0 then
+		return false
+	end
+	return true
+end
+
+
+function ildb.may_modify_tcbs(tcbs)
+	if tcbs.signal then
+		return false
+	elseif tcbs.ts_id then
+		local ts = ildb.get_ts(tcbs.ts_id)
+		if ts and not ildb.may_modify_ts(ts) then
+			return false
+		end
+	end
+	return true
 end
 
 -- Utilize the traverser to find the track section at the specified position
