@@ -447,7 +447,7 @@ end
 -- - merging and dissolving sections
 -- As of now the action will be denied if a route is set or if a train is in the section.
 function ildb.may_modify_ts(ts)
-	if ts.route or ts.route_post or #ts.trains>0 then
+	if ts.route or ts.route_post or (ts.trains and #ts.trains>0) then
 		return false
 	end
 	return true
