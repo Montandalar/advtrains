@@ -472,11 +472,7 @@ function advtrains.train_step_c(id, train, dtime)
 	run_callbacks_update(id, train)
 	
 	-- Return if something(TM) damaged the path
-	if not train.path then
-		atwarn(id,"@train_step_c missing path")
-		atwarn(advtrains.dbg_last_pathclear)
-		return
-	end
+	if train.no_step or train.wait_for_path or not train.path then return end
 	
 	advtrains.path_clear_unused(train)
 	
@@ -608,11 +604,6 @@ advtrains.te_register_on_new_path(function(id, train)
 end)
 
 advtrains.te_register_on_update(function(id, train)
-	if not train.path then
-		atwarn(id,"@register_on_update missing path")
-		atwarn(advtrains.dbg_last_pathclear)
-		return
-	end
 	local new_index = atround(train.index)
 	local new_end_index = atround(train.end_index)
 	local old_index = train.tnc.old_index
