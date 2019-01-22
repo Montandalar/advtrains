@@ -19,7 +19,7 @@ train.lzb = {
 	trav = Current index that the traverser has advanced so far
 	travsht = boolean indicating whether the train will be a shunt move at "trav"
 	travspd = speed restriction at end of traverser
-	travwspd = warning speed res.
+	travwspd = warning speed res.t
 	oncoming = table containing oncoming signals, in order of appearance on the path
 		{
 			pos = position of the signal (not the IP!). Can be nil

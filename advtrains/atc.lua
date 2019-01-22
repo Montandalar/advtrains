@@ -179,17 +179,21 @@ local matchptn={
 		train.tarvelocity=tonumber(match)
 		return #match+1
 	end,
-	["B([0-9B]+)"]=function(id, train, match)
-		if match=="B" then
-			train.atc_brake_target = -1
-			train.tarvelocity = 0
-		elseif train.velocity>tonumber(match) then
+	["B([0-9]+)"]=function(id, train, match)
+		if train.velocity>tonumber(match) then
 			train.atc_brake_target=tonumber(match)
 			if not train.tarvelocity or train.tarvelocity>train.atc_brake_target then
 				train.tarvelocity=train.atc_brake_target
 			end
 		end
 		return #match+1
+	end,
+	["BB"]=function(id, train)
+		if match=="B" then
+			train.atc_brake_target = -1
+			train.tarvelocity = 0
+		else
+		return 2
 	end,
 	["W"]=function(id, train)
 		train.atc_wait_finish=true
