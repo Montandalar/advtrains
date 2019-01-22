@@ -58,6 +58,8 @@ function advtrains.interlocking.ars_check(sigd, train)
 	
 	local rteid = find_rtematch(tcbs.routes, train)
 	if rteid then
-		il.route.update_route(sigd, tcbs, rteid, nil)
+		--delay routesetting, it should not occur inside train step
+		-- using after here is OK because that gets called on every path recalculation
+		minetest.after(0, il.route.update_route, sigd, tcbs, rteid, nil)
 	end
 end
