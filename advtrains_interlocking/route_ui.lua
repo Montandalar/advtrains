@@ -185,7 +185,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		
 		if fields.ars and fields.savears then
 			route.ars = text_to_ars(fields.ars)
-			atdebug(route.ars)
+			--atdebug(route.ars)
 		end
 		
 		if fields.back then
