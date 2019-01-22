@@ -98,7 +98,15 @@ end
 
 -- Invalidates a path
 -- this is supposed to clear stuff from the occupation tables
-function advtrains.path_invalidate(train)
+-- This function throws a warning whenever any code calls it while the train steps are run, since that must not happen.
+-- The ignore_lock parameter can be used to ignore this, however, it should then be accompanied by a call to train_ensure_init
+-- before returning from the calling function.
+function advtrains.path_invalidate(train, ignore_lock)
+	if advtrains.lock_path_inval and not ignore_lock then
+		atwarn("Train ",train.train_id,": Illegal path invalidation has occured during train step:")
+		atwarn(debug.traceback())
+	end
+
 	if train.path then
 		for i,p in pairs(train.path) do
 			advtrains.occ.clear_item(train.id, advtrains.round_vector_floor_y(p))
@@ -122,11 +130,11 @@ end
 -- Prints a path using the passed print function
 -- This function should be 'atprint', 'atlog', 'atwarn' or 'atdebug', because it needs to use print_concat_table
 function advtrains.path_print(train, printf)
+	printf("path_print: tid =",train.train_id," index =",train.index," end_index =",train.end_index," vel =",train.velocity)
 	if not train.path then
 		printf("path_print: Path is invalidated/inexistant.")
 		return
 	end
-	printf("path_print: tid =",train.train_id," index =",train.index," end_index =",train.end_index," vel =",train.velocity)
 	printf("i:	CP	Position	Dir	CN		->Dist->")
 	for i = train.path_ext_b, train.path_ext_f do
 		if i==train.path_trk_b then

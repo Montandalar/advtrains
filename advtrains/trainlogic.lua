@@ -83,6 +83,8 @@ advtrains.mainloop_trainlogic=function(dtime)
 		advtrains.train_ensure_init(k, v)
 	end
 	
+	advtrains.lock_path_inval = true
+	
 	for k,v in pairs(advtrains.trains) do
 		advtrains.atprint_context_tid=k
 		advtrains.train_step_b(k, v, dtime)
@@ -92,6 +94,8 @@ advtrains.mainloop_trainlogic=function(dtime)
 		advtrains.atprint_context_tid=k
 		advtrains.train_step_c(k, v, dtime)
 	end
+	
+	advtrains.lock_path_inval = false
 	
 	advtrains.atprint_context_tid=nil
 	
@@ -1039,7 +1043,7 @@ function advtrains.invert_train(train_id)
 		train.atc_arrow = not train.atc_arrow
 	end
 	
-	advtrains.path_invalidate(train)
+	advtrains.path_invalidate(train, true)
 	advtrains.couple_invalidate(train)
 	
 	local old_trainparts=train.trainparts
@@ -1048,6 +1052,9 @@ function advtrains.invert_train(train_id)
 		table.insert(train.trainparts, 1, v)--notice insertion at first place
 	end
 	advtrains.update_trainpart_properties(train_id, true)
+	
+	-- recalculate path
+	advtrains.train_ensure_init(train_id, train)
 	
 	-- If interlocking present, check whether this train is in a section and then set as shunt move after reversion
 	if advtrains.interlocking and train.il_sections and #train.il_sections > 0 then
