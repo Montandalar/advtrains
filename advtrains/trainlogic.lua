@@ -253,7 +253,7 @@ function advtrains.train_ensure_init(id, train)
 	--restore path
 	if not train.path then
 		if not train.last_pos then
-			atwarn("Train",id,": Restoring path failed, no last_pos set! Train will be disabled. You can try to fix the issue in the save file.")
+			atlog("Train",id,": Restoring path failed, no last_pos set! Train will be disabled. You can try to fix the issue in the save file.")
 			train.no_step = true
 			return nil
 		end
@@ -275,12 +275,12 @@ function advtrains.train_ensure_init(id, train)
 		local result = advtrains.path_create(train, train.last_pos, train.last_connid or 1, train.last_frac or 0)
 		
 		if result==false then
-			atwarn("Train",id,": Restoring path failed, node at",train.last_pos,"is gone! Train will be disabled. You can try to place a rail at this position and restart the server.")
+			atlog("Train",id,": Restoring path failed, node at",train.last_pos,"is gone! Train will be disabled. You can try to place a rail at this position and restart the server.")
 			train.no_step = true
 			return nil
 		elseif result==nil then
 			if not train.wait_for_path then
-				atwarn("Train",id,": Can't initialize: Waiting for the (yet unloaded) node at",train.last_pos," to be loaded.")
+				atlog("Train",id,": Can't initialize: Waiting for the (yet unloaded) node at",train.last_pos," to be loaded.")
 			end
 			train.wait_for_path = true
 			return false
