@@ -178,7 +178,7 @@ advtrains.te_register_on_create(function(id, train)
 		-- Make train a shunt move
 		train.is_shunt = true
 	elseif ts_id==nil then
-		atwarn("Train",id,": Unable to determine whether to block a track section!")
+		atlog("Train",id,": Unable to determine whether to block a track section!")
 	else
 		--atdebug("Train",id,": Outside of interlocked area!")
 	end

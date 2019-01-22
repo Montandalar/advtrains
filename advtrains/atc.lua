@@ -189,10 +189,8 @@ local matchptn={
 		return #match+1
 	end,
 	["BB"]=function(id, train)
-		if match=="B" then
-			train.atc_brake_target = -1
-			train.tarvelocity = 0
-		else
+		train.atc_brake_target = -1
+		train.tarvelocity = 0
 		return 2
 	end,
 	["W"]=function(id, train)
