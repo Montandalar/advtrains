@@ -142,44 +142,41 @@ minetest.register_craftitem(":advtrains:subway_train", {
 				if not pointed_thing.type == "node" then
 					return
 				end
-				
+				local pname = placer:get_player_name()
 
 				local node=minetest.get_node_or_nil(pointed_thing.under)
 				if not node then atprint("[advtrains]Ignore at placer position") return itemstack end
 				local nodename=node.name
+				if(not advtrains.is_track_and_drives_on(nodename, {default=true})) then
+					atprint("no track here, not placing.")
+					return itemstack
+				end
+				if not minetest.check_player_privs(placer, {train_operator = true }) then
+					minetest.chat_send_player(pname, "You don't have the train_operator privilege.")
+					return itemstack
+				end
+				if not minetest.check_player_privs(placer, {train_admin = true }) and minetest.is_protected(pointed_thing.under, placer:get_player_name()) then
+					return itemstack
+				end
+				local tconns=advtrains.get_track_connections(node.name, node.param2)
+				local yaw = placer:get_look_horizontal()
+				local plconnid = advtrains.yawToClosestConn(yaw, tconns)
 				
-				if not minetest.check_player_privs(placer, {train_place = true }) and minetest.is_protected(pointed_thing.under, placer:get_player_name()) then
-					minetest.record_protection_violation(pointed_thing.under, placer:get_player_name())
+				local prevpos = advtrains.get_adjacent_rail(pointed_thing.under, tconns, plconnid, {default=true})
+				if not prevpos then
+					minetest.chat_send_player(pname, "The track you are trying to place the wagon on is not long enough!")
 					return
 				end
 				
-				local tconns=advtrains.get_track_connections(node.name, node.param2)
-				local yaw = placer:get_look_horizontal() + (math.pi/2)
-				local plconnid = advtrains.yawToClosestConn(yaw, tconns)
+				local wid1 = advtrains.create_wagon("advtrains:subway_wagon", pname)
+				local wid2 = advtrains.create_wagon("advtrains:subway_wagon", pname)
+				local wid3 = advtrains.create_wagon("advtrains:subway_wagon", pname)
 				
-				local prevpos = advtrains.get_adjacent_rail(pointed_thing.under, tconns, plconnid, advtrains.all_tracktypes)
-				if not prevpos then return end
-				local id=advtrains.create_new_train_at(pointed_thing.under, prevpos)
+				local id=advtrains.create_new_train_at(pointed_thing.under, plconnid, 0, {wid1, wid2, wid3})
 				
-				for i=1,3 do
-					local ob=minetest.add_entity(pointed_thing.under, "advtrains:subway_wagon")
-					if not ob then
-						atprint("couldn't add_entity, aborting")
-					end
-					local le=ob:get_luaentity()
-					
-					le.owner=placer:get_player_name()
-					
-					local wagon_uid=le:init_new_instance(id, {})
-					
-					advtrains.add_wagon_to_train(le, id)
-				end
-				minetest.after(1,function()
-				advtrains.trains[id].tarvelocity=2
-				advtrains.trains[id].velocity=2
-				advtrains.trains[id].movedir=1
-				end)
-				if not minetest.settings:get_bool("creative_mode") then
+				minetest.after(2, function() advtrains.trains[id].tarvelocity = 2 end)
+				
+				if not advtrains.is_creative(pname) then
 					itemstack:take_item()
 				end
 				return itemstack
