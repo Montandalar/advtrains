@@ -190,7 +190,7 @@ end
 function o.get_occupations(train, index)
 	local ppos, ontrack = advtrains.path_get(train, index)
 	if not ontrack then
-		atwarn("Train",train.id,"get_occupations requested off-track",index)
+		atlog("Train",train.id,"get_occupations requested off-track",index)
 		return {}, ppos
 	end
 	local pos = advtrains.round_vector_floor_y(ppos)

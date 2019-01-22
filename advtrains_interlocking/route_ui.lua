@@ -119,7 +119,7 @@ function atil.show_route_edit_form(pname, sigd, routeid)
 	end
 	if c_sigd then
 		local e_tcbs = ildb.get_tcbs(c_sigd)
-		itab("Route end: "..sigd_to_string(c_sigd).." ("..(e_tcbs.signal_name or "-")..")")
+		itab("Route end: "..sigd_to_string(c_sigd).." ("..(e_tcbs and e_tcbs.signal_name or "-")..")")
 	else
 		itab("Route ends on dead-end")
 	end
