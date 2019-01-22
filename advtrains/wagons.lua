@@ -218,6 +218,7 @@ function wagon:destroy()
 	--atdebug("[wagon ", self.id, "]: destroying")
 	
 	self.object:remove()
+	return true
 end
 
 function wagon:on_step(dtime)
