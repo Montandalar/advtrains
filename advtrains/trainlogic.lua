@@ -431,27 +431,35 @@ function advtrains.train_step_b(id, train, dtime)
 		local accel = advtrains.get_acceleration(train, tmp_lever)
 		local vdiff = accel*dtime
 		
-		-- ATC control exception: don't cross tarvelocity if
-		-- atc provided a target_vel
-		if train.tarvelocity then
-			local tvdiff = train.tarvelocity - trainvelocity
-			if tvdiff~=0 and math.abs(vdiff) > math.abs(tvdiff) then
-				--applying this change would cross tarvelocity
-				--atdebug("In Tvdiff condition, clipping",vdiff,"to",tvdiff)
-				--atdebug("vel=",trainvelocity,"tvel=",train.tarvelocity)
-				vdiff=tvdiff
+		-- This should only be executed when we are accelerating
+		-- I suspect that this causes the braking bugs
+		if tmp_lever == 4 then
+		
+			-- ATC control exception: don't cross tarvelocity if
+			-- atc provided a target_vel
+			if train.tarvelocity then
+				local tvdiff = train.tarvelocity - trainvelocity
+				if tvdiff~=0 and math.abs(vdiff) > math.abs(tvdiff) then
+					--applying this change would cross tarvelocity
+					--atdebug("In Tvdiff condition, clipping",vdiff,"to",tvdiff)
+					--atdebug("vel=",trainvelocity,"tvel=",train.tarvelocity)
+					vdiff=tvdiff
+				end
+			end
+			if tarvel_cap and trainvelocity<=tarvel_cap and trainvelocity+vdiff>tarvel_cap then
+				vdiff = tarvel_cap - train.velocity
+			end
+			local mspeed = (train.max_speed or 10)
+			if trainvelocity+vdiff > mspeed then
+				vdiff = mspeed - trainvelocity
 			end
 		end
-		if tarvel_cap and trainvelocity<=tarvel_cap and trainvelocity+vdiff>tarvel_cap then
-			vdiff = tarvel_cap - train.velocity
-		end
+		
 		if trainvelocity+vdiff < 0 then
 			vdiff = - trainvelocity
 		end
-		local mspeed = (train.max_speed or 10)
-		if trainvelocity+vdiff > mspeed then
-			vdiff = mspeed - trainvelocity
-		end
+
+
 		train.acceleration=vdiff
 		train.velocity=train.velocity+vdiff
 		--if train.ctrl.user then
@@ -467,7 +475,7 @@ function advtrains.train_step_b(id, train, dtime)
 	local distance = (train.velocity*dtime) / pdist
 	
 	--TODO debugging code
-	train.debug = "step_dist: "..math.floor(distance*1000)
+	train.debug = atdump(train.ctrl).."step_dist: "..math.floor(distance*1000)
 	
 	train.index=train.index+distance
 	

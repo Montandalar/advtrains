@@ -12,6 +12,7 @@ end
 --advtrains
 
 DUMP_DEBUG_SAVE = false
+GENERATE_ATRICIFIAL_LAG = false
 
 --Constant for maximum connection value/division of the circle
 AT_CMAX = 16
@@ -365,6 +366,8 @@ local save_interval=20
 local save_timer=save_interval
 advtrains.mainloop_runcnt=0
 
+
+local t = 0
 minetest.register_globalstep(function(dtime_mt)
 	return advtrains.pcall(function()
 		advtrains.mainloop_runcnt=advtrains.mainloop_runcnt+1
@@ -373,11 +376,22 @@ minetest.register_globalstep(function(dtime_mt)
 		if not init_load then
 			advtrains.load()
 		end
-		--limit dtime: if trains move too far in one step, automation may cause stuck and wrongly braking trains
-		local dtime=dtime_mt
-		if dtime>0.2 then
-			atprint("Limiting dtime to 0.2!")
-			dtime=0.2
+		
+		local dtime
+		if GENERATE_ATRICIFIAL_LAG then
+			dtime = 0.2
+			if os.clock()<t then
+				return
+			end
+			
+			t = os.clock()+0.2
+		else
+			--limit dtime: if trains move too far in one step, automation may cause stuck and wrongly braking trains
+			dtime=dtime_mt
+			if dtime>0.2 then
+				atprint("Limiting dtime to 0.2!")
+				dtime=0.2
+			end
 		end
 		
 		advtrains.mainloop_trainlogic(dtime)
