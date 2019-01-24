@@ -474,8 +474,8 @@ function advtrains.train_step_b(id, train, dtime)
 	local pdist = train.path_dist[math.floor(train.index)] or 1
 	local distance = (train.velocity*dtime) / pdist
 	
-	--TODO debugging code
-	train.debug = atdump(train.ctrl).."step_dist: "..math.floor(distance*1000)
+	--debugging code
+	--train.debug = atdump(train.ctrl).."step_dist: "..math.floor(distance*1000)
 	
 	train.index=train.index+distance
 	

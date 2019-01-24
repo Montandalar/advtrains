@@ -1,6 +1,18 @@
 -- Advtrains line automation system
 
-advtrains.lines = {}
+advtrains.lines = {
+	-- [station code] = {name=...}
+	stations = {},
+	
+	--[[ [new pos hash] = {
+		stn = <station code>,
+		platform = <platform identifier>,
+		doors = <door side L,R,C>
+		wait = <least wait time>
+		signal = <position of signal that is the "exit signal" for this platform>
+	}]]
+	stops = {},
+}
 
 
 local modpath = minetest.get_modpath(minetest.get_current_modname()) .. DIR_DELIM
@@ -9,9 +21,15 @@ dofile(modpath.."stoprail.lua")
 
 
 function advtrains.lines.load(data)
-	
+	if data then
+		advtrains.lines.stations = data.stations or {}
+		advtrains.lines.stops = data.stops or {}
+	end
 end
 
 function advtrains.lines.save()
-	return {}
+	return {
+		stations = advtrains.lines.stations,
+		stops = advtrains.lines.stops
+	}
 end

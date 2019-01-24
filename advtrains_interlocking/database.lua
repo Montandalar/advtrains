@@ -105,6 +105,8 @@ local signal_assignments = {}
 -- track+direction -> signal position
 local influence_points = {}
 
+advtrains.interlocking.npr_rails = {}
+
 
 function ildb.load(data)
 	if not data then return end
@@ -126,6 +128,9 @@ function ildb.load(data)
 	if data.influence_points then
 		influence_points = data.influence_points
 	end
+	if data.npr_rails then
+		advtrains.interlocking.npr_rails = data.npr_rails
+	end
 end
 
 function ildb.save()
@@ -136,6 +141,7 @@ function ildb.save()
 		rs_locks = advtrains.interlocking.route.rte_locks,
 		rs_callbacks = advtrains.interlocking.route.rte_callbacks,
 		influence_points = influence_points,
+		npr_rails = advtrains.interlocking.npr_rails,
 	}
 end
 
