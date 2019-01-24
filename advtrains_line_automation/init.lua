@@ -1,14 +1,15 @@
 -- Advtrains line automation system
 
 advtrains.lines = {
-	-- [station code] = {name=...}
+	-- [station code] = {name=..., owner=...}
 	stations = {},
 	
 	--[[ [new pos hash] = {
 		stn = <station code>,
-		platform = <platform identifier>,
+		track = <platform identifier>,
 		doors = <door side L,R,C>
 		wait = <least wait time>
+		reverse = <boolean>
 		signal = <position of signal that is the "exit signal" for this platform>
 	}]]
 	stops = {},

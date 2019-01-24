@@ -1,6 +1,7 @@
 -- tsr_rail.lua
 -- Point speed restriction rails
 -- Simple rail whose only purpose is to place a TSR on the position, as a temporary solution until the timetable system covers everything.
+-- This code resembles the code in lines/stoprail.lua
 
 local function updateform(pos)
 	local meta = minetest.get_meta(pos)

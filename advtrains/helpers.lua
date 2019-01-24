@@ -381,6 +381,7 @@ end
 
 -- decodes a position encoded with encode_pos
 function advtrains.decode_pos(pts)
+	if not pts or not #pts==6 then return nil end
 	local stry = string.sub(pts, 1,4)
 	local strx = string.sub(pts, 5,8)
 	local strz = string.sub(pts, 9,12)
