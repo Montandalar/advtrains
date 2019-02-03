@@ -491,6 +491,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			advtrains.interlocking.clear_visu_context("prog_"..pname)
 			player_rte_prog[pname] = nil
 			chat(pname, "Successfully programmed route.")
+			
+			advtrains.interlocking.show_route_edit_form(pname, rp.origin, #tcbs.routes)
 			return
 		end
 	end 
