@@ -539,6 +539,8 @@ end
 
 -- textlist selection temporary storage
 local sig_pselidx = {}
+-- Players having a signalling form open
+local p_open_sig_form = {}
 
 function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 	if not minetest.check_player_privs(pname, "train_operator") then
@@ -621,9 +623,18 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 	end	
 	sig_pselidx[pname] = sel_rte
 	minetest.show_formspec(pname, "at_il_signalling_"..minetest.pos_to_string(sigd.p).."_"..sigd.s, form)
+	p_open_sig_form[pname] = sigd
 	
 	-- always a good idea to update the signal aspect
 	advtrains.interlocking.update_signal_aspect(tcbs)
+end
+
+function advtrains.interlocking.update_player_forms(sigd)
+	for pname, tsigd in pairs(p_open_sig_form) do
+		if advtrains.interlocking.sigd_equal(sigd, tsigd) then
+			advtrains.interlocking.show_signalling_form(sigd, pname, nil)
+		end
+	end
 end
 
 
@@ -637,6 +648,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	-- independent of the formspec, clear this whenever some formspec event happens
 	local tpsi = sig_pselidx[pname]
 	sig_pselidx[pname] = nil
+	p_open_sig_form[pname] = nil
 	
 	local pts, connids = string.match(formname, "^at_il_signalling_([^_]+)_(%d)$")
 	local pos, connid

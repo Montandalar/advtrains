@@ -320,6 +320,7 @@ function ilrs.update_route(sigd, tcbs, newrte, cancel)
 		end
 	end
 	advtrains.interlocking.update_signal_aspect(tcbs)
+	advtrains.interlocking.update_player_forms(sigd)
 end
 
 -- Try to re-set routes that conflicted with this point
