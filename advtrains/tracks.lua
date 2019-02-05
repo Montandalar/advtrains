@@ -429,7 +429,7 @@ function sl.create_slopeplacer_on_place(def, preset)
 			minetest.chat_send_player(player:get_player_name(), attrans("Can't place: space occupied!"))
 			return istack
 		end
-		if advtrains.is_protected(pos, player:get_player_name()) then 
+		if not advtrains.check_track_protection(pos, player:get_player_name()) then 
 			minetest.record_protection_violation(pos, player:get_player_name())
 			return istack
 		end
