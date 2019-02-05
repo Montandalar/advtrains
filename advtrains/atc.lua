@@ -2,6 +2,9 @@
 --registers and controls the ATC system
 
 local atc={}
+
+local eval_conditional
+
 -- ATC persistence table. advtrains.atc is created by init.lua when it loads the save file.
 atc.controllers = {}
 function atc.load_data(data)
@@ -50,8 +53,18 @@ function atc.send_command(pos, par_tid)
 					atwarn("ATC rail at", pos, ": Rail not on train's path! Can't determine arrow direction. Assuming +!")
 				end
 				
-				atc.train_set_command(train, atc.controllers[pts].command, iconnid==1)
-				atprint("Sending ATC Command to", train_id, ":", atc.controllers[pts].command, "iconnid=",iconnid)
+				local command = atc.controllers[pts].command				
+				command = eval_conditional(command, iconnid==1, train.velocity)
+				if not command then command="" end
+				command=string.match(command, "^%s*(.*)$")
+				
+				if command == "" then
+					atprint("Sending ATC Command to", train_id, ": Not modifying, conditional evaluated empty.")
+					return true
+				end
+				
+				atc.train_set_command(train, command, iconnid==1)
+				atprint("Sending ATC Command to", train_id, ":", command, "iconnid=",iconnid)
 				return true
 				
 			else
@@ -219,41 +232,33 @@ local matchptn={
 	end,
 }
 
-function atc.execute_atc_command(id, train)
-	--strip whitespaces
-	local command=string.match(train.atc_command, "^%s*(.*)$")
-	
-	
-	if string.match(command, "^%s*$") then
-		train.atc_command=nil
-		return
-	end
+eval_conditional = function(command, arrow, speed)
 	--conditional statement?
 	local is_cond, cond_applies, compare
 	local cond, rest=string.match(command, "^I([%+%-])(.+)$")
 	if cond then
 		is_cond=true
 		if cond=="+" then
-			cond_applies=train.atc_arrow
+			cond_applies=arrow
 		end
 		if cond=="-" then
-			cond_applies=not train.atc_arrow
+			cond_applies=not arrow
 		end
 	else 
 		cond, compare, rest=string.match(command, "^I([<>]=?)([0-9]+)(.+)$")
 		if cond and compare then
 			is_cond=true
 			if cond=="<" then
-				cond_applies=train.velocity<tonumber(compare)
+				cond_applies=speed<tonumber(compare)
 			end
 			if cond==">" then
-				cond_applies=train.velocity>tonumber(compare)
+				cond_applies=speed>tonumber(compare)
 			end
 			if cond=="<=" then
-				cond_applies=train.velocity<=tonumber(compare)
+				cond_applies=speed<=tonumber(compare)
 			end
 			if cond==">=" then
-				cond_applies=train.velocity>=tonumber(compare)
+				cond_applies=speed>=tonumber(compare)
 			end
 		end
 	end	
@@ -267,8 +272,7 @@ function atc.execute_atc_command(id, train)
 		while nest>=0 do
 			if pos>#rest then
 				atwarn(sid(id), attrans("ATC command syntax error: I statement not closed: @1",command))
-				atc.train_reset_command(train, true)
-				return
+				return ""
 			end
 			local char=string.sub(rest, pos, pos)
 			if char=="I" then
@@ -289,24 +293,43 @@ function atc.execute_atc_command(id, train)
 			command=string.sub(rest, elsepos+1, pos-2)..string.sub(rest, pos)
 		end
 		atprint("Result: "..command)
-		train.atc_command=command
-		atc.execute_atc_command(id, train)
+	end
+	return command
+end
+
+function atc.execute_atc_command(id, train)
+	--strip whitespaces
+	local command=string.match(train.atc_command, "^%s*(.*)$")
+	
+	
+	if string.match(command, "^%s*$") then
+		train.atc_command=nil
 		return
-	else
-		for pattern, func in pairs(matchptn) do
-			local match=string.match(command, "^"..pattern)
-			if match then
-				local patlen=func(id, train, match)
-				
-				atprint("Executing: "..string.sub(command, 1, patlen))
-				
-				train.atc_command=string.sub(command, patlen+1)
-				if train.atc_delay<=0 and not train.atc_wait_finish then
-					--continue (recursive, cmds shouldn't get too long, and it's a end-recursion.)
-					atc.execute_atc_command(id, train)
-				end
-				return
+	end
+
+	train.atc_command = eval_conditional(command, train.atc_arrow, train.velocity)
+	
+	if not train.atc_command then return end
+	command=string.match(train.atc_command, "^%s*(.*)$")
+	
+	if string.match(command, "^%s*$") then
+		train.atc_command=nil
+		return
+	end
+	
+	for pattern, func in pairs(matchptn) do
+		local match=string.match(command, "^"..pattern)
+		if match then
+			local patlen=func(id, train, match)
+			
+			atprint("Executing: "..string.sub(command, 1, patlen))
+			
+			train.atc_command=string.sub(command, patlen+1)
+			if train.atc_delay<=0 and not train.atc_wait_finish then
+				--continue (recursive, cmds shouldn't get too long, and it's a end-recursion.)
+				atc.execute_atc_command(id, train)
 			end
+			return
 		end
 	end
 	atwarn(sid(id), attrans("ATC command parse error: Unknown command: @1", command))
