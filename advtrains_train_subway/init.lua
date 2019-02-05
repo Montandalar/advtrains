@@ -105,7 +105,9 @@ advtrains.register_wagon("subway_wagon", {
 		--set line number
 		local line = nil
 		if train.line then
-			line = tonumber(string.sub(train.line, 1, 1))
+			local lint = string.sub(train.line, 1, 1)
+			line = tonumber(lint)
+			if lint=="X" then line="X" end
 		end
 		if line and line~=self.line_cache then
 			local new_line_tex="advtrains_subway_wagon.png^advtrains_subway_wagon_line"..line..".png"
