@@ -1,7 +1,6 @@
 -- lzb.lua
 -- Enforced and/or automatic train override control, obeying signals
 
-
 local function approach_callback(parpos, train_id, train, index)
 	local pos = advtrains.round_vector_floor_y(parpos)
 	
@@ -185,11 +184,24 @@ local function apply_control(id, train)
 	local i = 1
 	while i<=#lzb.oncoming do
 		if lzb.oncoming[i].idx < train.index-0.5 then
-			if not lzb.oncoming[i].npr then
-				train.speed_restriction = lzb.oncoming[i].spd
-				train.is_shunt = lzb.oncoming[i].sht
+			local ent = lzb.oncoming[i]
+			local nodelete
+			if not ent.npr then
+				if ent.spd == 0 and minetest.settings:get_bool("at_il_force_lzb_halt") then
+					atwarn(train.id,"overrun LZB 0 restriction (red signal) ",ent.pos)
+					-- Set train 1 index backward. Hope this does not lead to bugs...
+					train.index = ent.idx - 0.5
+					train.velocity = 0
+					train.ctrl.lzb = 0
+					nodelete = true
+				else
+					train.speed_restriction = ent.spd
+					train.is_shunt = ent.sht
+				end
 			end
-			table.remove(lzb.oncoming, i)
+			if not nodelete then
+				table.remove(lzb.oncoming, i)
+			end
 		else
 			i = i + 1
 		end

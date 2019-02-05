@@ -861,14 +861,24 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 	end
 	if fields.line then
 		if fields.line~="" then
-			train.line=fields.line
+			if fields.line ~= train.line then
+				train.line=fields.line
+				if advtrains.interlocking then
+					advtrains.interlocking.lzb_invalidate(train)
+				end
+			end
 		else
 			train.line=nil
 		end
 	end
 	if fields.routingcode then
 		if fields.routingcode~="" then
-			train.routingcode=fields.routingcode
+			if fields.routingcode ~= train.routingcode then
+				train.routingcode=fields.routingcode
+				if advtrains.interlocking then
+					advtrains.interlocking.lzb_invalidate(train)
+				end
+			end
 		else
 			train.routingcode=nil
 		end
