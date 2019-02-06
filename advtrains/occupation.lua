@@ -172,8 +172,9 @@ function o.check_collision(pos, train_id)
 		if ti~=train_id then
 			local idx = t[i+1]
 			local train = advtrains.trains[ti]
+			
 			--atdebug("checking train",t[i],"index",idx,"<>",train.index,train.end_index)
-			if idx >= train.end_index and idx <= train.index then
+			if train and idx >= train.end_index and idx <= train.index then
 				--atdebug("collides.")
 				return true
 			end
