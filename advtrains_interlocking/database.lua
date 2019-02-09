@@ -422,6 +422,9 @@ function ildb.remove_from_interlocking(sigd)
 		end
 	end
 	advtrains.interlocking.show_tcb_marker(sigd.p)
+	if tcbs.signal then
+		return false
+	end
 	return true
 end
 
@@ -461,9 +464,7 @@ end
 
 
 function ildb.may_modify_tcbs(tcbs)
-	if tcbs.signal then
-		return false
-	elseif tcbs.ts_id then
+	if tcbs.ts_id then
 		local ts = ildb.get_ts(tcbs.ts_id)
 		if ts and not ildb.may_modify_ts(ts) then
 			return false
@@ -509,7 +510,15 @@ end
 -- returns the sigd the signal at pos belongs to, if this is known
 function ildb.get_sigd_for_signal(pos)
 	local pts = advtrains.roundfloorpts(pos)
-	return signal_assignments[pts]
+	local sigd = signal_assignments[pts]
+	if sigd then
+		if not ildb.get_tcbs(sigd) then
+			signal_assignments[pts] = nil
+			return nil
+		end
+		return sigd
+	end
+	return nil
 end
 function ildb.set_sigd_for_signal(pos, sigd)
 	local pts = advtrains.roundfloorpts(pos)
