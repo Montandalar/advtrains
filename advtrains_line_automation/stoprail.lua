@@ -137,25 +137,36 @@ local adefunc = function(def, preset, suffix, rotation)
 				on_train_approach = function(pos,train_id, train, index)
 					if train.path_cn[index] == 1 then
 						advtrains.interlocking.lzb_add_oncoming_npr(train, index, 2)
+						local pe = advtrains.encode_pos(pos)
+						local stdata = advtrains.lines.stops[pe]
+						if stdata and stdata.stn then
+							local stn = advtrains.lines.stations[stdata.stn]
+							local stnname = stn and stn.name or "Unknown Station"
+							train.text_inside = "Next Stop:\n"..stnname
+						end
 					end
 				end,
 				on_train_enter = function(pos, train_id)
 					local train = advtrains.trains[train_id]
-					
-					local pe = advtrains.encode_pos(pos)
-					local stdata = advtrains.lines.stops[pe]
-					if not stdata then
-						advtrains.atc.train_set_command(train, "B0", true)
-						updatemeta(pos)
+					local index = atfloor(train.index)
+					if train.path_cn[index] == 1 then
+						local pe = advtrains.encode_pos(pos)
+						local stdata = advtrains.lines.stops[pe]
+						if not stdata then
+							advtrains.atc.train_set_command(train, "B0", true)
+							updatemeta(pos)
+						end
+						
+						local stn = advtrains.lines.stations[stdata.stn]
+						local stnname = stn and stn.name or "Unknown Station"
+						
+						-- Send ATC command and set text
+						advtrains.atc.train_set_command(train, "B0 W O"..stdata.doors..(stdata.reverse and "R" or "").." D"..stdata.wait.." OC D1 SM", true)
+						train.text_inside = stnname
+						if tonumber(stdata.wait) then
+							minetest.after(tonumber(stdata.wait), function() train.text_inside = "" end)
+						end
 					end
-					
-					local stn = advtrains.lines.stations[stdata.stn]
-					local stnname = stn and stn.name or "Unknown Station"
-					
-					-- Send ATC command and set text
-					advtrains.atc.train_set_command(train, "B0 W O"..stdata.doors..(stdata.reverse and "R" or "").." D"..stdata.wait.." OC D1 SM", true)
-					train.text_inside = stnname
-					
 				end
 			},
 		}
