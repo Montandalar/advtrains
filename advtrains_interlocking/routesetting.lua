@@ -62,6 +62,10 @@ function ilrs.set_route(signal, route, try)
 	local c_tcbs, c_ts_id, c_ts, c_rseg, c_lckp
 	while c_sigd and i<=#route do
 		c_tcbs = ildb.get_tcbs(c_sigd)
+		if not c_tcbs then
+			if not try then atwarn("Did not find TCBS",c_sigd,"while setting route",rtename,"of",signal) end
+			return false, "No TCB found at "..sigd_to_string(c_sigd)..". Please reconfigure route!"
+		end
 		c_ts_id = c_tcbs.ts_id
 		if not c_ts_id then
 			if not try then atwarn("Encountered End-Of-Interlocking while setting route",rtename,"of",signal) end
