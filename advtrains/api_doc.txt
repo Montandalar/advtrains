@@ -174,9 +174,9 @@ minetest.register_node(nodename, {
 	^- the code in these 3 default minetest API functions is required for advtrains to work, however you can add your own code
 	
 	advtrains = {
-		on_train_enter=function(pos, train_id) end
+		on_train_enter=function(pos, train_id, train, index) end
 		^- called when a train enters the rail
-		on_train_leave=function(pos, train_id) end
+		on_train_leave=function(pos, train_id, train, index) end
 		^- called when a train leaves the rail
 		
 		-- The following function is only in effect when interlocking is enabled:

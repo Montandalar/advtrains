@@ -146,9 +146,7 @@ local adefunc = function(def, preset, suffix, rotation)
 						end
 					end
 				end,
-				on_train_enter = function(pos, train_id)
-					local train = advtrains.trains[train_id]
-					local index = atfloor(train.index)
+				on_train_enter = function(pos, train_id, train, index)
 					if train.path_cn[index] == 1 then
 						local pe = advtrains.encode_pos(pos)
 						local stdata = advtrains.lines.stops[pe]
