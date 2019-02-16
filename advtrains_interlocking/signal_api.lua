@@ -322,30 +322,6 @@ end
 
 local players_assign_ip = {}
 
--- shows small info form for signal IP state/assignment
--- only_notset: show only if it is not set yet (used by signal tcb assignment)
-function advtrains.interlocking.show_ip_form(pos, pname, only_notset)
-	if not minetest.check_player_privs(pname, "interlocking") then
-		return
-	end
-	local form = "size[7,5]label[0.5,0.5;Signal at "..minetest.pos_to_string(pos).."]"
-	local pts, connid = advtrains.interlocking.db.get_ip_by_signalpos(pos)
-	if pts then
-		form = form.."label[0.5,1.5;Influence point is set at "..pts.."/"..connid.."]"
-		form = form.."button_exit[0.5,2.5;  5,1;show;Show]"
-		form = form.."button_exit[0.5,3.5;  5,1;clear;Clear]"
-	else
-		form = form.."label[0.5,1.5;Influence point is not set.]"
-		form = form.."label[0.5,2.0;It is recommended to set an influence point.]"
-		form = form.."label[0.5,2.5;This is the point where trains will obey the signal.]"
-		
-		form = form.."button_exit[0.5,3.5;  5,1;set;Set]"
-	end
-	if not only_notset or not pts then
-		minetest.show_formspec(pname, "at_il_ipassign_"..minetest.pos_to_string(pos), form)
-	end
-end
-
 local function ipmarker(ipos, connid)
 	local node_ok, conns, rhe = advtrains.get_rail_info_at(ipos, advtrains.all_tracktypes)
 	if not node_ok then return end
@@ -358,6 +334,32 @@ local function ipmarker(ipos, connid)
 	obj:set_properties({
 		textures = { "at_il_signal_ip.png" },
 	})
+end
+
+-- shows small info form for signal IP state/assignment
+-- only_notset: show only if it is not set yet (used by signal tcb assignment)
+function advtrains.interlocking.show_ip_form(pos, pname, only_notset)
+	if not minetest.check_player_privs(pname, "interlocking") then
+		return
+	end
+	local form = "size[7,5]label[0.5,0.5;Signal at "..minetest.pos_to_string(pos).."]"
+	local pts, connid = advtrains.interlocking.db.get_ip_by_signalpos(pos)
+	if pts then
+		form = form.."label[0.5,1.5;Influence point is set at "..pts.."/"..connid.."]"
+		form = form.."button_exit[0.5,2.5;  5,1;set;Move]"
+		form = form.."button_exit[0.5,3.5;  5,1;clear;Clear]"
+		local ipos = minetest.string_to_pos(pts)
+		ipmarker(ipos, connid)
+	else
+		form = form.."label[0.5,1.5;Influence point is not set.]"
+		form = form.."label[0.5,2.0;It is recommended to set an influence point.]"
+		form = form.."label[0.5,2.5;This is the point where trains will obey the signal.]"
+		
+		form = form.."button_exit[0.5,3.5;  5,1;set;Set]"
+	end
+	if not only_notset or not pts then
+		minetest.show_formspec(pname, "at_il_ipassign_"..minetest.pos_to_string(pos), form)
+	end
 end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
@@ -375,11 +377,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			advtrains.interlocking.signal_init_ip_assign(pos, pname)
 		elseif fields.clear then
 			advtrains.interlocking.db.clear_ip_by_signalpos(pos)
-		elseif fields.show then
-			local ipts, connid = advtrains.interlocking.db.get_ip_by_signalpos(pos)
-			if not ipts then return end
-			local ipos = minetest.string_to_pos(ipts)
-			ipmarker(ipos, connid)
 		end
 	end
 end)
@@ -391,7 +388,7 @@ function advtrains.interlocking.signal_init_ip_assign(pos, pname)
 		return
 	end
 	--remove old IP
-	advtrains.interlocking.db.clear_ip_by_signalpos(pos)
+	--advtrains.interlocking.db.clear_ip_by_signalpos(pos)
 	minetest.chat_send_player(pname, "Configuring Signal: Please look in train's driving direction and punch rail to set influence point.")
 	
 	players_assign_ip[pname] = pos

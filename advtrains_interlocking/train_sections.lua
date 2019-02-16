@@ -65,7 +65,7 @@ local function setsection(tid, train, ts_id, ts, sigd)
 	-- train
 	if not train.il_sections then train.il_sections = {} end
 	if not itkexist(train.il_sections, "ts_id", ts_id) then
-		table.insert(train.il_sections, {ts_id = ts_id, origin = origin})
+		table.insert(train.il_sections, {ts_id = ts_id, origin = sigd})
 	end
 	
 	-- ts
