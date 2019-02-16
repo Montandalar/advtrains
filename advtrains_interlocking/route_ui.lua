@@ -94,9 +94,14 @@ function atil.show_route_edit_form(pname, sigd, routeid)
 	local c_tcbs, c_ts_id, c_ts, c_rseg, c_lckp
 	while c_sigd and i<=#route do
 		c_tcbs = ildb.get_tcbs(c_sigd)
+		if not c_tcbs then
+			itab("-!- No TCBS at "..sigd_to_string(c_sigd)..". Please reconfigure route!")
+			break
+		end
 		c_ts_id = c_tcbs.ts_id
 		if not c_ts_id then
 			itab("-!- No track section adjacent to "..sigd_to_string(c_sigd)..". Please reconfigure route!")
+			break
 		end
 		c_ts = ildb.get_ts(c_ts_id)
 		
@@ -112,6 +117,7 @@ function atil.show_route_edit_form(pname, sigd, routeid)
 				itab("  Lock: "..pts.." -> "..state)
 				if not advtrains.is_passive(pos) then
 					itab("-!- No passive component at "..pts..". Please reconfigure route!")
+					break
 				end
 			end
 		end
