@@ -288,4 +288,4 @@ advtrains.te_register_on_update(function(id, train)
 	end
 	look_ahead(id, train)
 	apply_control(id, train)
-end)
+end, true)

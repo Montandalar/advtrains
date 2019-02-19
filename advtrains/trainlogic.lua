@@ -573,9 +573,13 @@ end
 
 local function mknodecallback(name)
 	local callt = {}
-	advtrains["tnc_register_on_"..name] = function(func)
+	advtrains["tnc_register_on_"..name] = function(func, prio)
 		assertt(func, "function")
-		table.insert(callt, func)
+		if prio then
+			table.insert(callt, 1, func)
+		else
+			table.insert(callt, func)
+		end
 	end
 	return callt, function(pos, id, train, index)
 		for _,f in ipairs(callt) do
