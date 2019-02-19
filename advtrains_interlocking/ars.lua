@@ -23,28 +23,91 @@
 
 local il = advtrains.interlocking
 
+-- The ARS data are saved in a table format, but are entered in text format. Utility functions to transform between both.
+function il.ars_to_text(arstab)
+	if not arstab then
+		return ""
+	end
+	
+	local txt = {}
+	
+	for i, arsent in ipairs(arstab) do
+		if arsent.ln then
+			txt[#txt+1] = "LN "..arsent.ln
+		elseif arsent.rc then
+			txt[#txt+1] = "RC "..arsent.rc
+		elseif arsent.c then
+			txt[#txt+1] = "#"..arsent.c
+		end
+	end
+	
+	if arstab.default then
+		return "*\n" .. table.concat(txt, "\n")
+	end
+	return table.concat(txt, "\n")
+end
+
+function il.text_to_ars(t)
+	if t=="" then
+		return nil
+	elseif t=="*" then
+		return {default=true}
+	end
+	local arstab = {}
+	for line in string.gmatch(t, "[^\r\n]+") do
+		if line=="*" then
+			arstab.default = true
+		else
+			local c, v = string.match(line, "^(..)%s(.*)$")
+			if c and v then
+				local tt=string.upper(c)
+				if tt=="LN" then
+					arstab[#arstab+1] = {ln=v}
+				elseif tt=="RC" then
+					arstab[#arstab+1] = {rc=v}
+				end
+			else
+				local ct = string.match(line, "^#(.*)$")
+				if ct then arstab[#arstab+1] = {c = ct} end
+			end
+		end
+	end
+	return arstab
+end
 
 local function find_rtematch(routes, train)
 	local default
-	local line = train.line
-	local routingcode = train.routingcode
 	for rteid, route in ipairs(routes) do
 		if route.ars then
 			if route.ars.default then
 				default = rteid
 			else
-				for arskey, arsent in ipairs(route.ars) do
-					--atdebug(arsent, line, routingcode)
-					if arsent.ln and line and arsent.ln == line then
-						return rteid
-					elseif arsent.rc and routingcode and string.find(" "..routingcode.." ", " "..arsent.rc.." ", nil, true) then
-						return rteid
-					end
+				if il.ars_check_rule_match(route.ars, train) then
+					return rteid
 				end
 			end
 		end
 	end
 	return default
+end
+
+-- Checks whether ARS rule explicitly matches. This does not take into account the "default" field, since a wider context is required for this.
+-- Returns the rule number that matched, or nil if nothing matched
+function il.ars_check_rule_match(ars, train)
+		if not ars then
+			return nil
+		end
+		local line = train.line
+		local routingcode = train.routingcode
+		for arskey, arsent in ipairs(ars) do
+			--atdebug(arsent, line, routingcode)
+			if arsent.ln and line and arsent.ln == line then
+				return arskey
+			elseif arsent.rc and routingcode and string.find(" "..routingcode.." ", " "..arsent.rc.." ", nil, true) then
+				return arskey
+			end
+		end
+		return nil
 end
 
 function advtrains.interlocking.ars_check(sigd, train)

@@ -27,7 +27,7 @@ local function show_stoprailform(pos, player)
 	local stdata = advtrains.lines.stops[pe]
 	if not stdata then
 		advtrains.lines.stops[pe] = {
-					stn="", track="", doors="R", wait=10
+					stn="", track="", doors="R", wait=10, ars={default=true},
 				}
 		stdata = advtrains.lines.stops[pe]
 	end
@@ -35,19 +35,21 @@ local function show_stoprailform(pos, player)
 	local stn = advtrains.lines.stations[stdata.stn]
 	local stnname = stn and stn.name or ""
 	
-	local form = "size[8,6.5]"
+	local form = "size[8,7]"
 	form = form.."field[0.5,1;7,1;stn;"..attrans("Station Code")..";"..minetest.formspec_escape(stdata.stn).."]"
 	form = form.."field[0.5,2;7,1;stnname;"..attrans("Station Name")..";"..minetest.formspec_escape(stnname).."]"
 	
 	
 	form = form.."label[0.5,3;Door side:]"
-	form = form.."dropdown[0.5,3.5;2;doors;Left,Right,Closed;"..door_dropdown[stdata.doors].."]"
-	form = form.."dropdown[3,3.5;1.5;reverse;---,Reverse;"..(stdata.reverse and 2 or 1).."]"
+	form = form.."dropdown[0.5,3;2;doors;Left,Right,Closed;"..door_dropdown[stdata.doors].."]"
+	form = form.."dropdown[3,3;1.5;reverse;---,Reverse;"..(stdata.reverse and 2 or 1).."]"
 	
 	form = form.."field[5,3.5;2,1;track;"..attrans("Track")..";"..stdata.track.."]"
 	form = form.."field[5,4.5;2,1;wait;"..attrans("Stop Time")..";"..stdata.wait.."]"
 	
-	form = form.."button[0.5,5.5;7,1;save;"..attrans("Save").."]"
+	form = form.."textarea[0.5,4;4,2;ars;Trains stopping here (ARS rules);"..advtrains.interlocking.ars_to_text(stdata.ars).."]"
+	
+	form = form.."button[0.5,6;7,1;save;"..attrans("Save").."]"
 	
 	minetest.show_formspec(pname, "at_lines_stop_"..pe, form)
 end
@@ -107,6 +109,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				stdata.wait = tonumber(fields.wait) or 10
 			end
 			
+			if fields.ars then
+				stdata.ars = advtrains.interlocking.text_to_ars(fields.ars)
+			end
+			
 			
 			--TODO: signal
 			updatemeta(pos)
@@ -136,13 +142,20 @@ local adefunc = function(def, preset, suffix, rotation)
 			advtrains = {
 				on_train_approach = function(pos,train_id, train, index)
 					if train.path_cn[index] == 1 then
-						advtrains.interlocking.lzb_add_oncoming_npr(train, index, 2)
 						local pe = advtrains.encode_pos(pos)
 						local stdata = advtrains.lines.stops[pe]
 						if stdata and stdata.stn then
-							local stn = advtrains.lines.stations[stdata.stn]
-							local stnname = stn and stn.name or "Unknown Station"
-							train.text_inside = "Next Stop:\n"..stnname
+						
+							--TODO REMOVE AFTER SOME TIME (only migration)
+							if not stdata.ars then
+								stdata.ars = {default=true}
+							end
+							if stdata.ars and (stdata.ars.default or advtrains.interlocking.ars_check_rule_match(stdata.ars, train) ) then
+								advtrains.interlocking.lzb_add_oncoming_npr(train, index, 2)
+								local stn = advtrains.lines.stations[stdata.stn]
+								local stnname = stn and stn.name or "Unknown Station"
+								train.text_inside = "Next Stop:\n"..stnname
+							end
 						end
 					end
 				end,
@@ -151,18 +164,19 @@ local adefunc = function(def, preset, suffix, rotation)
 						local pe = advtrains.encode_pos(pos)
 						local stdata = advtrains.lines.stops[pe]
 						if not stdata then
-							advtrains.atc.train_set_command(train, "B0", true)
-							updatemeta(pos)
+							return
 						end
 						
-						local stn = advtrains.lines.stations[stdata.stn]
-						local stnname = stn and stn.name or "Unknown Station"
-						
-						-- Send ATC command and set text
-						advtrains.atc.train_set_command(train, "B0 W O"..stdata.doors.." D"..stdata.wait.." OC D1 "..(stdata.reverse and "R" or "").." SM", true)
-						train.text_inside = stnname
-						if tonumber(stdata.wait) then
-							minetest.after(tonumber(stdata.wait), function() train.text_inside = "" end)
+						if stdata.ars and (stdata.ars.default or advtrains.interlocking.ars_check_rule_match(stdata.ars, train) ) then
+							local stn = advtrains.lines.stations[stdata.stn]
+							local stnname = stn and stn.name or "Unknown Station"
+							
+							-- Send ATC command and set text
+							advtrains.atc.train_set_command(train, "B0 W O"..stdata.doors.." D"..stdata.wait.." OC D1 "..(stdata.reverse and "R" or "").." SM", true)
+							train.text_inside = stnname
+							if tonumber(stdata.wait) then
+								minetest.after(tonumber(stdata.wait), function() train.text_inside = "" end)
+							end
 						end
 					end
 				end

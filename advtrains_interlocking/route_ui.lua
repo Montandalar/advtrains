@@ -10,58 +10,6 @@ local function sigd_to_string(sigd)
 	return minetest.pos_to_string(sigd.p).." / "..lntrans[sigd.s]
 end
 
--- The ARS data are saved in a table format, but are entered in text format. Utility functions to transform between both.
-local function ars_to_text(arstab)
-	if not arstab then
-		return ""
-	end
-	
-	local txt = {}
-	
-	for i, arsent in ipairs(arstab) do
-		if arsent.ln then
-			txt[#txt+1] = "LN "..arsent.ln
-		elseif arsent.rc then
-			txt[#txt+1] = "RC "..arsent.rc
-		elseif arsent.c then
-			txt[#txt+1] = "#"..arsent.c
-		end
-	end
-	
-	if arstab.default then
-		return "*\n" .. table.concat(txt, "\n")
-	end
-	return table.concat(txt, "\n")
-end
-
-local function text_to_ars(t)
-	if t=="" then
-		return nil
-	elseif t=="*" then
-		return {default=true}
-	end
-	local arstab = {}
-	for line in string.gmatch(t, "[^\r\n]+") do
-		if line=="*" then
-			arstab.default = true
-		else
-			local c, v = string.match(line, "^(..)%s(.*)$")
-			if c and v then
-				local tt=string.upper(c)
-				if tt=="LN" then
-					arstab[#arstab+1] = {ln=v}
-				elseif tt=="RC" then
-					arstab[#arstab+1] = {rc=v}
-				end
-			else
-				local ct = string.match(line, "^#(.*)$")
-				if ct then arstab[#arstab+1] = {c = ct} end
-			end
-		end
-	end
-	return arstab
-end
-
 
 
 function atil.show_route_edit_form(pname, sigd, routeid)
@@ -139,7 +87,7 @@ function atil.show_route_edit_form(pname, sigd, routeid)
 	form = form.."button[5.5,6;2,1;delete;Delete Route]"
 	
 	--atdebug(route.ars)
-	form = form.."textarea[1,7.3;5.2,3;ars;ARS Rule List;"..ars_to_text(route.ars).."]"
+	form = form.."textarea[1,7.3;5.2,3;ars;ARS Rule List;"..atil.ars_to_text(route.ars).."]"
 	form = form.."button[6,7.7;1,1;savears;Save]"
 	
 	minetest.show_formspec(pname, "at_il_routeedit_"..minetest.pos_to_string(sigd.p).."_"..sigd.s.."_"..routeid, form)
@@ -192,7 +140,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		
 		if fields.ars and fields.savears then
-			route.ars = text_to_ars(fields.ars)
+			route.ars = atil.text_to_ars(fields.ars)
 			--atdebug(route.ars)
 		end
 		
