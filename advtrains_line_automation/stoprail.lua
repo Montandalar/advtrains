@@ -159,7 +159,7 @@ local adefunc = function(def, preset, suffix, rotation)
 						local stnname = stn and stn.name or "Unknown Station"
 						
 						-- Send ATC command and set text
-						advtrains.atc.train_set_command(train, "B0 W O"..stdata.doors..(stdata.reverse and "R" or "").." D"..stdata.wait.." OC D1 SM", true)
+						advtrains.atc.train_set_command(train, "B0 W O"..stdata.doors.." D"..stdata.wait.." OC D1 "..(stdata.reverse and "R" or "").." SM", true)
 						train.text_inside = stnname
 						if tonumber(stdata.wait) then
 							minetest.after(tonumber(stdata.wait), function() train.text_inside = "" end)
