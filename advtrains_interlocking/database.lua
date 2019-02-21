@@ -552,6 +552,7 @@ end
 
 -- set signal assignment.
 function ildb.set_ip_signal(pts, connid, spos)
+	ildb.clear_ip_by_signalpos(spos)
 	if not influence_points[pts] then
 		influence_points[pts] = {}
 	end
