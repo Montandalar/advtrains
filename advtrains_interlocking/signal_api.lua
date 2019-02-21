@@ -227,9 +227,9 @@ function advtrains.interlocking.signal_on_aspect_changed(pos)
 	local tns = advtrains.occ.get_trains_over(ipos)
 	for id, sidx in pairs(tns) do
 		local train = advtrains.trains[id]
-		if train.index <= sidx then
+		--if train.index <= sidx then
 			advtrains.interlocking.lzb_invalidate(train)
-		end
+		--end
 	end
 end
 
