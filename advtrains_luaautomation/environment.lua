@@ -58,8 +58,14 @@ local function safe_print(t, ...)
 	minetest.chat_send_all(str)
 end
 
-local function safe_date()
-	return(os.date("*t",os.time()))
+local function safe_date(f, t)
+	if not f then
+		-- fall back to old behavior
+		return(os.date("*t",os.time()))
+	else
+		--pass parameters
+		return os.date(f,t)
+	end
 end
 
 -- string.rep(str, n) with a high value for n can be used to DoS
