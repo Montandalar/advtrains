@@ -183,7 +183,7 @@ local function apply_control(id, train)
 	
 	local i = 1
 	while i<=#lzb.oncoming do
-		if lzb.oncoming[i].idx < train.index-0.5 then
+		if lzb.oncoming[i].idx < train.index then
 			local ent = lzb.oncoming[i]
 			local nodelete
 			if not ent.npr then
@@ -256,7 +256,8 @@ local function invalidate(train)
 		travsht = train.is_shunt,
 		oncoming = {}
 	}
-	train.ctrl.lzb = nil
+	-- possible FIX: do not clear LZB control when invalidating. This will be cleared when apply_control is run next time
+	--train.ctrl.lzb = nil
 end
 
 function advtrains.interlocking.lzb_invalidate(train)
