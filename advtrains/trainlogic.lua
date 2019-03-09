@@ -1,6 +1,7 @@
 --trainlogic.lua
 --controls train entities stuff about connecting/disconnecting/colliding trains and other things
 
+local setting_overrun_mode = minetest.settings:get("advtrains_overrun_mode")
 
 local benchmark=false
 local bm={}
@@ -534,22 +535,25 @@ function advtrains.train_step_c(id, train, dtime)
 						collided = true
 					end
 					--- 8b damage players ---
-					if not minetest.settings:get_bool("creative_mode") then
+					if setting_overrun_mode=="drop" or setting_overrun_mode=="normal" then
 						local testpts = minetest.pos_to_string(testpos)
 						local player=advtrains.playersbypts[testpts]
-						if player and not minetest.check_player_privs(player, "creative") and train.velocity>3 then
-							--instantly kill player
-							--drop inventory contents first, to not to spawn bones
-							local player_inv=player:get_inventory()
-							for i=1,player_inv:get_size("main") do
-								minetest.add_item(testpos, player_inv:get_stack("main", i))
+						if player and train.velocity>3 and player:get_hp()>0 and advtrains.is_damage_enabled(player:get_player_name()) then
+							--atdebug("damage found",player:get_player_name())
+							if setting_overrun_mode=="drop" then
+								--instantly kill player
+								--drop inventory contents first, to not to spawn bones
+								local player_inv=player:get_inventory()
+								for i=1,player_inv:get_size("main") do
+									minetest.add_item(testpos, player_inv:get_stack("main", i))
+								end
+								for i=1,player_inv:get_size("craft") do
+									minetest.add_item(testpos, player_inv:get_stack("craft", i))
+								end
+								-- empty lists main and craft
+								player_inv:set_list("main", {})
+								player_inv:set_list("craft", {})
 							end
-							for i=1,player_inv:get_size("craft") do
-								minetest.add_item(testpos, player_inv:get_stack("craft", i))
-							end
-							-- empty lists main and craft
-							player_inv:set_list("main", {})
-							player_inv:set_list("craft", {})
 							player:set_hp(0)
 						end
 					end

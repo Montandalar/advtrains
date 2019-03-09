@@ -33,3 +33,9 @@ advtrains_prot_range_up (Track protection range [up]) int 3 0 10
 #    Players without the 'track_builder' privilege can not build within a box around any tracks determined by these range settings
 #    This setting determines the lower y bound of the box, a value of 1 means that the rail and 1 node below it are protected
 advtrains_prot_range_down (Track protection range [down]) int 1 0 10
+
+#    Determine what effect "being overrun by a train" has.
+#    none: No damage is dealt at all.
+#    drop: Player is killed, all items are dropped as items on the tracks.
+#    normal: Player is killed, game-defined behavior is applied as if the player died by other means.
+advtrains_overrun_mode (Overrun mode) enum drop none,drop,normal

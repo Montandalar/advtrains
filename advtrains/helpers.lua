@@ -232,6 +232,16 @@ function advtrains.is_creative(name)
 	return minetest.settings:get_bool("creative_mode")
 end
 
+function advtrains.is_damage_enabled(name)
+	if not name then
+		error("advtrains.is_damage_enabled() called without name parameter!")
+	end
+	if minetest.check_player_privs(name, "train_admin") then
+		return false
+	end
+	return minetest.settings:get_bool("enable_damage")
+end
+
 function advtrains.ms_to_kmh(speed)
 	return speed * 3.6
 end
