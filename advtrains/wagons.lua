@@ -7,6 +7,9 @@
 -- An entity is ONLY spawned by update_trainpart_properties when it finds it useful.
 -- Only data that are only important to the entity itself are stored in the luaentity
 
+-- TP delay when getting off wagon
+local GETOFF_TP_DELAY = 0.5
+
 advtrains.wagons = {}
 advtrains.wagon_prototypes = {}
 advtrains.wagon_objects = {}
@@ -678,6 +681,7 @@ function wagon:get_off(seatno)
 		if self.door_entry and train.door_open and train.door_open~=0 and train.velocity==0 and train.index and train.path then
 			local index = advtrains.path_get_index_by_offset(train, train.index, -data.pos_in_train)
 			for i, ino in ipairs(self.door_entry) do
+				--atdebug("using door-based",i,ino)
 				local fct=data.wagon_flipped and -1 or 1
 				local aci = advtrains.path_get_index_by_offset(train, index, ino*fct)
 				local ix1, ix2 = advtrains.path_get_adjacent(train, aci)
@@ -687,26 +691,35 @@ function wagon:get_off(seatno)
 				local oadd = { x = (ix2.z-ix1.z)*train.door_open*2, y = 1, z = (ix1.x-ix2.x)*train.door_open*2}
 				local platpos=vector.round(vector.add(ix1, add))
 				local offpos=vector.round(vector.add(ix1, oadd))
-				atprint("platpos:", platpos, "offpos:", offpos)
+				--atdebug("platpos:", platpos, "offpos:", offpos)
 				if minetest.get_item_group(minetest.get_node(platpos).name, "platform")>0 then
-					minetest.after(0.2, function() clicker:setpos(offpos) end)
+					minetest.after(GETOFF_TP_DELAY, function() clicker:setpos(offpos) end)
+					--atdebug("tp",offpos)
 					return
 				end
-			end
-		else--if not door_entry, or paths missing, fall back to old method
-			local objpos=advtrains.round_vector_floor_y(self.object:getpos())
-			local yaw=self.object:getyaw()
-			local isx=(yaw < math.pi/4) or (yaw > 3*math.pi/4 and yaw < 5*math.pi/4) or (yaw > 7*math.pi/4)
-			--abuse helper function
-			for _,r in ipairs({-1, 1}) do
-				local p=vector.add({x=isx and r or 0, y=0, z=not isx and r or 0}, objpos)
-				local offp=vector.add({x=isx and r*2 or 0, y=1, z=not isx and r*2 or 0}, objpos)
-				if minetest.get_item_group(minetest.get_node(p).name, "platform")>0 then
-					minetest.after(0.2, function() clicker:setpos(offp) end)
-					return
-				end
+				--atdebug("nope")
 			end
 		end
+		--if not door_entry, or paths missing, fall back to old method
+		--atdebug("using fallback")
+		local objpos=advtrains.round_vector_floor_y(self.object:getpos())
+		local yaw=self.object:getyaw()
+		local isx=(yaw < math.pi/4) or (yaw > 3*math.pi/4 and yaw < 5*math.pi/4) or (yaw > 7*math.pi/4)
+		local offp
+		--abuse helper function
+		for _,r in ipairs({-1, 1}) do
+			--atdebug("offset",r)
+			local p=vector.add({x=isx and r or 0, y=0, z=not isx and r or 0}, objpos)
+			offp=vector.add({x=isx and r*2 or 0, y=1, z=not isx and r*2 or 0}, objpos)
+			--atdebug("platpos:", p, "offpos:", offp)
+			if minetest.get_item_group(minetest.get_node(p).name, "platform")>0 then
+				minetest.after(GETOFF_TP_DELAY, function() clicker:setpos(offp) end)
+				--atdebug("tp",offp)
+				return
+			end
+		end
+		--atdebug("nope")
+		
 	end
 end
 function wagon:show_get_on_form(pname)
