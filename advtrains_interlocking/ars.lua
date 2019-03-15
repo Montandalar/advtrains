@@ -124,5 +124,8 @@ function advtrains.interlocking.ars_check(sigd, train)
 		--delay routesetting, it should not occur inside train step
 		-- using after here is OK because that gets called on every path recalculation
 		minetest.after(0, il.route.update_route, sigd, tcbs, rteid, nil)
+	else
+		-- just "punch" routesetting, just in case callback got lost.
+		minetest.after(0, il.route.update_route, sigd, tcbs, nil, nil)
 	end
 end

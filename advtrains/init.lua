@@ -459,6 +459,9 @@ function advtrains.save(remove_players_from_wagons)
 		atlatc.save()
 	end
 	atprint("[save_all]Saved advtrains save files")
+	
+	--TODO very simple yet hacky workaround for the "green signals" bug
+	advtrains.invalidate_all_paths()
 end
 minetest.register_on_shutdown(advtrains.save)
 
