@@ -234,6 +234,17 @@ function ilrs.cancel_route_from(sigd)
 			atwarn("Failed to cancel route, no TCBS at",c_sigd)
 			return false
 		end
+		
+		--atdebug("cancelling",c_ts.route.rsn)
+		-- clear signal aspect and routesetting state
+		c_tcbs.route_committed = nil
+		c_tcbs.aspect = nil
+		c_tcbs.routeset = nil
+		c_tcbs.route_auto = nil
+		c_tcbs.route_origin = nil
+		
+		advtrains.interlocking.update_signal_aspect(c_tcbs)
+		
 		c_ts_id = c_tcbs.ts_id
 		if not c_tcbs then
 			atwarn("Failed to cancel route, end of interlocking at",c_sigd)
@@ -247,16 +258,6 @@ function ilrs.cancel_route_from(sigd)
 			--atdebug("cancel_route_from: abort (eoi/no route):")
 			return false
 		end
-		
-		--atdebug("cancelling",c_ts.route.rsn)
-		-- clear signal aspect and routesetting state
-		c_tcbs.route_committed = nil
-		c_tcbs.aspect = nil
-		c_tcbs.routeset = nil
-		c_tcbs.route_auto = nil
-		c_tcbs.route_origin = nil
-		
-		advtrains.interlocking.update_signal_aspect(c_tcbs)
 		
 		c_ts.route = nil
 		

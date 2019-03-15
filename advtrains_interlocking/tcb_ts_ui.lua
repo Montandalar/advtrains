@@ -613,9 +613,8 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 			end
 		elseif sigd_equal(tcbs.route_origin, sigd) then
 			-- something has gone wrong: tcbs.routeset should have been set...
-			atwarn("Signal",tcbs.signal_name,"- Unknown route set. Route is being cancelled.")
+			form = form.."label[0.5,2.5;Inconsistent state: route_origin is same TCBS but no route set. Try again.]"
 			ilrs.cancel_route_from(sigd)
-			return
 		else
 			form = form.."label[0.5,2.5;Route is set over this signal by:\n"..sigd_to_string(tcbs.route_origin).."]"
 			form = form.."label[0.5,4;Wait for this route to be cancelled in order to do anything here.]"
