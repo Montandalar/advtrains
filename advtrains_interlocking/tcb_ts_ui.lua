@@ -605,11 +605,21 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 				if hasprivs then
 					form = form.."button[3.5,7;2,1;editroute;Edit]"
 				end
+			else
+				if tcbs.ars_disabled then
+					form = form.."label[0.5,6  ;NOTE: ARS is disabled.]"
+					form = form.."label[0.5,6.5;Routes are not automatically set.]"
+				end
 			end
 			if hasprivs then
 				form = form.."button[0.5,8;2.5,1;newroute;New Route]"
 				form = form.."button[  3,8;2.5,1;unassign;Unassign Signal]"
 				form = form.."button[  3,9;2.5,1;influp;Influence Point]"
+			end
+			if tcbs.ars_disabled then
+				form = form.."button[0.5,9;2.5,1;arsenable;Enable ARS]"
+			else
+				form = form.."button[0.5,9;2.5,1;arsdisable;Disable ARS]"
 			end
 		elseif sigd_equal(tcbs.route_origin, sigd) then
 			-- something has gone wrong: tcbs.routeset should have been set...
@@ -672,6 +682,9 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			tcbs.signal_name = fields.name
 		end
 		if tcbs.routeset and fields.cancelroute then
+			if tcbs.routes[tcbs.routeset] and tcbs.routes[tcbs.routeset].ars then
+				tcbs.ars_disabled = true
+			end
 			-- if route committed, cancel route ts info
 			ilrs.update_route(sigd, tcbs, nil, true)
 		end
@@ -718,6 +731,13 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		if fields.influp and hasprivs then
 			advtrains.interlocking.show_ip_form(tcbs.signal, pname)
 			return
+		end
+		
+		if tcbs.ars_disabled and fields.arsenable then
+			tcbs.ars_disabled = nil
+		end
+		if not tcbs.ars_disabled and fields.arsdisable then
+			tcbs.ars_disabled = true
 		end
 		
 		if fields.auto then

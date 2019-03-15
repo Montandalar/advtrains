@@ -114,8 +114,16 @@ function advtrains.interlocking.ars_check(sigd, train)
 	local tcbs = il.db.get_tcbs(sigd)
 	if not tcbs or not tcbs.routes then return end
 	
+	if tcbs.ars_disabled then
+		-- No-ARS mode of signal.
+		-- ignore...
+		return
+	end
+	
 	if tcbs.routeset then
 		-- ARS is not in effect when a route is already set
+		-- just "punch" routesetting, just in case callback got lost.
+		minetest.after(0, il.route.update_route, sigd, tcbs, nil, nil)
 		return
 	end
 	
@@ -124,8 +132,5 @@ function advtrains.interlocking.ars_check(sigd, train)
 		--delay routesetting, it should not occur inside train step
 		-- using after here is OK because that gets called on every path recalculation
 		minetest.after(0, il.route.update_route, sigd, tcbs, rteid, nil)
-	else
-		-- just "punch" routesetting, just in case callback got lost.
-		minetest.after(0, il.route.update_route, sigd, tcbs, nil, nil)
 	end
 end
