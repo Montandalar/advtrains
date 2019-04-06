@@ -503,7 +503,16 @@ function wagon:on_step(dtime)
 				self.turning = false
 			end
 			
-			self.object:setyaw(yaw)
+			if self.object.set_rotation then
+                local pitch = math.atan2(vdir.y, math.hypot(vdir.x, vdir.z))
+                if data.wagon_flipped then
+                    pitch = -pitch
+                end
+                self.object:set_rotation({x=pitch, y=yaw, z=0})
+            else
+                self.object:setyaw(yaw)
+            end
+			
 			self.updatepct_timer=2
 			if self.update_animation then
 				self:update_animation(train.velocity, self.old_velocity)
