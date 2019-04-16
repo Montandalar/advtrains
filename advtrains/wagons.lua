@@ -846,8 +846,8 @@ function wagon:show_bordcom(pname)
 		local i=1
 		while train.lzb.oncoming[i] do
 			local oci = train.lzb.oncoming[i]
-			if oci.pos then
-				if advtrains.interlocking.db.get_sigd_for_signal(oci.pos) then
+			if oci.udata and oci.udata.signal_pos then
+				if advtrains.interlocking.db.get_sigd_for_signal(oci.udata.signal_pos) then
 					form = form .. "button[4.5,8;5,1;ilrs;Remote Routesetting]"
 					break
 				end

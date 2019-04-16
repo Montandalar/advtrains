@@ -585,9 +585,9 @@ local function mknodecallback(name)
 			table.insert(callt, func)
 		end
 	end
-	return callt, function(pos, id, train, index)
+	return callt, function(pos, id, train, index, paramx1, paramx2, paramx3)
 		for _,f in ipairs(callt) do
-			f(pos, id, train, index)
+			f(pos, id, train, index, paramx1, paramx2, paramx3)
 		end
 	end
 end
@@ -596,6 +596,14 @@ end
 -- signature is advtrains.tnc_register_on_enter/leave(function(pos, id, train, index) ... end)
 local callbacks_enter_node, run_callbacks_enter_node = mknodecallback("enter")
 local callbacks_leave_node, run_callbacks_leave_node = mknodecallback("leave")
+
+-- Node callback for approaching
+-- Might be called multiple times, whenever path is recalculated
+-- signature is function(pos, id, train, index, lzbdata)
+-- lzbdata: arbitrary data (shared between all callbacks), deleted when LZB is restarted.
+-- These callbacks are called in order of distance as train progresses along tracks, so lzbdata can be used to
+-- keep track of a train's state once it passes this point
+local callbacks_approach_node, run_callbacks_approach_node = mknodecallback("approach")
 
 
 local function tnc_call_enter_callback(pos, train_id, train, index)
@@ -619,6 +627,18 @@ local function tnc_call_leave_callback(pos, train_id, train, index)
 	
 	-- call other registered callbacks
 	run_callbacks_leave_node(pos, train_id, train, index)
+end
+
+function advtrains.tnc_call_approach_callback(pos, train_id, train, index, lzbdata)
+	--atdebug("tnc approach",pos,train_id, lzbdata)
+	local node = advtrains.ndb.get_node(pos) --this spares the check if node is nil, it has a name in any case
+	local mregnode=minetest.registered_nodes[node.name]
+	if mregnode and mregnode.advtrains and mregnode.advtrains.on_train_approach then
+		mregnode.advtrains.on_train_approach(pos, train_id, train, index, lzbdata)
+	end
+	
+	-- call other registered callbacks
+	run_callbacks_approach_node(pos, train_id, train, index, lzbdata)
 end
 
 

@@ -25,6 +25,7 @@ local no_action=false
 local function reload_saves()
 	atwarn("Restoring saved state in 1 second...")
 	no_action=true
+	advtrains.lock_path_inval = false
 	--read last save state and continue, as if server was restarted
 	for aoi, le in pairs(minetest.luaentities) do
 		if le.is_wagon then
@@ -191,6 +192,8 @@ dofile(advtrains.modpath.."/craft_items.lua")
 
 dofile(advtrains.modpath.."/log.lua")
 dofile(advtrains.modpath.."/passive.lua")
+
+dofile(advtrains.modpath.."/lzb.lua")
 
 
 --load/save

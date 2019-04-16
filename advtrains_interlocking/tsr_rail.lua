@@ -34,7 +34,7 @@ local adefunc = function(def, preset, suffix, rotation)
 					if train.path_cn[index] == 1 then
 						local pe = advtrains.encode_pos(pos)
 						local npr = advtrains.interlocking.npr_rails[pe] or 2
-						advtrains.interlocking.lzb_add_oncoming_npr(train, index, npr)
+						advtrains.lzb_add_checkpoint(train, index, npr, nil)
 					end
 				end,
 			},

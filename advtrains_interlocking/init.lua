@@ -22,7 +22,7 @@ dofile(modpath.."tcb_ts_ui.lua")
 dofile(modpath.."route_ui.lua")
 dofile(modpath.."tool.lua")
 
-dofile(modpath.."lzb.lua")
+dofile(modpath.."approach.lua")
 dofile(modpath.."ars.lua")
 dofile(modpath.."tsr_rail.lua")
 
