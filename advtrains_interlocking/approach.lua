@@ -105,7 +105,7 @@ advtrains.tnc_register_on_approach(function(pos, id, train, index, lzbdata)
 		
 		local udata = {signal_pos = spos}
 		local callback = get_over_function(lspd, travsht)
-		advtrains.lzb_add_checkpoint(train, index, lspd, callback)
+		advtrains.lzb_add_checkpoint(train, index, lspd, callback, udata)
 	end
 	lzbdata.travsht = travsht
 	lzbdata.travspd = travspd

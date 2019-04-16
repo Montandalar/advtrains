@@ -172,7 +172,7 @@ function advtrains.lzb_add_checkpoint(train, index, speed, callback, udata)
 		idx = index,
 		spd = speed,
 		fun = callback,
-		data = udata,
+		udata = udata,
 	})
 end
 

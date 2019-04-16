@@ -927,8 +927,8 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 		local i=1
 		while train.lzb.oncoming[i] do
 			local oci = train.lzb.oncoming[i]
-			if oci.pos then
-				local sigd = advtrains.interlocking.db.get_sigd_for_signal(oci.pos)
+			if oci.udata and oci.udata.signal_pos then
+				local sigd = advtrains.interlocking.db.get_sigd_for_signal(oci.udata.signal_pos)
 				if sigd then
 					advtrains.interlocking.show_signalling_form(sigd, pname)
 					return
