@@ -885,9 +885,7 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 		if fields.line~="" then
 			if fields.line ~= train.line then
 				train.line=fields.line
-				if advtrains.interlocking then
-					advtrains.interlocking.lzb_invalidate(train)
-				end
+				minetest.after(0, advtrains.invalidate_path, train.id)
 			end
 		else
 			train.line=nil
@@ -897,9 +895,7 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 		if fields.routingcode~="" then
 			if fields.routingcode ~= train.routingcode then
 				train.routingcode=fields.routingcode
-				if advtrains.interlocking then
-					advtrains.interlocking.lzb_invalidate(train)
-				end
+				minetest.after(0, advtrains.invalidate_path, train.id)
 			end
 		else
 			train.routingcode=nil

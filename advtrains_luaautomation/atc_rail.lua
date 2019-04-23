@@ -58,9 +58,7 @@ function r.fire_event(pos, evtdata)
 				return false
 			end
 			train.line = line .. ""
-			if advtrains.interlocking then
-				advtrains.interlocking.lzb_invalidate(train)
-			end
+			minetest.after(0, advtrains.invalidate_path, train_id)
 			return true
 		end,
 		get_line = function()
@@ -71,9 +69,7 @@ function r.fire_event(pos, evtdata)
 				return false
 			end
 			train.routingcode = rc
-			if advtrains.interlocking then
-				advtrains.interlocking.lzb_invalidate(train)
-			end
+			minetest.after(0, advtrains.invalidate_path, train_id)
 			return true
 		end,
 		get_rc = function()
