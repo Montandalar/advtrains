@@ -524,6 +524,7 @@ function advtrains.train_step_c(id, train, dtime)
 		local collpos = advtrains.path_get(train, atround(collindex))
 		if collpos then
 			local rcollpos=advtrains.round_vector_floor_y(collpos)
+			local is_loaded_area = minetest.get_node_or_nil(rcollpos) ~= nil
 			for x=-train.extent_h,train.extent_h do
 				for z=-train.extent_h,train.extent_h do
 					local testpos=vector.add(rcollpos, {x=x, y=0, z=z})
@@ -535,7 +536,7 @@ function advtrains.train_step_c(id, train, dtime)
 						collided = true
 					end
 					--- 8b damage players ---
-					if setting_overrun_mode=="drop" or setting_overrun_mode=="normal" then
+					if is_loaded_area and (setting_overrun_mode=="drop" or setting_overrun_mode=="normal") then
 						local testpts = minetest.pos_to_string(testpos)
 						local player=advtrains.playersbypts[testpts]
 						if player and train.velocity>3 and player:get_hp()>0 and advtrains.is_damage_enabled(player:get_player_name()) then
@@ -560,11 +561,13 @@ function advtrains.train_step_c(id, train, dtime)
 				end
 			end
 			--- 8c damage other objects ---
-			local objs = minetest.get_objects_inside_radius(rcollpos, 2)
-			for _,obj in ipairs(objs) do
-				if not obj:is_player() and obj:get_armor_groups().fleshy and obj:get_armor_groups().fleshy > 0 
-						and obj:get_luaentity() and obj:get_luaentity().name~="signs:text" then
-					obj:punch(obj, 1, { full_punch_interval = 1.0, damage_groups = {fleshy = 1000}, }, nil)
+			if is_loaded_area then
+				local objs = minetest.get_objects_inside_radius(rcollpos, 2)
+				for _,obj in ipairs(objs) do
+					if not obj:is_player() and obj:get_armor_groups().fleshy and obj:get_armor_groups().fleshy > 0 
+							and obj:get_luaentity() and obj:get_luaentity().name~="signs:text" then
+						obj:punch(obj, 1, { full_punch_interval = 1.0, damage_groups = {fleshy = 1000}, }, nil)
+					end
 				end
 			end
 		end
