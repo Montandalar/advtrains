@@ -13,31 +13,31 @@ advtrains.register_wagon("subway_wagon", {
 	seats = {
 		{
 			name="Driver stand",
-			attach_offset={x=0, y=10, z=0},
+			attach_offset={x=0, y=0, z=0},
 			view_offset={x=0, y=0, z=0},
 			group="dstand",
 		},
 		{
 			name="1",
-			attach_offset={x=-4, y=8, z=8},
+			attach_offset={x=-4, y=-2, z=8},
 			view_offset={x=0, y=0, z=0},
 			group="pass",
 		},
 		{
 			name="2",
-			attach_offset={x=4, y=8, z=8},
+			attach_offset={x=4, y=-2, z=8},
 			view_offset={x=0, y=0, z=0},
 			group="pass",
 		},
 		{
 			name="3",
-			attach_offset={x=-4, y=8, z=-8},
+			attach_offset={x=-4, y=-2, z=-8},
 			view_offset={x=0, y=0, z=0},
 			group="pass",
 		},
 		{
 			name="4",
-			attach_offset={x=4, y=8, z=-8},
+			attach_offset={x=4, y=-2, z=-8},
 			view_offset={x=0, y=0, z=0},
 			group="pass",
 		},
