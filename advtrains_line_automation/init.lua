@@ -40,5 +40,4 @@ end
 
 function advtrains.lines.step(dtime)
 	advtrains.lines.rwt.step(dtime)
-	atdebug(advtrains.lines.rwt.now())
 end

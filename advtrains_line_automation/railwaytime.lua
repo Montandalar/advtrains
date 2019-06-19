@@ -81,11 +81,32 @@ function rwt.add(t1, t2)
 	return rwt.from_sec(t1s + t2s)
 end
 
-function rwt.sub(t1, t2)
+function rwt.add_secs(t1, t2s)
+	local t1s = rwt.to_sec(t1)
+	return rwt.from_sec(t1s + t2s)
+end
+
+-- How many seconds FROM t1 TO t2
+function rwt.diff(t1, t2)
 	local t1s = rwt.to_sec(t1)
 	local t2s = rwt.to_sec(t1)
-	return rwt.from_sec(t1s - t2s)
+	return t2s - t1s
 end
+
+-- Subtract t2 from t1 (inverted argument order compared to diff())
+function rwt.sub(t1, t2)
+	return rwt.from_sec(rwt.diff(t2, t1))
+end
+
+-- Adjusts t2 by thresh and then returns time from t1 to t2
+function rwt.adj_diff(t1, t2, thresh)
+	local newc = rwt.adjust_cycle(t2, thresh, t1)
+	local t1s = rwt.to_sec(t1)
+	local t2s = rwt.to_sec(t2, newc)
+	return t1s - t2s
+end
+
+
 
 -- Threshold values
 -- "reftime" is the time to which this is made relative and defaults to now.
@@ -96,8 +117,8 @@ rwt.CA_PASTS	= -1	 		-- Same, except when times are equal, goes back one full cy
 rwt.CA_CENTER	= 30*60			-- If time is within past 30 minutes of reftime, selected as past, else selected as future.
 
 -- Adjusts the "cycle" value of a railway time to be in some relation to reftime.
--- Modifies rwtime in-place
-function rwt.adjust(rwtime, reftime_p, thresh)
+-- Returns new cycle
+function rwt.adjust_cycle(rwtime, reftime_p, thresh)
 	local reftime = reftime_p or rwt.now()
 	
 	local reftimes = rwt.to_sec(reftime)
@@ -106,13 +127,13 @@ function rwt.adjust(rwtime, reftime_p, thresh)
 	local timeres = reftimes + thresh - rwtimes
 	local cycles = atfloor(timeres / (60*60))
 
-	rwtime.c = cycles
+	return cycles
 end
 
-function rwt.get_adjust(rwtime, reftime, thresh)
-	local res = rwt.copy(rwtime)
-	rwt.adjust(res, reftime, thresh)
-	return res
+function rwt.adjust(rwtime, reftime, thresh)
+	local cp = rwt.copy(rwtime)
+	cp.c = rwt.adjust(rwtime, reftime, thresh)
+	return cp
 end
 
 function rwt.to_string(rwtime, places)
@@ -125,6 +146,15 @@ function rwt.to_string(rwtime, places)
 		return string.format(";%02d",rwtime.s)
 	end
 	return str
+end
+
+-- Useful for departure times: returns time (in seconds)
+-- until the next (adjusted FUTURE) occurence of deptime is reached
+-- in this case, rwtime is used as reftime and deptime should lie in the future of rwtime
+-- rwtime defaults to NOW
+function rwt.get_time_until(deptime, rwtime_p)
+	local rwtime = rwtime_p or rwt.now()
+	return rwt.adj_diff(rwtime, deptime, rwt.CA_FUTURE)
 end
 
 

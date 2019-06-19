@@ -223,6 +223,27 @@ if advtrains.interlocking then
 	end
 end
 
+-- Lines-specific:
+if advtrains.lines then
+	local atlrwt = advtrains.lines.rwt
+	static_env.rwt = {
+		now = atlrwt.now,
+		new = atlrwt.new,
+		copy = atlrwt.copy,
+		from_sec = atlrwt.from_sec,
+		to_sec = atlrwt.to_sec,
+		add = atlrwt.add,
+		add_secs = atlrwt.add_secs,
+		diff = atlrwt.diff,
+		sub = atlrwt.sub,
+		adj_diff = atlrwt.adj_diff,
+		adjust_cycle = atlrwt.adjust_cycle,
+		adjust = atlrwt.adjust,
+		to_string = atlrwt.to_string,
+		get_time_until = atlrwt.get_time_until,
+	}
+end
+
 for _, name in pairs(safe_globals) do
 	static_env[name] = _G[name]
 end
