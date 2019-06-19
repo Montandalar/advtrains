@@ -68,6 +68,8 @@ function atdump(t, intend)
 			str=minetest.pos_to_string(t)
 		elseif t.p and t.s then -- interlocking sigd
 			str="S["..minetest.pos_to_string(t.p).."/"..t.s.."]"
+		elseif advtrains.lines and t.s and t.m then -- RwT
+			str=advtrains.lines.rwt.to_string(t)
 		else
 			str="{"
 			local intd = (intend or "") .. "  "
@@ -417,7 +419,9 @@ minetest.register_globalstep(function(dtime_mt)
 			atlatc.mainloop_stepcode(dtime)
 			atlatc.interrupt.mainloop(dtime)
 		end
-		
+		if advtrains.lines then
+			advtrains.lines.step(dtime)
+		end
 		
 		--trigger a save when necessary
 		save_timer=save_timer-dtime
