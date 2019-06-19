@@ -136,9 +136,9 @@ function rwt.adjust(rwtime, reftime, thresh)
 	return cp
 end
 
-function rwt.to_string(rwtime, places)
+function rwt.to_string(rwtime, no_cycle, places)
 	local pl = places or 2
-	if rwtime.c~=0 or pl>=3 then
+	if (rwtime.c~=0 or pl>=3) and not no_cycle then
 		return string.format("%d;%02d;%02d", rwtime.c, rwtime.m, rwtime.s)
 	elseif rwtime.m~=0 or pl>=2 then
 		return string.format("%02d;%02d", rwtime.m, rwtime.s)
