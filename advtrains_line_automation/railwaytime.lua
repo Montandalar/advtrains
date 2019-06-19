@@ -13,12 +13,22 @@
 -- 43;3   22;0   2;30   0;10  ;10
 -- Those places are then filled with zeroes. Indeed, ";" would be valid for 00;00 .
 
+-- Using negative times is discouraged. If you need a negative time, you may insert a minus (-) ONLY in the "c" place
+
 --[[
 1;23;45 = {
 	s=45,
 	m=23,
 	c=1, -- Cycle(~hour), not displayed most time
 }
+
+Railway times can exist in 3 forms:
+- as table (see above)
+- as string (like "12;34")
+- as number (of seconds)
+
+Forms are automagically converted as needed by the converter functions to_*
+To be sure a rwt is in the required form, explicitly use a converter.
 
 ]]
 
@@ -43,7 +53,7 @@ function rwt.step(dt)
 end
 
 function rwt.now()
-	return rwt.from_sec(e_time)
+	return rwt.to_table(e_time)
 end
 
 function rwt.new(c, m, s)
@@ -54,55 +64,112 @@ function rwt.new(c, m, s)
 	}
 end
 function rwt.copy(rwtime)
+	local rwtimet = rwt.to_table(rwtime)
 	return {
-		c = rwtime.c or 0,
-		m = rwtime.m or 0,
-		s = rwtime.s or 0
+		c = rwtimet.c or 0,
+		m = rwtimet.m or 0,
+		s = rwtimet.s or 0
 	}
 end
 
-function rwt.from_sec(stime)
-	local res = {}
-	local seconds = atfloor(stime)
-	res.s = seconds % 60
-	local minutes = atfloor(seconds/60)
-	res.m = minutes % 60
-	res.c = atfloor(minutes/60)
-	return res
+function rwt.to_table(rwtime)
+	if type(rwtime) == "table" then
+		return rwtime
+	elseif type(rwtime) == "string" then
+		return rwt.parse(rwtime)
+	elseif type(rwtime) == "number" then
+		local res = {}
+		local seconds = atfloor(rwtime)
+		res.s = seconds % 60
+		local minutes = atfloor(seconds/60)
+		res.m = minutes % 60
+		res.c = atfloor(minutes/60)
+		return res
+	end
 end
 
-function rwt.to_sec(rwtime, c_over)
-	return (c_over or rwtime.c)*60*60 + rwtime.m*60 + rwtime.s
+function rwt.to_secs(rwtime, c_over)
+	local res = rwtime
+	if type(rwtime) == "string" then
+		res = rwt.parse(rwtime)
+	elseif type(rwtime) == "number" then
+		return rwtime
+	end
+	if type(res)=="table" then
+		return (c_over or res.c)*60*60 + res.m*60 + res.s
+	end
 end
+
+function rwt.to_string(rwtime_p, no_cycle)
+	local rwtime = rwt.to_table(rwtime_p)
+	if rwtime.c~=0 and not no_cycle then
+		return string.format("%d;%02d;%02d", rwtime.c, rwtime.m, rwtime.s)
+	else
+		return string.format("%02d;%02d", rwtime.m, rwtime.s)
+	end
+end
+
+---
+
+local function v_n(str, cpl)
+	if not str then return nil end
+	if str == "" then
+		return 0
+	end
+	local n = tonumber(str)
+	if not cpl and (n<0 or n>59) then
+		return nil
+	end
+	return n
+end
+
+function rwt.parse(str)
+	--atdebug("parse",str)
+	--3-value form
+	local str_c, str_m, str_s = string.match(str, "^(%-?%d?%d?);(%d%d);(%d?%d?)$")
+	if str_c and str_m and str_s then
+		--atdebug("3v",str_c, str_m, str_s)
+		local c, m, s = v_n(str_c, true), v_n(str_m), v_n(str_s)
+		if c and m and s then
+			return rwt.new(c,m,s)
+		end
+	end
+	--2-value form
+	local str_m, str_s = string.match(str, "^(%d?%d?);(%d?%d?)$")
+	if str_m and str_s then
+		--atdebug("2v",str_m, str_s)
+		local m, s = v_n(str_m), v_n(str_s)
+		if m and s then
+			return rwt.new(0,m,s)
+		end
+	end
+end
+
+---
 
 function rwt.add(t1, t2)
-	local t1s = rwt.to_sec(t1)
-	local t2s = rwt.to_sec(t1)
-	return rwt.from_sec(t1s + t2s)
-end
-
-function rwt.add_secs(t1, t2s)
-	local t1s = rwt.to_sec(t1)
-	return rwt.from_sec(t1s + t2s)
+	local t1s = rwt.to_secs(t1)
+	local t2s = rwt.to_secs(t1)
+	return rwt.to_table(t1s + t2s)
 end
 
 -- How many seconds FROM t1 TO t2
 function rwt.diff(t1, t2)
-	local t1s = rwt.to_sec(t1)
-	local t2s = rwt.to_sec(t1)
+	local t1s = rwt.to_secs(t1)
+	local t2s = rwt.to_secs(t1)
 	return t2s - t1s
 end
 
 -- Subtract t2 from t1 (inverted argument order compared to diff())
 function rwt.sub(t1, t2)
-	return rwt.from_sec(rwt.diff(t2, t1))
+	return rwt.to_table(rwt.diff(t2, t1))
 end
 
 -- Adjusts t2 by thresh and then returns time from t1 to t2
 function rwt.adj_diff(t1, t2, thresh)
 	local newc = rwt.adjust_cycle(t2, thresh, t1)
-	local t1s = rwt.to_sec(t1)
-	local t2s = rwt.to_sec(t2, newc)
+	local t1s = rwt.to_secs(t1)
+	local t2s = rwt.to_secs(t2, newc)
 	return t1s - t2s
 end
 
@@ -121,9 +188,9 @@ rwt.CA_CENTER	= 30*60			-- If time is within past 30 minutes of reftime, selecte
 function rwt.adjust_cycle(rwtime, reftime_p, thresh)
 	local reftime = reftime_p or rwt.now()
 	
-	local reftimes = rwt.to_sec(reftime)
+	local reftimes = rwt.to_secs(reftime)
 	
-	local rwtimes = rwt.to_sec(rwtime, 0)
+	local rwtimes = rwt.to_secs(rwtime, 0)
 	local timeres = reftimes + thresh - rwtimes
 	local cycles = atfloor(timeres / (60*60))
 
@@ -132,20 +199,8 @@ end
 
 function rwt.adjust(rwtime, reftime, thresh)
 	local cp = rwt.copy(rwtime)
-	cp.c = rwt.adjust(rwtime, reftime, thresh)
+	cp.c = rwt.adjust_cycle(rwtime, reftime, thresh)
 	return cp
-end
-
-function rwt.to_string(rwtime, no_cycle, places)
-	local pl = places or 2
-	if (rwtime.c~=0 or pl>=3) and not no_cycle then
-		return string.format("%d;%02d;%02d", rwtime.c, rwtime.m, rwtime.s)
-	elseif rwtime.m~=0 or pl>=2 then
-		return string.format("%02d;%02d", rwtime.m, rwtime.s)
-	else
-		return string.format(";%02d",rwtime.s)
-	end
-	return str
 end
 
 -- Useful for departure times: returns time (in seconds)
@@ -157,6 +212,50 @@ function rwt.get_time_until(deptime, rwtime_p)
 	return rwt.adj_diff(rwtime, deptime, rwt.CA_FUTURE)
 end
 
+
+-- Helper functions for handling "repeating times" (rpt)
+-- Those are generic declarations for time intervals like "every 5 minutes", with an optional offset
+-- ( /02;00-00;45 in timetable syntax
+
+-- Get the time (in seconds) until the next time this rpt occurs
+function rwt.time_to_next_rpt(rwtime, rpt_interval, rpt_offset)
+	local rpti_s   = rwt.to_secs(rpt_interval)
+	
+	return (rpti_s - rwt.time_from_last_rpt(rwtime, rpti_s, rpt_offset)) % rpti_s
+	-- Modulo is just there to clip a false value of rpti_s to 0
+end
+
+
+-- Get the time (in seconds) since the last time this rpt occured
+function rwt.time_from_last_rpt(rwtime, rpt_interval, rpt_offset)
+	local rwtime_s = rwt.to_secs(rwtime)
+	local rpti_s   = rwt.to_secs(rpt_interval)
+	local rpto_s   = rwt.to_secs(rpt_offset)
+	
+	return ((rwtime_s - rpto_s) % rpti_s)
+end
+
+-- From rwtime, get the next time that is divisible by rpt_interval offset by rpt_offset
+function rwt.next_rpt(rwtime, rpt_interval, rpt_offset)
+	local rwtime_s = rwt.to_secs(rwtime)
+	local rpti_s   = rwt.to_secs(rpt_interval)
+	local time_from_last = rwt.time_from_last_rpt(rwtime_s, rpti_s, rpt_offset)
+	
+	local res_s = rwtime_s - time_from_last + rpti_s
+	
+	return rwt.to_table(res_s)
+end
+
+-- from rwtime, get the last time that this rpt matched (which is actually just next_rpt - rpt_offset
+function rwt.last_rpt(rwtime, rpt_interval, rpt_offset)
+	local rwtime_s = rwt.to_sec(rwtime)
+	local rpti_s   = rwt.to_sec(rpt_interval)
+	local time_from_last = rwt.time_from_last_rpt(rwtime, rpt_interval, rpt_offset)
+	
+	local res_s = rwtime_s - time_from_last
+	
+	return rwt.to_table(res_s)
+end
 
 
 advtrains.lines.rwt = rwt

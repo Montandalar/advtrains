@@ -230,10 +230,10 @@ if advtrains.lines then
 		now = atlrwt.now,
 		new = atlrwt.new,
 		copy = atlrwt.copy,
-		from_sec = atlrwt.from_sec,
-		to_sec = atlrwt.to_sec,
+		to_table = atlrwt.to_table,
+		to_secs = atlrwt.to_secs,
+		to_string = atlrwt.to_string,
 		add = atlrwt.add,
-		add_secs = atlrwt.add_secs,
 		diff = atlrwt.diff,
 		sub = atlrwt.sub,
 		adj_diff = atlrwt.adj_diff,
@@ -241,6 +241,10 @@ if advtrains.lines then
 		adjust = atlrwt.adjust,
 		to_string = atlrwt.to_string,
 		get_time_until = atlrwt.get_time_until,
+		next_rpt = atlrwt.next_rpt,
+		last_rpt = atlrwt.last_rpt,
+		time_from_last_rpt = atlrwt.time_from_last_rpt,
+		time_to_next_rpt = atlrwt.time_to_next_rpt,
 	}
 end
 
