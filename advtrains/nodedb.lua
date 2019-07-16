@@ -81,7 +81,8 @@ end
 
 --save
 function ndb.save_data()
-	local file, err = io.open(path, "wb")
+	local tmppath = path.."~"
+	local file, err = io.open(tmppath, "wb")
 	if not file then
 		atwarn("Couldn't save the node database: ", err or "Unknown Error")
 	else
@@ -97,6 +98,7 @@ function ndb.save_data()
 		end
 		file:close()
 	end
+	os.rename(tmppath, path)
 	return {nodeids = ndb_nodeids}
 end
 
@@ -288,7 +290,7 @@ minetest.register_chatcommand("at_sync_ndb",
 	{
         params = "", -- Short parameter description
         description = "Write node db back to map and find ghost nodes", -- Full description
-        privs = {train_operator=true, worldedit=true}, -- Require the "privs" privilege to run
+        privs = {train_operator=true}, 
         func = function(name, param)
 			return advtrains.pcall(function()
 				if not minetest.check_player_privs(name, {server=true}) and os.time() < ptime+30 then

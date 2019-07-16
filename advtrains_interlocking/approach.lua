@@ -17,7 +17,7 @@ local il = advtrains.interlocking
 local function get_over_function(speed, shunt)
 	return function(pos, id, train, index, speed, lzbdata)
 		if speed == 0 and minetest.settings:get_bool("at_il_force_lzb_halt") then
-			atwarn(id,"overrun LZB 0 restriction (red signal) ",ent.pos)
+			atwarn(id,"overrun LZB 0 restriction (red signal) ",pos)
 			-- Set train 1 index backward. Hope this does not lead to bugs...
 			train.index = index - 0.5
 			train.velocity = 0
