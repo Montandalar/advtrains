@@ -358,14 +358,15 @@ advtrains.avt_save = function(remove_players_from_wagons)
 		minetest.log("error", " Failed to serialize advtrains save data!")
 		return
 	end
-	local file, err = io.open(advtrains.fpath, "w")
+	local temppath = advtrains.fpath.."~"
+	local file, err = io.open(temppath, "w")
 	if err then
-		minetest.log("error", " Failed to write advtrains save data to file "..advtrains.fpath..": "..(err or "Unknown Error"))
+		minetest.log("error", " Failed to write advtrains save data to file "..temppath..": "..(err or "Unknown Error"))
 		return
 	end
 	file:write(datastr)
 	file:close()
-	
+	os.rename(temppath, advtrains.fpath)
 	if DUMP_DEBUG_SAVE then
 		local file, err = io.open(advtrains.fpath.."_DUMP", "w")
 		if err then
