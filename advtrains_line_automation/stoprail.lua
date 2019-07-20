@@ -4,7 +4,10 @@
 
 local function to_int(n)
 	--- Disallow floating-point numbers
-	return math.floor(tonumber(n))
+	local k = tonumber(n)
+	if k then
+		return math.floor(k)
+	end
 end
 
 local function updatemeta(pos)
