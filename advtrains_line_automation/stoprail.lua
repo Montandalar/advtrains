@@ -2,6 +2,11 @@
 -- adds "stop rail". Recognized by lzb. (part of behavior is implemented there)
 
 
+local function to_int(n)
+	--- Disallow floating-point numbers
+	return math.floor(tonumber(n))
+end
+
 local function updatemeta(pos)
 	local meta = minetest.get_meta(pos)
 	local pe = advtrains.encode_pos(pos)
@@ -112,7 +117,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				stdata.track = fields.track
 			end
 			if fields.wait then
-				stdata.wait = tonumber(fields.wait) or 10
+				stdata.wait = to_int(fields.wait) or 10
 			end
 			
 			if fields.ars then
@@ -120,10 +125,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			end
 
 			if fields.ddelay then
-				stdata.ddelay = tonumber(fields.wait) or 1
+				stdata.ddelay = to_int(fields.ddelay) or 1
 			end
 			if fields.speed then
-				stdata.speed = tonumber(fields.speed) or "M"
+				stdata.speed = to_int(fields.speed) or "M"
 			end
 			
 			--TODO: signal
