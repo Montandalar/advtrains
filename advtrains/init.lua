@@ -206,83 +206,153 @@ local MDS_interlocking, MDS_lines
 
 advtrains.fpath=minetest.get_worldpath().."/advtrains"
 dofile(advtrains.modpath.."/log.lua")
+function advtrains.read_component(name)
+	local path = advtrains.fpath.."_"..name
+	minetest.log("action", "[advtrains] loading "..path)
+	local file, err = io.open(path, "r")
+	if not file then
+		minetest.log("warning", " Failed to read advtrains save data from file "..path..": "..(err or "Unknown Error"))
+		minetest.log("warning", " (this is normal when first enabling advtrains on this world)")
+		return
+	end
+	local tbl =  minetest.deserialize(file:read("*a"))
+	file:close()
+	return tbl
+end
 
 function advtrains.avt_load()
-	local file, err = io.open(advtrains.fpath, "r")
-	if not file then
-		minetest.log("warning", " Failed to read advtrains save data from file "..advtrains.fpath..": "..(err or "Unknown Error"))
-		minetest.log("warning", " (this is normal when first enabling advtrains on this world)")
-	else
-		local tbl = minetest.deserialize(file:read("*a"))
-		if type(tbl) == "table" then
-			if tbl.version then
-				--congrats, we have the new save format.
-				advtrains.trains = tbl.trains
-				--Save the train id into the train table to avoid having to pass id around
-				for id, train in pairs(advtrains.trains) do
-					train.id = id
-				end
-				advtrains.wagons = tbl.wagon_save
-				advtrains.player_to_train_mapping = tbl.ptmap or {}
-				advtrains.ndb.load_data(tbl.ndb)
-				advtrains.atc.load_data(tbl.atc)
-				if advtrains.interlocking then
-					advtrains.interlocking.db.load(tbl.interlocking)
-				else
-					MDS_interlocking = tbl.interlocking
-				end
-				if advtrains.lines then
-					advtrains.lines.load(tbl.lines)
-				else
-					MDS_lines = tbl.lines
-				end
-				--remove wagon_save entries that are not part of a train
-				local todel=advtrains.merge_tables(advtrains.wagon_save)
-				for tid, train in pairs(advtrains.trains) do
-					train.id = tid
-					for _, wid in ipairs(train.trainparts) do
-						todel[wid]=nil
-					end
-				end
-				for wid, _ in pairs(todel) do
-					atwarn("Removing unused wagon", wid, "from wagon_save table.")
-					advtrains.wagon_save[wid]=nil
-				end
+	-- check for new, split advtrains save file
+	
+	local version = advtrains.read_component("version")
+	local tbl
+	if version and version == 3 then
+		-- we are dealing with the new, split-up system
+		minetest.log("action", "[advtrains] loading savefiles version 3")
+		local il_save = {
+			tcbs = true,
+			ts = true,
+			signalass = true,
+			rs_locks = true,
+			rs_callbacks = true,
+			influence_points = true,
+			npr_rails = true,
+		}
+		tbl={
+			trains = true,
+			wagon_save = true,
+			ptmap = true,
+			atc = true,
+			ndb = true,		
+			lines = true,
+			version = 2,
+		}
+		for i,k in pairs(il_save) do
+			il_save[i] = advtrains.read_component("interlocking_"..i)
+		end
+		for i,k in pairs(tbl) do
+			tbl[i] = advtrains.read_component(i)
+		end
+		tbl["interlocking"] = il_save
+	else	
+		local file, err = io.open(advtrains.fpath, "r")
+		if not file then
+			minetest.log("warning", " Failed to read advtrains save data from file "..advtrains.fpath..": "..(err or "Unknown Error"))
+			minetest.log("warning", " (this is normal when first enabling advtrains on this world)")
+			return
+		else
+			tbl = minetest.deserialize(file:read("*a"))
+			file:close()
+		end
+	end
+	if type(tbl) == "table" then
+		if tbl.version then
+			--congrats, we have the new save format.
+			advtrains.trains = tbl.trains
+			--Save the train id into the train table to avoid having to pass id around
+			for id, train in pairs(advtrains.trains) do
+				train.id = id
+			end
+			advtrains.wagons = tbl.wagon_save
+			advtrains.player_to_train_mapping = tbl.ptmap or {}
+			advtrains.ndb.load_data(tbl.ndb)
+			advtrains.atc.load_data(tbl.atc)
+			if advtrains.interlocking then
+				advtrains.interlocking.db.load(tbl.interlocking)
 			else
-				--oh no, its the old one...
-				advtrains.trains=tbl
-				--load ATC
-				advtrains.fpath_atc=minetest.get_worldpath().."/advtrains_atc"
-				local file, err = io.open(advtrains.fpath_atc, "r")
-				if not file then
-					local er=err or "Unknown Error"
-					atprint("Failed loading advtrains atc save file "..er)
-				else
-					local tbl = minetest.deserialize(file:read("*a"))
-					if type(tbl) == "table" then
-						advtrains.atc.controllers=tbl.controllers
-					end
-					file:close()
-				end
-				--load wagon saves
-				advtrains.fpath_ws=minetest.get_worldpath().."/advtrains_wagon_save"
-				local file, err = io.open(advtrains.fpath_ws, "r")
-				if not file then
-					local er=err or "Unknown Error"
-					atprint("Failed loading advtrains save file "..er)
-				else
-					local tbl = minetest.deserialize(file:read("*a"))
-					if type(tbl) == "table" then
-						advtrains.wagon_save=tbl
-					end
-					file:close()
+				MDS_interlocking = tbl.interlocking
+			end
+			if advtrains.lines then
+				advtrains.lines.load(tbl.lines)
+			else
+				MDS_lines = tbl.lines
+			end
+			--remove wagon_save entries that are not part of a train
+			local todel=advtrains.merge_tables(advtrains.wagon_save)
+			for tid, train in pairs(advtrains.trains) do
+				train.id = tid
+				for _, wid in ipairs(train.trainparts) do
+					todel[wid]=nil
 				end
 			end
+			for wid, _ in pairs(todel) do
+				atwarn("Removing unused wagon", wid, "from wagon_save table.")
+				advtrains.wagon_save[wid]=nil
+			end
 		else
-			minetest.log("error", " Failed to deserialize advtrains save data: Not a table!")
+			--oh no, its the old one...
+			advtrains.trains=tbl
+			--load ATC
+			advtrains.fpath_atc=minetest.get_worldpath().."/advtrains_atc"
+			local file, err = io.open(advtrains.fpath_atc, "r")
+			if not file then
+				local er=err or "Unknown Error"
+				atprint("Failed loading advtrains atc save file "..er)
+			else
+				local tbl = minetest.deserialize(file:read("*a"))
+				if type(tbl) == "table" then
+					advtrains.atc.controllers=tbl.controllers
+				end
+				file:close()
+			end
+			--load wagon saves
+			advtrains.fpath_ws=minetest.get_worldpath().."/advtrains_wagon_save"
+			local file, err = io.open(advtrains.fpath_ws, "r")
+			if not file then
+				local er=err or "Unknown Error"
+				atprint("Failed loading advtrains save file "..er)
+			else
+				local tbl = minetest.deserialize(file:read("*a"))
+				if type(tbl) == "table" then
+					advtrains.wagon_save=tbl
+				end
+				file:close()
+			end
 		end
-		file:close()
+	else
+		minetest.log("error", " Failed to deserialize advtrains save data: Not a table!")
 	end
+end
+
+advtrains.save_component = function (tbl, name)
+	-- Saves each component of the advtrains file separately
+	--
+	-- required for now to shrink the advtrains db to overcome lua
+	-- limitations.
+	local datastr = minetest.serialize(tbl)
+	if not datastr then
+		minetest.log("error", " Failed to serialize advtrains save data!")
+		return
+	end
+	local temppath = advtrains.fpath.."_"..name.."~"
+	local file, err = io.open(temppath, "w")
+	if err then
+		minetest.log("error", " Failed to write advtrains save data to file "..temppath..": "..(err or "Unknown Error"))
+		return
+	end
+	file:write(datastr)
+	file:close()
+	os.rename(temppath, advtrains.fpath.."_"..name)
+	
 end
 
 advtrains.avt_save = function(remove_players_from_wagons)
@@ -343,30 +413,24 @@ advtrains.avt_save = function(remove_players_from_wagons)
 	else
 		ln_save = MDS_lines
 	end
+
 	local save_tbl={
 		trains = tmp_trains,
 		wagon_save = advtrains.wagons,
 		ptmap = advtrains.player_to_train_mapping,
 		atc = advtrains.atc.save_data(),
 		ndb = advtrains.ndb.save_data(),
-		interlocking = il_save,
 		lines = ln_save,
-		version = 2,
+		version = 3,
 	}
-	local datastr = minetest.serialize(save_tbl)
-	if not datastr then
-		minetest.log("error", " Failed to serialize advtrains save data!")
-		return
+	for i,k in pairs(save_tbl) do
+		advtrains.save_component(k,i)
 	end
-	local temppath = advtrains.fpath.."~"
-	local file, err = io.open(temppath, "w")
-	if err then
-		minetest.log("error", " Failed to write advtrains save data to file "..temppath..": "..(err or "Unknown Error"))
-		return
+	
+	for i,k in pairs(il_save) do
+		advtrains.save_component(k,"interlocking_"..i)
 	end
-	file:write(datastr)
-	file:close()
-	os.rename(temppath, advtrains.fpath)
+	
 	if DUMP_DEBUG_SAVE then
 		local file, err = io.open(advtrains.fpath.."_DUMP", "w")
 		if err then
