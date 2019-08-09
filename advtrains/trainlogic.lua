@@ -930,7 +930,7 @@ function advtrains.split_train_at_wagon(wagon_id)
 	local newtrain=advtrains.trains[newtrain_id]
 	
 	newtrain.velocity=train.velocity
-	
+	return newtrain_id -- return new train ID, so new train can be manipulated
 end
 
 -- coupling
