@@ -188,6 +188,9 @@ get_rc()
 set_rc(routingcode)
 	Sets the "Routingcode" property of the train (a string).
 	The interlocking system uses this property for Automatic Routesetting.
+split_at_index(index, command)
+	Splits the train at the specified index, into a train with index-1 wagons and a second train starting with the index-th wagon.
+	command specifies an atc command to be sent to the second train after decoupling. 
 
 # Operator panel
 This simple node executes its actions when punched. It can be used to change a switch and update the corresponding signals or similar applications.
