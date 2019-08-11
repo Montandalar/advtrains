@@ -892,38 +892,35 @@ function advtrains.spawn_wagons(train_id)
 		end
 	end
 end
-		
 
-function advtrains.split_train_at_wagon(wagon_id)
-	--get train
-	local data = advtrains.wagons[wagon_id]
-	local old_id = data.train_id
-	local train=advtrains.trains[old_id]
+function advtrains.split_train_at_index(train, index)
+	-- this function splits a train at index, creating a new train from the back part of the train.
+
+	local train_id=train.id
+	if index > #train.trainparts then
+		-- index specified too long
+		return
+	end
+	local w_id = train.trainparts[index]
+	local data = advtrains.wagons[w_id]
 	local _, wagon = advtrains.get_wagon_prototype(data)
-	
-	if not advtrains.train_ensure_init(old_id, train) then
-		atwarn("Train",old_id,"is not initialized! Operation aborted!")
+	if not advtrains.train_ensure_init(train_id, train) then
+		atwarn("Train",train_id,"is not initialized! Operation aborted!")
 		return
 	end
 	
-	local index=advtrains.path_get_index_by_offset(train, train.index, - data.pos_in_train + wagon.wagon_span)
-	
-	-- find new initial path position for this train
-	local pos, connid, frac = advtrains.path_getrestore(train, index)
-	
-	-- build trainparts table, passing it directly to the train constructor
+	local p_index=advtrains.path_get_index_by_offset(train, train.index, - data.pos_in_train + wagon.wagon_span)
+	local pos, connid, frac = advtrains.path_getrestore(train, p_index)
 	local tp = {}
 	for k,v in ipairs(train.trainparts) do
-		if k >= data.pos_in_trainparts then
+		if k >= index then
 			table.insert(tp, v)
-			train.trainparts[k]=nil
+			train.trainparts[k] = nil
 		end
 	end
-	
-	--update train parts
-	advtrains.update_trainpart_properties(old_id)
+	advtrains.update_trainpart_properties(train_id)
 	recalc_end_index(train)
-	run_callbacks_update(old_id, train)
+	run_callbacks_update(train_id, train)
 	
 	--create subtrain
 	local newtrain_id=advtrains.create_new_train_at(pos, connid, frac, tp)
@@ -931,6 +928,13 @@ function advtrains.split_train_at_wagon(wagon_id)
 	
 	newtrain.velocity=train.velocity
 	return newtrain_id -- return new train ID, so new train can be manipulated
+
+end
+
+function advtrains.split_train_at_wagon(wagon_id)
+	--get train
+	local data = advtrains.wagons[wagon_id]
+	advtrains.split_train_at_index(advtrains.trains[data.train_id], data.pos_in_trainparts)
 end
 
 -- coupling

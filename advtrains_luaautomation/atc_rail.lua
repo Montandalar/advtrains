@@ -53,6 +53,19 @@ function r.fire_event(pos, evtdata)
 			advtrains.atc.train_set_command(train, cmd, atc_arrow)
 			return true
 		end,
+		split_at_index = function(index, cmd)
+			if not train_id then return false end
+			assertt(cmd, "string")
+			if type(index) ~= "number" then
+				return false
+			end
+			local new_id = advtrains.split_train_at_index(train, index)
+			if new_id then
+				minetest.after(1,advtrains.atc.train_set_command,advtrains.trains[new_id], cmd, atc_arrow)
+				return true
+			end
+			return false
+		end,
 		set_line = function(line)
 			if type(line)~="string" and type(line)~="number" then
 				return false
