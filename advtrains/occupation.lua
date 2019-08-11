@@ -175,8 +175,8 @@ function o.check_collision(pos, train_id)
 			
 			--atdebug("checking train",t[i],"index",idx,"<>",train.index,train.end_index)
 			if train and idx >= train.end_index and idx <= train.index then
-				--atdebug("collides.")
-				return true
+				--atdebug("collides.")				
+				return train -- return train it collided with so we can couple when shunting is enabled
 			end
 		end
 		i = i + 2

@@ -66,6 +66,11 @@ function r.fire_event(pos, evtdata)
 			end
 			return false
 		end,
+		set_shunt = function()
+			-- enable shunting mode
+			if not train_id then return false end
+			train.is_shunt = true
+		end,
 		set_line = function(line)
 			if type(line)~="string" and type(line)~="number" then
 				return false

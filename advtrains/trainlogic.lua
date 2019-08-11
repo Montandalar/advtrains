@@ -529,11 +529,20 @@ function advtrains.train_step_c(id, train, dtime)
 				for z=-train.extent_h,train.extent_h do
 					local testpos=vector.add(rcollpos, {x=x, y=0, z=z})
 					--- 8a Check collision ---
-					if not collided and advtrains.occ.check_collision(testpos, id) then
-						--collides
-						train.velocity = 0
-						advtrains.atc.train_reset_command(train)
-						collided = true
+					if not collided then
+
+						local col_tr = advtrains.occ.check_collision(testpos, id)
+						if col_tr then
+							if train.is_shunt or col_tr.is_shunt then
+								train.is_shunt = nil
+								col_tr.is_shunt = nil
+								minetest.after(0,advtrains.do_connect_trains, col_tr.id, train.id, train.velocity)
+							else
+								train.velocity = 0
+								advtrains.atc.train_reset_command(train)
+								collided = true
+							end
+						end
 					end
 					--- 8b damage players ---
 					if is_loaded_area and (setting_overrun_mode=="drop" or setting_overrun_mode=="normal") then
@@ -908,7 +917,7 @@ function advtrains.split_train_at_index(train, index)
 		atwarn("Train",train_id,"is not initialized! Operation aborted!")
 		return
 	end
-	
+	train.is_shunt = nil -- prevent immediate recoupling
 	local p_index=advtrains.path_get_index_by_offset(train, train.index, - data.pos_in_train + wagon.wagon_span)
 	local pos, connid, frac = advtrains.path_getrestore(train, p_index)
 	local tp = {}
@@ -1047,7 +1056,7 @@ end
 --->frontpos's will match
 
 
-function advtrains.do_connect_trains(first_id, second_id)
+function advtrains.do_connect_trains(first_id, second_id, vel)
 	local first, second=advtrains.trains[first_id], advtrains.trains[second_id]
 	
 	if not advtrains.train_ensure_init(first_id, first) then
@@ -1068,7 +1077,7 @@ function advtrains.do_connect_trains(first_id, second_id)
 	
 	advtrains.remove_train(second_id)
 	
-	first.velocity=0
+	first.velocity= vel or 0
 	
 	advtrains.update_trainpart_properties(first_id)
 	advtrains.couple_invalidate(first)
