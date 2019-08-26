@@ -85,7 +85,7 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 			local tcb = ildb.get_tcb(tcbpos)
 			if not tcb then return true end
 			for connid=1,2 do
-				if tcb[connid].ts_id then
+				if tcb[connid].ts_id or tcb[connid].signal then
 					return false
 				end
 			end
