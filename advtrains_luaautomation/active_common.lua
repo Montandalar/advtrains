@@ -123,6 +123,15 @@ function ac.run_in_env(pos, evtdata, customfct_p)
 			digiline:receptor_send(pos, digiline.rules.default, channel, msg)
 		end
 	end
+	-- add lines scheduler if enabled
+	if advtrains.lines and advtrains.lines.sched then
+		customfct.schedule = function(rwtime, msg)
+			advtrains.lines.sched.enqueue(rwtime, "atlatc_env", {pos=pos, msg=msg}, advtrains.encode_pos(pos), 1)
+		end
+		customfct.schedule_in = function(rwtime, msg)
+			advtrains.lines.sched.enqueue_in(rwtime, "atlatc_env", {pos=pos, msg=msg}, advtrains.encode_pos(pos), 1)
+		end
+	end
 	
 	local datain=nodetbl.data or {}
 	local succ, dataout = atlatc.envs[nodetbl.env]:execute_code(datain, nodetbl.code, evtdata, customfct)
@@ -142,6 +151,13 @@ end
 
 function ac.on_digiline_receive(pos, node, channel, msg)
 	atlatc.interrupt.add(0, pos, {type="digiline", digiline=true, channel = channel, msg = msg})
+end
+
+if advtrains.lines and advtrains.lines.sched then
+	advtrains.lines.sched.register_callback("atlatc_env", function(data)
+		-- This adds another interrupt to the atlatc queue... there might be a better way
+		atlatc.interrupt.add(0, data.pos, {type="schedule",schedule=true, msg=data.msg})
+	end)
 end
 
 atlatc.active=ac
