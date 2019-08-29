@@ -336,7 +336,8 @@ function ildb.sync_tcb_neighbors(pos, connid)
 	local found_tcbs = { {p = pos, s = connid} }
 	local node_ok, conns, rhe = advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
 	if not node_ok then
-		error("update_tcb_neighbors but node is NOK: "..minetest.pos_to_string(pos))
+		atwarn("update_tcb_neighbors but node is NOK: "..minetest.pos_to_string(pos))
+		return
 	end
 	
 	--atdebug("Traversing from ",pos, connid)
