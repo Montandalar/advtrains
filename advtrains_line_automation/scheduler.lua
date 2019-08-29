@@ -69,6 +69,9 @@ end
 
 function sched.enqueue(rwtime, handler, evtdata, unitid, unitlim)
 	local qtime = ln.rwt.to_secs(rwtime)
+	assert(type(handler)=="string")
+	assert(type(unitid)=="string")
+	assert(type(unitlim)=="number")
 	
 	local cnt=1
 	local ucn, elem
