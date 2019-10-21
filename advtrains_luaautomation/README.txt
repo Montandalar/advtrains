@@ -114,6 +114,18 @@ aspect = {
 }
 As of August 2018, only the aspect.main.free field is ever used by the interlocking system.
 
+# Lines
+
+The advtrains_line_automation component adds a few contraptions that should make creating timeable systems easier.
+Part of its functionality is also available in LuaATC:
+
+- rwt.* - all Railway Time functions are included as documented in https://advtrains.de/wiki/doku.php?id=dev:lines:rwt
+
+- schedule(rw_time, msg)
+- schedule_in(rw_dtime, msg)
+Schedules an event of type {type="schedule", schedule=true, msg=msg} at (resp. after) the specified railway time.
+(which can be in any format). You can only schedule one event this way. (uses the new lines-internal scheduler)
+
 ## Components and events
 
 The event table is a table of the following format:
