@@ -244,7 +244,7 @@ Depending on the number of connections:
 function advtrains.register_tracks(tracktype, def, preset)
 	advtrains.trackplacer.register_tracktype(def.nodename_prefix, preset.tpdefault)
 	if preset.regtp then
-		advtrains.trackplacer.register_track_placer(def.nodename_prefix, def.texture_prefix, def.description)			
+		advtrains.trackplacer.register_track_placer(def.nodename_prefix, def.texture_prefix, def.description, def)			
 	end
 	if preset.regsp then
 		advtrains.slope.register_placer(def, preset)			

@@ -262,12 +262,13 @@ function tp.placetrack(pos, nnpref, placer, itemstack, pointed_thing, yaw)
 end
 
 
-function tp.register_track_placer(nnprefix, imgprefix, dispname)
+function tp.register_track_placer(nnprefix, imgprefix, dispname, def)
 	minetest.register_craftitem(":"..nnprefix.."_placer",{
 		description = dispname,
 		inventory_image = imgprefix.."_placer.png",
 		wield_image = imgprefix.."_placer.png",
 		groups={advtrains_trackplacer=1, digtron_on_place=1},
+		liquids_pointable = def.liquids_pointable,
 		on_place = function(itemstack, placer, pointed_thing)
 			return advtrains.pcall(function()
 					local name = placer:get_player_name()
@@ -280,13 +281,19 @@ function tp.register_track_placer(nnprefix, imgprefix, dispname)
 					if not advtrains.check_track_protection(pos, name) then
 						return itemstack, false
 					end
-					if minetest.registered_nodes[minetest.get_node(pos).name] and minetest.registered_nodes[minetest.get_node(pos).name].buildable_to
-					and minetest.registered_nodes[minetest.get_node(upos).name] and minetest.registered_nodes[minetest.get_node(upos).name].walkable then
+					if minetest.registered_nodes[minetest.get_node(pos).name] and minetest.registered_nodes[minetest.get_node(pos).name].buildable_to then
+						if def.suitable_substrate then
+							s = def.suitable_substrate(upos)
+						else
+							s = minetest.registered_nodes[minetest.get_node(upos).name] and minetest.registered_nodes[minetest.get_node(upos).name].walkable
+						end
+						if s then
 --						minetest.chat_send_all(nnprefix)
-						local yaw = placer:get_look_horizontal()
-						tp.placetrack(pos, nnprefix, placer, itemstack, pointed_thing, yaw)
-						if not advtrains.is_creative(name) then
-							itemstack:take_item()
+							local yaw = placer:get_look_horizontal()
+							tp.placetrack(pos, nnprefix, placer, itemstack, pointed_thing, yaw)
+							if not advtrains.is_creative(name) then
+								itemstack:take_item()
+							end
 						end
 					end
 				end
