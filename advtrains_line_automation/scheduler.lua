@@ -10,7 +10,11 @@ local UNITS_THRESH = 10
 local MAX_PER_ITER = 10
 
 local callbacks = {}
---Function signature is function(d)
+
+-- Register a handler callback to handle scheduler items.
+-- e - a handler identifier (corresponds to "handler" in enqueue() )
+-- func - a function(evtdata) to be executed when a schedule item expires
+--        evtdata - arbitrary data that has been passed into enqueue()
 function sched.register_callback(e, func)
 	callbacks[e] = func
 end
@@ -36,6 +40,7 @@ function sched.load(data)
 			table.insert(queue, elem)
 			units_cnt[elem.u] = (units_cnt[elem.u] or 0) + 1
 		end
+		atlog("[lines][scheduler] Loaded the schedule queue,",#data,"items.")
 	end
 end
 function sched.save()
@@ -54,7 +59,7 @@ function sched.run()
 				-- run it
 				callbacks[elem.e](elem.d)
 			else
-				atwarn("No callback to handle schedule",elem)
+				atwarn("[lines][scheduler] No callback to handle schedule",elem)
 			end
 			cnt=cnt+1
 			ucn = units_cnt[elem.u]
@@ -67,6 +72,12 @@ function sched.run()
 	end
 end
 
+-- Enqueue a new scheduled item to be executed at "rwtime"
+-- handler: a string identifying the handler to use (registered with sched.register_callback())
+-- evtdata: Arbitrary Lua data to be passed to the handler callback
+-- unitid: An arbitrary string uniquely identifying the thing that is issuing this enqueue.
+--    used to prevent expotentially growing "scheduler bombs"
+-- unitlim: Custom override for UNITS_THRESH (see there)
 function sched.enqueue(rwtime, handler, evtdata, unitid, unitlim)
 	local qtime = ln.rwt.to_secs(rwtime)
 	assert(type(handler)=="string")
@@ -79,7 +90,7 @@ function sched.enqueue(rwtime, handler, evtdata, unitid, unitlim)
 	ucn = (units_cnt[unitid] or 0)
 	local ulim=(unitlim or UNITS_THRESH)
 	if ucn >= ulim then
-		atwarn("Scheduler: discarding enqueue for",handler,"(limit",ulim,") because unit",unitid,"has already",ucn,"schedules enqueued")
+		atwarn("[lines][scheduler] discarding enqueue for",handler,"(limit",ulim,") because unit",unitid,"has already",ucn,"schedules enqueued")
 		return false
 	end
 	
@@ -99,6 +110,7 @@ function sched.enqueue(rwtime, handler, evtdata, unitid, unitlim)
 	end
 end
 
+-- See enqueue(). Same meaning, except that rwtime is relative to now.
 function sched.enqueue_in(rwtime, handler, evtdata, unitid, unitlim)
 	local ctime = ln.rwt.get_time()
 	sched.enqueue(ctime + rwtime, handler, evtdata, unitid, unitlim)
