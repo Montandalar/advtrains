@@ -189,14 +189,14 @@ end
 
 function rwt.add(t1, t2)
 	local t1s = rwt.to_secs(t1)
-	local t2s = rwt.to_secs(t1)
+	local t2s = rwt.to_secs(t2)
 	return rwt.to_table(t1s + t2s)
 end
 
 -- How many seconds FROM t1 TO t2
 function rwt.diff(t1, t2)
 	local t1s = rwt.to_secs(t1)
-	local t2s = rwt.to_secs(t1)
+	local t2s = rwt.to_secs(t2)
 	return t2s - t1s
 end
 
