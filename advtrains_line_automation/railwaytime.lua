@@ -13,6 +13,9 @@
 -- 43;3   22;0   2;30   0;10  ;10
 -- Those places are then filled with zeroes. Indeed, ";" would be valid for 00;00 .
 
+-- There is an "adapt mode", which was proposed by gpcf, and results in RWT automatically adapting itself to real-world time.
+-- It works by shifting the minute/second after the realtime minute/second, adjusting the cycle value as needed.
+
 -- Using negative times is discouraged. If you need a negative time, you may insert a minus (-) ONLY in the "c" place
 
 --[[
@@ -37,11 +40,37 @@ local rwt = {}
 --Time Stamp (Seconds since start of world)
 local e_time = 0
 
--- Current rw time, cached and updated each step
-local crwtime
+local setting_rwt_real = minetest.settings:get("advtrains_lines_rwt_realtime")
+if setting_rwt_real=="" then
+	setting_rwt_real = "independent"
+end
+
+local e_last_epoch -- last real-time timestamp
+
+-- Advance RWT to match minute/second to the current real-world time
+-- only accounts for the minute/second part, leaves hour/cycle untouched
+local function adapt_real_time()
+	local datetab = os.date("*t")
+	local real_sectotal = 60*datetab.min + datetab.sec
+	
+	local rwttab = rwt.now()
+	local rwt_sectotal = 60*rwttab.m + rwttab.s
+	
+	--calculate the difference and take it %3600 (seconds/hour) to always move forward
+	local secsfwd = (real_sectotal - rwt_sectotal) % 3600
+	
+	atlog("[lines][rwt] Skipping",secsfwd,"seconds forward to sync rwt (",rwt.to_string(rwttab),") to real time (",os.date("%H:%M:%S"),")")
+	
+	e_time = e_time + secsfwd
+end
 
 function rwt.set_time(t)
 	e_time = t or 0
+	if setting_rwt_real == "adapt_real" then
+		adapt_real_time()
+	end
+	atlog("[lines][rwt] Initialized railway time: ",rwt.to_string(e_time))
+	e_last_epoch = os.time()
 end
 
 function rwt.get_time()
@@ -49,7 +78,18 @@ function rwt.get_time()
 end
 
 function rwt.step(dt)
-	e_time = e_time + dt
+	if setting_rwt_real=="independent" then
+		-- Regular stepping with dtime
+		e_time = e_time + dt		
+	else
+		-- advance with real-world time
+		local diff = os.time() - e_last_epoch
+		e_last_epoch = os.time()
+		
+		if diff>0 then
+			e_time = e_time + diff
+		end
+	end
 end
 
 function rwt.now()
