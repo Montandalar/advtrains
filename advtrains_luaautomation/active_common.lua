@@ -71,7 +71,12 @@ function ac.on_receive_fields(pos, formname, fields, player)
 		nodetbl.code=fields.code
 	end
 	if fields.save then
+		-- reset certain things
 		nodetbl.err=nil
+		if advtrains.lines and advtrains.lines.sched then
+			-- discard all schedules for this node
+			advtrains.lines.sched.discard_all(advtrains.encode_pos(pos))
+		end
 	end
 	if fields.cle then
 		nodetbl.data={}

@@ -116,4 +116,15 @@ function sched.enqueue_in(rwtime, handler, evtdata, unitid, unitlim)
 	sched.enqueue(ctime + rwtime, handler, evtdata, unitid, unitlim)
 end
 
+-- Discards all schedules for unit "unitid" (removes them from the queue)
+function sched.discard_all(unitid)
+	for i=1,#queue do
+		if queue[i].u == unitid then
+			table.remove(queue,i)
+			i=i-1
+		end
+	end
+	units_cnt[unitid] = 0
+end
+
 ln.sched = sched
