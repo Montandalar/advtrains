@@ -34,6 +34,8 @@ function iq.mainloop(dtime)
 			local ndef=minetest.registered_nodes[node.name]
 			if ndef and ndef.luaautomation and ndef.luaautomation.fire_event then
 				ndef.luaautomation.fire_event(pos, evtdata)
+			else
+				atwarn("[atlatc][interrupt] Couldn't run event",evtdata.type,"on",pos,", something wrong with the node",node)
 			end
 			table.remove(queue, i)
 			i=i-1

@@ -10,7 +10,7 @@ minetest.register_node("advtrains_luaautomation:oppanel", {
 	description = "LuaAutomation operation panel",
 	groups = {
 		cracky = 1,
-		save_in_nodedb=1,
+		save_in_at_nodedb=1,
 	},
 	after_place_node = atlatc.active.after_place_node,
 	after_dig_node = atlatc.active.after_dig_node,

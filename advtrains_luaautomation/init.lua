@@ -3,7 +3,7 @@
 -- Uses global table 'atlatc' (AdvTrains_LuaATC)
 
 -- Boilerplate to support localized strings if intllib mod is installed.
-if minetest.get_modpath("intllib") then
+if intllib then
     atltrans = intllib.Getter()
 else
     atltrans = function(s,a,...)a={a,...}return s:gsub("@(%d+)",function(n)return a[tonumber(n)]end)end
