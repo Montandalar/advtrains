@@ -281,8 +281,6 @@ end
 -- newrte: If a new route should be set, the route index of it (in tcbs.routes). nil otherwise
 -- cancel: true in combination with newrte=nil causes cancellation of the current route.
 function ilrs.update_route(sigd, tcbs, newrte, cancel)
-	-- in general, always show danger signal
-	tcbs.aspect = nil
 	--atdebug("Update_Route for",sigd,tcbs.signal_name)
 	if tcbs.route_origin and not sigd_equal(tcbs.route_origin, sigd) then
 		--atdebug("Signal not in control, held by",tcbs.signal_name)
