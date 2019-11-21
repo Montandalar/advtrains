@@ -90,7 +90,7 @@ function sched.enqueue(rwtime, handler, evtdata, unitid, unitlim)
 	ucn = (units_cnt[unitid] or 0)
 	local ulim=(unitlim or UNITS_THRESH)
 	if ucn >= ulim then
-		atwarn("[lines][scheduler] discarding enqueue for",handler,"(limit",ulim,") because unit",unitid,"has already",ucn,"schedules enqueued")
+		atlog("[lines][scheduler] discarding enqueue for",handler,"(limit",ulim,") because unit",unitid,"has already",ucn,"schedules enqueued")
 		return false
 	end
 	
@@ -118,10 +118,12 @@ end
 
 -- Discards all schedules for unit "unitid" (removes them from the queue)
 function sched.discard_all(unitid)
-	for i=1,#queue do
+	local i = 1
+	while i<=#queue do
 		if queue[i].u == unitid then
 			table.remove(queue,i)
-			i=i-1
+		else
+			i=i+1
 		end
 	end
 	units_cnt[unitid] = 0

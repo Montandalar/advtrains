@@ -131,10 +131,10 @@ function ac.run_in_env(pos, evtdata, customfct_p)
 	-- add lines scheduler if enabled
 	if advtrains.lines and advtrains.lines.sched then
 		customfct.schedule = function(rwtime, msg)
-			advtrains.lines.sched.enqueue(rwtime, "atlatc_env", {pos=pos, msg=msg}, advtrains.encode_pos(pos), 1)
+			return advtrains.lines.sched.enqueue(rwtime, "atlatc_env", {pos=pos, msg=msg}, advtrains.encode_pos(pos), 1)
 		end
 		customfct.schedule_in = function(rwtime, msg)
-			advtrains.lines.sched.enqueue_in(rwtime, "atlatc_env", {pos=pos, msg=msg}, advtrains.encode_pos(pos), 1)
+			return advtrains.lines.sched.enqueue_in(rwtime, "atlatc_env", {pos=pos, msg=msg}, advtrains.encode_pos(pos), 1)
 		end
 	end
 	
