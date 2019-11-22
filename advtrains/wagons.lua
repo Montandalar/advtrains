@@ -45,6 +45,7 @@ local wagon={
 	textures = {"black.png"},
 	is_wagon=true,
 	wagon_span=1,--how many index units of space does this wagon consume
+	wagon_width=3, -- Wagon width in meters
 	has_inventory=false,
 	static_save=false,
 }
@@ -694,12 +695,17 @@ function wagon:get_off(seatno)
 				local fct=data.wagon_flipped and -1 or 1
 				local aci = advtrains.path_get_index_by_offset(train, index, ino*fct)
 				local ix1, ix2 = advtrains.path_get_adjacent(train, aci)
+				local d = train.door_open
+				if self.wagon_width then
+					d = d * math.floor(self.wagon_width/2)
+				end
 				-- the two wanted positions are ix1 and ix2 + (2nd-1st rotated by 90deg)
 				-- (x z) rotated by 90deg is (-z x)  (http://stackoverflow.com/a/4780141)
-				local add = { x = (ix2.z-ix1.z)*train.door_open, y = 0, z = (ix1.x-ix2.x)*train.door_open }
-				local oadd = { x = (ix2.z-ix1.z)*train.door_open*2, y = 1, z = (ix1.x-ix2.x)*train.door_open*2}
+				local add = { x = (ix2.z-ix1.z)*d, y = 0, z = (ix1.x-ix2.x)*d }
+				local oadd = { x = (ix2.z-ix1.z)*(d+train.door_open), y = 1, z = (ix1.x-ix2.x)*(d+train.door_open)}
 				local platpos=vector.round(vector.add(ix1, add))
 				local offpos=vector.round(vector.add(ix1, oadd))
+				
 				--atdebug("platpos:", platpos, "offpos:", offpos)
 				if minetest.get_item_group(minetest.get_node(platpos).name, "platform")>0 then
 					minetest.after(GETOFF_TP_DELAY, function() clicker:setpos(offpos) end)
