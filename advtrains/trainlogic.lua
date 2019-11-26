@@ -703,40 +703,6 @@ advtrains.te_register_on_remove(function(id, train)
 	--atdebug(id,"tnc remove",train.index,train.end_index)
 end)
 
--- Calculates the indices where the window borders of the occupation windows are.
--- TODO adapt this code to new system, probably into a callback (probably only the brake distance code is needed)
-local function calc_occwindows(id, train)
-	local end_index = advtrains.path_get_index_by_offset(train, train.index, -train.trainlen)
-	train.end_index = end_index
-	local cpl_b = end_index - COUPLE_ZONE
-	local safety_b = advtrains.path_get_index_by_offset(train, cpl_b, -SAFETY_ZONE)
-	local cpl_f = end_index + COUPLE_ZONE
-	local safety_f = advtrains.path_get_index_by_offset(train, cpl_f, SAFETY_ZONE)
-	
-	-- calculate brake distance
-	local acc_all = t_accel_all[1]
-	local acc_eng = t_accel_eng[1]
-	local nwagons = #train.trainparts
-	local acc = acc_all + (acc_eng*train.locomotives_in_train)/nwagons
-	local vel = train.velocity
-	local brakedst = (vel*vel) / (2*acc)
-	
-	local brake_i = math.max(advtrains.path_get_index_by_offset(train, train.index, brakedst + BRAKE_SPACE), safety_f)
-	local aware_i = advtrains.path_get_index_by_offset(train, brake_i, AWARE_ZONE)
-	
-	return {
-		safety_b,
-		cpl_b,
-		end_index,
-		train.index,
-		cpl_f,
-		safety_f,
-		brake_i,
-		aware_i,
-	}
-end
-
-
 --returns new id
 function advtrains.create_new_train_at(pos, connid, ioff, trainparts)
 	local new_id=advtrains.random_id()
