@@ -951,21 +951,23 @@ function advtrains.train_check_couples(train)
 	if not train.cpl_front then
 		-- recheck front couple
 		local front_trains, pos = advtrains.occ.get_occupations(train, atround(train.index) + CPL_CHK_DST)
-		for tid, idx in pairs(front_trains) do
-			local other_train = advtrains.trains[tid]
-			if not advtrains.train_ensure_init(tid, other_train) then
-				atwarn("Train",tid,"is not initialized! Couldn't check couples!")
-				return
-			end
-			--atdebug(train.id,"front: ",idx,"on",tid,atround(other_train.index),atround(other_train.end_index))
-			if other_train.velocity == 0 then
-				if idx>=other_train.index and idx<=other_train.index + CPL_ZONE then
-					createcouple(pos, train, true, other_train, true)
-					break
+		if minetest.get_node_or_nil(pos) then -- if the position is loaded...
+			for tid, idx in pairs(front_trains) do
+				local other_train = advtrains.trains[tid]
+				if not advtrains.train_ensure_init(tid, other_train) then
+					atwarn("Train",tid,"is not initialized! Couldn't check couples!")
+					return
 				end
-				if idx<=other_train.end_index and idx>=other_train.end_index - CPL_ZONE then
-					createcouple(pos, train, true, other_train, false)
-					break
+				--atdebug(train.id,"front: ",idx,"on",tid,atround(other_train.index),atround(other_train.end_index))
+				if other_train.velocity == 0 then
+					if idx>=other_train.index and idx<=other_train.index + CPL_ZONE then
+						createcouple(pos, train, true, other_train, true)
+						break
+					end
+					if idx<=other_train.end_index and idx>=other_train.end_index - CPL_ZONE then
+						createcouple(pos, train, true, other_train, false)
+						break
+					end
 				end
 			end
 		end
@@ -979,20 +981,22 @@ function advtrains.train_check_couples(train)
 	if not train.cpl_back then
 		-- recheck back couple
 		local back_trains, pos = advtrains.occ.get_occupations(train, atround(train.end_index) - CPL_CHK_DST)
-		for tid, idx in pairs(back_trains) do
-			local other_train = advtrains.trains[tid]
-			if not advtrains.train_ensure_init(tid, other_train) then
-				atwarn("Train",tid,"is not initialized! Couldn't check couples!")
-				return
-			end
-			if other_train.velocity == 0 then
-				if idx>=other_train.index and idx<=other_train.index + CPL_ZONE then
-					createcouple(pos, train, false, other_train, true)
-					break
+		if minetest.get_node_or_nil(pos) then -- if the position is loaded...
+			for tid, idx in pairs(back_trains) do
+				local other_train = advtrains.trains[tid]
+				if not advtrains.train_ensure_init(tid, other_train) then
+					atwarn("Train",tid,"is not initialized! Couldn't check couples!")
+					return
 				end
-				if idx<=other_train.end_index and idx>=other_train.end_index - CPL_ZONE then
-					createcouple(pos, train, false, other_train, false)
-					break
+				if other_train.velocity == 0 then
+					if idx>=other_train.index and idx<=other_train.index + CPL_ZONE then
+						createcouple(pos, train, false, other_train, true)
+						break
+					end
+					if idx<=other_train.end_index and idx>=other_train.end_index - CPL_ZONE then
+						createcouple(pos, train, false, other_train, false)
+						break
+					end
 				end
 			end
 		end
