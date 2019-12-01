@@ -114,6 +114,12 @@ function wagon:set_id(wid)
 	
 	minetest.after(0.2, function() self:reattach_all() end)
 	
+	
+	
+	if self.set_textures then
+		self:set_textures(data)
+	end
+	
 	if self.custom_on_activate then
 		self:custom_on_activate()
 	end
@@ -172,18 +178,25 @@ function wagon:on_punch(puncher, time_from_last_punch, tool_capabilities, direct
 		   return
 		end
 		
+		if self.custom_may_destroy then
+			if not self.custom_may_destroy(self, puncher, time_from_last_punch, tool_capabilities, direction) then
+				return
+			end
+		end
+		local itemstack = puncher:get_wielded_item()
+		-- WARNING: This part of the API is guaranteed to change! DO NOT USE!
+		if self.set_livery and itemstack:get_name() == "bike:painter" then
+			self:set_livery(puncher, itemstack, data)
+			return
+		end
+
 		local pc=puncher:get_player_control()
 		if not pc.sneak then
 			minetest.chat_send_player(puncher:get_player_name(), attrans("Warning: If you destroy this wagon, you only get some steel back! If you are sure, hold Sneak and left-click the wagon."))
 			return
 		end
 		
-		if self.custom_may_destroy then
-			if not self.custom_may_destroy(self, puncher, time_from_last_punch, tool_capabilities, direction) then
-				return
-			end
-		end
-
+		
 		if not self:destroy() then return end
 
 		local inv = puncher:get_inventory()
