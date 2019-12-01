@@ -173,10 +173,6 @@ function wagon:on_punch(puncher, time_from_last_punch, tool_capabilities, direct
 		   minetest.chat_send_player(puncher:get_player_name(), attrans("This wagon is owned by @1, you can't destroy it.", data.owner));
 		   return
 		end
-		if #(self:train().trainparts)>1 then
-		   minetest.chat_send_player(puncher:get_player_name(), attrans("Wagon needs to be decoupled from other wagons in order to destroy it."));
-		   return
-		end
 		
 		if self.custom_may_destroy then
 			if not self.custom_may_destroy(self, puncher, time_from_last_punch, tool_capabilities, direction) then
@@ -188,6 +184,10 @@ function wagon:on_punch(puncher, time_from_last_punch, tool_capabilities, direct
 		if self.set_livery and itemstack:get_name() == "bike:painter" then
 			self:set_livery(puncher, itemstack, data)
 			return
+		end
+		if #(self:train().trainparts)>1 then
+		   minetest.chat_send_player(puncher:get_player_name(), attrans("Wagon needs to be decoupled from other wagons in order to destroy it."));
+		   return
 		end
 
 		local pc=puncher:get_player_control()
