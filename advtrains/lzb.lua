@@ -85,9 +85,9 @@ end
 --[[
 Distance needed to accelerate from v0 to v1 with constant acceleration a:
 
-         v1 - v0     a   / v1 - v0 \ 2
-s = v0 * -------  +  - * | ------- |
-            a        2   \    a    /
+         v1 - v0     a   / v1 - v0 \ 2     v1^2 - v0^2
+s = v0 * -------  +  - * | ------- |    =  -----------
+            a        2   \    a    /           2*a
 ]]
 
 local function apply_control(id, train)
@@ -112,8 +112,7 @@ local function apply_control(id, train)
 		local v0 = train.velocity
 		local v1 = it.spd
 		if v1 and v1 <= v0 then
-			local f = (v1-v0) / a
-			local s = v0*f + a*f*f/2
+			local s = (v1*v1 - v0*v0) / (2*a)
 			
 			local st = s + params.ADD_SLOW
 			if v0 > 3 then

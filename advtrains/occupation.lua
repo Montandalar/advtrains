@@ -1,48 +1,7 @@
 -- occupation.lua
 --[[
 Collects and manages positions where trains occupy and/or reserve/require space
-THIS SECTION ABOVE IS OUTDATED, look below
 
-Zone diagram of a train:
-              |___| |___| --> Direction of travel
-              oo oo+oo oo
-=|=======|===|===========|===|=======|===================|========|===
- |SafetyB|CpB|   Train   |CpF|SafetyF|        Brake      |Aware   |
-[1]     [2] [3]         [4] [5]     [6]                 [7]      [8]
-
-ID|Name   |Desc
- 0 Free    Zone that was occupied before, which has now been left
- 1 Train   Zone where the train actually is.
- 2 SafetyB Safety zone behind the train. extends 4m
- 3 SafetyF Safety zone in front of the train. extends 4m
-			If a train is about to enter this zone, immediately brake it down to 2
- 4 CpB     Backside coupling zone. If the coupling zones of 2 trains overlap, they can be coupled
- 5 CpF     Frontside coupling zone
- 6 Brake   Brake distance of the train. Extends to the point ~5 nodes in front
-			of the point where the train would stop if it would regularily brake now.
- 7 Aware   Awareness zone. Extends 10-20 nodes beyond the Brake zone
-			Whenever any of the non-aware zones of other trains are detected here, the train will start to brake.
-			
-Table format:
-occ[y][x][z] = {
-	[1] = train 1 id
-	[2] = train 1 ZoneID
-//	[3] = entry seqnum*
-	...
-	[2n-1] = train n id
-	[2n  ] = train n ZoneID
-//	[3n-2] = train n id
-//	[3n-1] = train n ZoneID
-//	[3n  ] = entry seqnum*
-}
-occ_chg[n] = {
-	pos = vector,
-	train_id,
-	old_val, (0 when entry did not exist before)
-	new_val, (0 when entry was deleted)
-}
-
----------------------
 It turned out that, especially for the TSS, some more, even overlapping zones are required.
 Packing those into a data structure would just become a huge mess!
 Instead, this occupation system will store the path indices of positions in the corresponding.
