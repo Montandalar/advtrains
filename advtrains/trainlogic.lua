@@ -116,8 +116,10 @@ function advtrains.tp_player_to_train(player)
 		player:setpos(train.last_pos)
 	end
 end
-minetest.register_on_joinplayer(function()
+minetest.register_on_joinplayer(function(player)
 	return advtrains.pcall(function()
+		advtrains.hud[player:get_player_name()] = nil
+		advtrains.hhud[player:get_player_name()] = nil
 		--independent of this, cause all wagons of the train which are loaded to reattach their players
 		--needed because already loaded wagons won't call reattach_all()
 		for _,wagon in pairs(minetest.luaentities) do
