@@ -30,12 +30,16 @@ function il.ars_to_text(arstab)
 	end
 	
 	local txt = {}
-	
+
 	for i, arsent in ipairs(arstab) do
+		local n = ""
+		if arsent.n then
+			n = "!"
+		end
 		if arsent.ln then
-			txt[#txt+1] = "LN "..arsent.ln
+			txt[#txt+1] = n.."LN "..arsent.ln
 		elseif arsent.rc then
-			txt[#txt+1] = "RC "..arsent.rc
+			txt[#txt+1] = n.."RC "..arsent.rc
 		elseif arsent.c then
 			txt[#txt+1] = "#"..arsent.c
 		end
@@ -58,13 +62,18 @@ function il.text_to_ars(t)
 		if line=="*" then
 			arstab.default = true
 		else
-			local c, v = string.match(line, "^(..)%s(.*)$")
+			local c, v = string.match(line, "^(...?)%s(.*)$")
 			if c and v then
+				local n = nil
+				if string.sub(c,1,1) == "!" then
+					n = true
+					c = string.sub(c,2)
+				end
 				local tt=string.upper(c)
 				if tt=="LN" then
-					arstab[#arstab+1] = {ln=v}
+					arstab[#arstab+1] = {ln=v, n=n}
 				elseif tt=="RC" then
-					arstab[#arstab+1] = {rc=v}
+					arstab[#arstab+1] = {rc=v, n=n}
 				end
 			else
 				local ct = string.match(line, "^#(.*)$")
@@ -101,6 +110,16 @@ function il.ars_check_rule_match(ars, train)
 		local routingcode = train.routingcode
 		for arskey, arsent in ipairs(ars) do
 			--atdebug(arsent, line, routingcode)
+			if arsent.n then
+				-- rule is inverse...
+				if arsent.ln and (not line or arsent.ln ~= line) then
+					return arskey
+				elseif arsent.rc and (not routingcode or not string.find(" "..routingcode.." ", " "..arsent.rc.." ", nil, true)) then
+					return arskey
+				end
+				return nil
+			end
+				
 			if arsent.ln and line and arsent.ln == line then
 				return arskey
 			elseif arsent.rc and routingcode and string.find(" "..routingcode.." ", " "..arsent.rc.." ", nil, true) then
