@@ -17,12 +17,18 @@
 -- path_cn   - Connid of the current node that points towards path[i+1]
 -- path_cp   - Connid of the current node that points towards path[i-1]
 --     When the day comes on that path!=node, these will only be set if this index represents a transition between rail nodes
--- path_dist - The distance (in meters) between this (path[i]) and the next (path[i+1]) item of the path
+-- path_dist - The total distance of this path element from path element 0
 -- path_dir  - The direction of this path item's transition to the next path item, which is the angle of conns[path_cn[i]].c
 --Variables:
 -- path_ext_f/b - how far path[i] is set
 -- path_trk_f/b - how far the path extends along a track. beyond those values, paths are generated in a straight line.
 -- path_req_f/b - how far path items were requested in the last step
+--
+--Distance and index:
+-- There is an important difference between the path index and the actual distance on the track: The distance between two path items can be larger than 1,
+-- but the corresponding index increment is still 1.
+-- Indexes in advtrains can be fractional values. If they are, it means that the actual position is interpolated between the 2 adjacent path items.
+-- If you need to proceed along the path by a specific actual distance, it does NOT work to simply add it to the index. You should use the path_get_index_by_offset() function.
 
 -- creates the path data structure, reconstructing the train from a position and a connid
 -- Important! train.drives_on must exist while calling this method
@@ -40,7 +46,7 @@ function advtrains.path_create(train, pos, connid, rel_index)
 	train.path = { [0] = { x=posr.x, y=posr.y+rhe, z=posr.z } }
 	train.path_cn = { [0] = connid }
 	train.path_cp = { [0] = mconnid }
-	train.path_dist = {}
+	train.path_dist = { [0] = 0 }
 	
 	train.path_dir = {
 		[0] = advtrains.conn_angle_median(conns[mconnid].c, conns[connid].c)
@@ -135,12 +141,12 @@ function advtrains.path_print(train, printf)
 		printf("path_print: Path is invalidated/inexistant.")
 		return
 	end
-	printf("i:	CP	Position	Dir	CN		->Dist->")
+	printf("i:	CP	Position	Dir	CN		Dist")
 	for i = train.path_ext_b, train.path_ext_f do
 		if i==train.path_trk_b then
 			printf("--Back on-track border here--")
 		end
-		printf(i,":	",train.path_cp[i],"	",train.path[i],"	",train.path_dir[i],"	",train.path_cn[i],"		->",train.path_dist[i],"->")
+		printf(i,":	",train.path_cp[i],"	",train.path[i],"	",train.path_dir[i],"	",train.path_cn[i],"		",train.path_dist[i],"")
 		if i==train.path_trk_f then
 			printf("--Front on-track border here--")		
 		end
@@ -156,7 +162,9 @@ function advtrains.path_get(train, index)
 	if index ~= atfloor(index) then
 		error("For train "..train.id..": Called path_get() but index="..index.." is not a round number")
 	end
+	
 	local pef = train.path_ext_f
+	-- generate forward (front of train, positive)
 	while index > pef do
 		local pos = train.path[pef]
 		local connid = train.path_cn[pef]
@@ -183,10 +191,13 @@ function advtrains.path_get(train, index)
 			train.path_dir[pef] = train.path_dir[pef-1]
 		end
 		train.path[pef] = adj_pos
-		train.path_dist[pef - 1] = vector.distance(pos, adj_pos)
+		train.path_dist[pef] = train.path_dist[pef-1] + vector.distance(pos, adj_pos)
 	end
 	train.path_ext_f = pef
+	
+	
 	local peb = train.path_ext_b
+	-- generate backward (back of train, negative)
 	while index < peb do
 		local pos = train.path[peb]
 		local connid = train.path_cp[peb]
@@ -213,7 +224,7 @@ function advtrains.path_get(train, index)
 			train.path_dir[peb] = train.path_dir[peb+1]
 		end
 		train.path[peb] = adj_pos
-		train.path_dist[peb] = vector.distance(pos, adj_pos)
+		train.path_dist[peb] = train.path_dist[peb+1] - vector.distance(pos, adj_pos)
 	end
 	train.path_ext_b = peb
 	
@@ -256,37 +267,53 @@ function advtrains.path_get_adjacent(train, index)
 	return p_floor, p_ceil, frac
 end
 
+local function n_interpolate(s, e, f)
+	return s + (e-s)*f
+end
+
+-- This function determines the index resulting from moving along the path by 'offset' meters
+-- starting from 'index'. See also the comment on the top of the file.
 function advtrains.path_get_index_by_offset(train, index, offset)
-	local off = offset
-	local idx = atfloor(index)
-	-- go down to floor. Calculate required path_dist
-	advtrains.path_get_adjacent(train, idx)
-	off = off + ((index-idx) * train.path_dist[idx])
-	--atdebug("pibo: 1 off=",off,"idx=",idx,"  index=",index)
+	-- Step 1: determine my current absolute pos on the path
+	local start_index_f = math.floor(index)
+	local _, _, frac = advtrains.path_get_adjacent(train, index)
+	local dist1, dist2 = train.path_dist[start_index_f], train.path_dist[start_index_f+1]
+	local start_dist = n_interpolate(dist1, dist2, frac)
 	
-	-- then walk the path back until we overshoot (off becomes >=0)
-	while off<0 do
-		idx = idx - 1
-		advtrains.path_get_adjacent(train, idx)
-		off = off + train.path_dist[idx]
-	end
-	--atdebug("pibo: 2 off=",off,"idx=",idx)
-	-- then walk the path forward until we would overshoot
-	while off - train.path_dist[idx] >= 0 do
-		idx = idx + 1
-		advtrains.path_get_adjacent(train, idx)
-		if not train.path_dist[idx] then
-			for i=-5,5 do
-				atdebug(idx+i,train.path_dist[idx+i])
-			end
-		end
-		off = off - train.path_dist[idx]
-	end
-	--atdebug("pibo: 3 off=",off,"idx=",idx," returns:",idx + (off / train.path_dist[idx]))
-	-- we should now be on the floor of the index we actually want.
-	-- give them the rest!
+	-- Step 2: determine the total end distance and estimate the index we'd come out
+	local end_dist = start_dist + offset
 	
-	return idx + (off / train.path_dist[idx])
+	local c_idx = math.floor(index + offset)
+	
+	-- Step 3: move forward/backward to find real index
+	-- We assume here that the distance between 2 path items is never smaller than 1.
+	-- Our estimated index is therefore either exact or too far over, and we're going to go back
+	-- towards the origin. It is therefore sufficient to query path_get a single time
+	
+	-- How we'll adjust c_idx
+	--  Desired position:  -------#------
+	--  Path items      :  --|--|--|--|--
+	--  c_idx           :       ^
+	
+	advtrains.path_get_adjacent(train, c_idx)
+	
+	while train.path_dist[c_idx] < end_dist do
+		c_idx = c_idx + 1
+	end
+	
+	while train.path_dist[c_idx] > end_dist do
+		c_idx = c_idx - 1
+	end
+	
+	-- Step 4: now c_idx points to the place shown above. Find out the fractional part.
+	
+	dist1, dist2 = train.path_dist[c_idx], train.path_dist[c_idx+1]
+	
+	frac = (end_dist - dist1) / (dist2 - dist1)
+	
+	assert(frac>=0 and frac<1, frac)
+	
+	return c_idx + frac
 end
 
 local PATH_CLEAR_KEEP = 4

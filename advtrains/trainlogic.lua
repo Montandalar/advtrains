@@ -474,7 +474,8 @@ function advtrains.train_step_b(id, train, dtime)
 	
 	--- 4. move train ---
 	
-	local pdist = train.path_dist[math.floor(train.index)] or 1
+	local idx_floor = math.floor(train.index)
+	local pdist = (train.path_dist[idx_floor+1] - train.path_dist[idx_floor])
 	local distance = (train.velocity*dtime) / pdist
 	
 	--debugging code
