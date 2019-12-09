@@ -5,7 +5,10 @@
 --Using subtable
 local r={}
 
-function r.fire_event(pos, evtdata)
+-- Note on appr_internal:
+-- The Approach callback is a special corner case: the train is not on the node, and it is executed synchronized 
+-- (in the train step right during LZB traversal). We therefore need access to the train id and the lzbdata table
+function r.fire_event(pos, evtdata, appr_internal)
 	
 	local ph=minetest.pos_to_string(pos)
 	local railtbl = atlatc.active.nodes[ph]
@@ -27,6 +30,13 @@ function r.fire_event(pos, evtdata)
 	local train_id=advtrains.get_train_at_pos(pos)
 	local train, atc_arrow, tvel
 	if train_id then train=advtrains.trains[train_id] end
+	
+	if not train and appr_internal then
+		-- also use the train when called as an approach callback
+		train_id = appr_internal.train_id
+		train = appr_internal.train
+	end
+	
 	if train then 
 		if not train.path then
 			--we happened to get in between an invalidation step
@@ -92,20 +102,9 @@ function r.fire_event(pos, evtdata)
 			advtrains.train_step_fc(train)
 		end,
 		set_shunt = function()
+			-- enable shunting mode
 			if not train_id then return false end
-			train.autocouple = true
-		end,
-		unset_shunt = function()
-			if not train_id then return false end
-			train.autocouple = nil
-		end,
-		set_autocouple = function ()
-			if not train_id then return false end
-			train.autocouple = true			
-		end,
-		unset_autocouple = function ()
-			if not train_id then return false end
-			train.autocouple = nil
+			train.is_shunt = true
 		end,
 		set_line = function(line)
 			if type(line)~="string" and type(line)~="number" then
@@ -150,45 +149,79 @@ function r.fire_event(pos, evtdata)
 			advtrains.trains[train_id].text_inside=text
 			return true
 		end,
+		atc_set_lzb_tsr = function(speed)
+			if not appr_internal then
+				error("atc_set_lzb_tsr() can only be used during 'approach' events!")
+			end
+			
+			local index = appr_internal.index
+			advtrains.lzb_add_checkpoint(train, index, speed, nil)
+			
+			return true
+		end,
 	}
 	
 	atlatc.active.run_in_env(pos, evtdata, customfct)
 	
 end
 
-if minetest.get_modpath("advtrains_train_track") ~= nil then
-	advtrains.register_tracks("default", {
-		nodename_prefix="advtrains_luaautomation:dtrack",
-		texture_prefix="advtrains_dtrack_atc",
-		models_prefix="advtrains_dtrack",
-		models_suffix=".b3d",
-		shared_texture="advtrains_dtrack_shared_atc.png",
-		description=atltrans("LuaAutomation ATC Rail"),
-		formats={},
-		get_additional_definiton = function(def, preset, suffix, rotation)
-			return {
-				after_place_node = atlatc.active.after_place_node,
-				after_dig_node = atlatc.active.after_dig_node,
-				on_receive_fields = function(pos, ...)
-					atlatc.active.on_receive_fields(pos, ...)
-					--set arrowconn (for ATC)
-					local ph=minetest.pos_to_string(pos)
-					local _, conns=advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
-					atlatc.active.nodes[ph].arrowconn=conns[1].c
+advtrains.register_tracks("default", {
+	nodename_prefix="advtrains_luaautomation:dtrack",
+	texture_prefix="advtrains_dtrack_atc",
+	models_prefix="advtrains_dtrack",
+	models_suffix=".b3d",
+	shared_texture="advtrains_dtrack_shared_atc.png",
+	description=atltrans("LuaAutomation ATC Rail"),
+	formats={},
+	get_additional_definiton = function(def, preset, suffix, rotation)
+		return {
+			after_place_node = atlatc.active.after_place_node,
+			after_dig_node = atlatc.active.after_dig_node,
+
+			on_receive_fields = function(pos, ...)
+				atlatc.active.on_receive_fields(pos, ...)
+				
+				--set arrowconn (for ATC)
+				local ph=minetest.pos_to_string(pos)
+				local _, conns=advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
+				atlatc.active.nodes[ph].arrowconn=conns[1].c
+			end,
+
+			advtrains = {
+				on_train_enter = function(pos, train_id)
+					--do async. Event is fired in train steps
+					atlatc.interrupt.add(0, pos, {type="train", train=true, id=train_id})
 				end,
-				advtrains = atlatc.active.trackdef_advtrains_defs,
-				luaautomation = {
-					fire_event=r.fire_event
+				on_train_approach = function(pos, train_id, train, index, lzbdata)
+					-- Insert an event only if the rail indicated that it supports approach callbacks
+					local ph=minetest.pos_to_string(pos)
+					local railtbl = atlatc.active.nodes[ph]
+					-- uses a "magic variable" in the local environment of the node
+					-- This hack is necessary because code might not be prepared to get approach events...
+					if railtbl and railtbl.data and railtbl.data.__approach_callback_mode then
+						local acm = railtbl.data.__approach_callback_mode
+						if acm==2 or (acm==1 and train.path_cn[index] == 1) then
+							local evtdata = {type="approach", approach=true, id=train_id}
+							-- This event is *required* to run synchronously, because it might set the ars_disable flag on the train and add LZB checkpoints,
+							-- although this is generally discouraged because this happens right in a train step
+							-- At this moment, I am not aware whether this may cause side effects, and I must encourage users not to do expensive calculations here.
+							r.fire_event(pos, evtdata, {train_id = train_id, train = train, index = index, lzbdata = lzbdata})
+						end
+					end
+				end,
+			},
+			luaautomation = {
+				fire_event=r.fire_event
+			},
+			digiline = {
+				receptor = {},
+				effector = {
+					action = atlatc.active.on_digiline_receive
 				},
-				digiline = {
-					receptor = {},
-					effector = {
-						action = atlatc.active.on_digiline_receive
-					},
-				},
-			}
-		end,
-	}, advtrains.trackpresets.t_30deg_straightonly)
-end
+			},
+		}
+	end,
+}, advtrains.trackpresets.t_30deg_straightonly)
+
 
 atlatc.rail = r

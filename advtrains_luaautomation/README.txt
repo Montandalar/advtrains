@@ -245,6 +245,34 @@ unset_autocouple()
 set_shunt(), unset_shunt()
 	deprecated aliases for set_autocouple() and unset_autocouple(), will be removed from a later release.
 
+# Approach callbacks
+The LuaATC interface provides a way to hook into the approach callback system, which is for example used in the TSR rails (provided by advtrains_interlocking) or the station tracks (provided by advtrains_lines). However, for compatibility reasons, this behavior needs to be explicitly enabled.
+
+Enabling the receiving of approach events works by setting a variable in the local environment of the ATC rail, by inserting the following code:
+
+__approach_callback_mode = 1
+-- to receive approach callbacks only in arrow direction
+-- or alternatively
+__approach_callback_mode = 2
+-- to receive approach callbacks in both directions
+
+The following event will be emitted when a train approaches:
+{type="approach", approach=true, id="<train_id>"}
+
+Please note these important considerations when using approach callbacks:
+- Approach events might be generated multiple times for the same approaching train. If you are using atc_set_lzb_tsr(), you need to call this function on every run of the approach callback, even if you issued it before for the same train.
+- A reference to the train is available while executing this event, so that functions such as atc_send() or atc_set_text_outside() can be called. On any consecutive interrupts, that reference will no longer be available until the train enters the track ("train" event)
+- Unlike all other callbacks, approach callbacks are executed synchronous during the train step. This may cause unexpected side effects when performing certain actions (such as switching turnouts, setting signals/routes) from inside such a callback. I strongly encourage you to only run things that are absolutely necessary at this point in time, and defer anything else to an interrupt(). Be aware that certain things might trigger unexpected behavior.
+
+Operations that are safe to execute in approach callbacks:
+- anything related only to the global environment (setting things in S)
+- digiline_send()
+- atc_set_text_*()
+- atc_set_lzb_tsr() (see below)
+
+In the context of approach callbacks, one more function is available:
+atc_set_lzb_tsr(speed)
+	Impose a Temporary Speed Restriction at the location of this rail, making the train pass this rail at the specified speed. (Causes the same behavior as the TSR rail)
 
 # Operator panel
 This simple node executes its actions when punched. It can be used to change a switch and update the corresponding signals or similar applications.
