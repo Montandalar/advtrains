@@ -999,6 +999,9 @@ function wagon:show_bordcom(pname)
 			end
 			i=i+1
 		end
+		if train.ars_disable then
+			form = form .. "button[4.5,7;5,1;ilarsenable;Clear 'Disable ARS' flag]"
+		end
 	end
 	
 	minetest.show_formspec(pname, "advtrains_bordcom_"..self.id, form)
@@ -1071,18 +1074,23 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 	
 	-- Interlocking functionality: If the interlocking module is loaded, you can set the signal aspect
 	-- from inside the train
-	if fields.ilrs and advtrains.interlocking and train.lzb and #train.lzb.oncoming > 0 then
-		local i=1
-		while train.lzb.oncoming[i] do
-			local oci = train.lzb.oncoming[i]
-			if oci.udata and oci.udata.signal_pos then
-				local sigd = advtrains.interlocking.db.get_sigd_for_signal(oci.udata.signal_pos)
-				if sigd then
-					advtrains.interlocking.show_signalling_form(sigd, pname)
-					return
+	if advtrains.interlocking then
+		if fields.ilrs and train.lzb and #train.lzb.oncoming > 0 then
+			local i=1
+			while train.lzb.oncoming[i] do
+				local oci = train.lzb.oncoming[i]
+				if oci.udata and oci.udata.signal_pos then
+					local sigd = advtrains.interlocking.db.get_sigd_for_signal(oci.udata.signal_pos)
+					if sigd then
+						advtrains.interlocking.show_signalling_form(sigd, pname)
+						return
+					end
 				end
+				i=i+1
 			end
-			i=i+1
+		end
+		if fields.ilarsenable then
+			advtrains.interlocking.ars_set_disable(train, false)
 		end
 	end
 	

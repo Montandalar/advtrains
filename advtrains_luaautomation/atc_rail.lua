@@ -153,6 +153,7 @@ function r.fire_event(pos, evtdata, appr_internal)
 			if not appr_internal then
 				error("atc_set_lzb_tsr() can only be used during 'approach' events!")
 			end
+			assert(tonumber(speed), "Number expected!")
 			
 			local index = appr_internal.index
 			advtrains.lzb_add_checkpoint(train, index, speed, nil)
@@ -160,6 +161,12 @@ function r.fire_event(pos, evtdata, appr_internal)
 			return true
 		end,
 	}
+	-- interlocking specific
+	if advtrains.interlocking then
+		customfct.atc_set_ars_disable = function(value)
+			advtrains.interlocking.ars_set_disable(train, value)
+		end
+	end
 	
 	atlatc.active.run_in_env(pos, evtdata, customfct)
 	

@@ -245,6 +245,11 @@ unset_autocouple()
 set_shunt(), unset_shunt()
 	deprecated aliases for set_autocouple() and unset_autocouple(), will be removed from a later release.
 
+-- This additional function is available when advtrains_interlocking is enabled: --
+
+atc_set_disable_ars(true)
+	Disables (true) or enables (false) the use of ARS for this train. The train will not trigger ARS (automatic route setting) on signals then.
+
 # Approach callbacks
 The LuaATC interface provides a way to hook into the approach callback system, which is for example used in the TSR rails (provided by advtrains_interlocking) or the station tracks (provided by advtrains_lines). However, for compatibility reasons, this behavior needs to be explicitly enabled.
 

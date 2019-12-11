@@ -256,6 +256,11 @@ local matchptn={
 		end
 		return 1
 	end,
+	["A([01])"]=function(id, train, match)
+		if not advtrains.interlocking then return 2 end
+		advtrains.interlocking.ars_set_disable(train, match=="0")
+		return 2
+	end,
 }
 
 eval_conditional = function(command, arrow, speed)

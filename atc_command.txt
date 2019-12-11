@@ -72,12 +72,15 @@ If the train drives in the 'wrong' direction, stop and reverse; independently ac
 I<8 S8 ;
 If the train is slower than 8, accelerate to 8.
 
-# ATC controller operation modes
-static: Only give 1 static command.
+# Interlocking
 
-mesecon: Give 2 different commands depending on if the controller is mesecon-powered or not
-digiline: Don't give any commands by itself. When a train passes, a digiline message in the form of "[+/-][speed]" is sent on the set channel (where +/- means the same as with conditions). Any digiline message sent to the controller will be interpreted as ATC command and sent to the train.
-** the latter two are not yet implemented.
+With advtrains_interlocking, there's one more available command:
+
+A0
+Disable ARS on the train.
+A1
+Enable ARS on the train.
+When disabled, the train will not trigger automatic route setting on signals based on ARS.
 
 # Persistence
 ATC controllers that are configured as 'static' or 'mesecon' are persistent over mapblock unloads and will even command the train when the mapblock is unloaded. This is not possible with digilines since these do not work in unloaded mapchunks.
