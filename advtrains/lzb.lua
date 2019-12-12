@@ -151,7 +151,7 @@ end
 
 local function invalidate(train)
 	train.lzb = {
-		trav = atfloor(train.index),
+		trav = atround(train.index),
 		data = {},
 		oncoming = {},
 	}
