@@ -19,10 +19,6 @@ local setaspectf = function(rot)
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_slow_"..rot, param2 = node.param2})
 		end
 	end
-	local meta = minetest.get_meta(pos)
-	if meta then
-		meta:set_string("infotext", minetest.serialize(asp))
-	end
  end
 end
 
