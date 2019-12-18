@@ -39,6 +39,7 @@ local rwt = {}
 
 --Time Stamp (Seconds since start of world)
 local e_time = 0
+local e_has_loaded = false
 
 local setting_rwt_real = minetest.settings:get("advtrains_lines_rwt_realtime")
 if setting_rwt_real=="" then
@@ -71,6 +72,8 @@ function rwt.set_time(t)
 	end
 	atlog("[lines][rwt] Initialized railway time: ",rwt.to_string(e_time))
 	e_last_epoch = os.time()
+	
+	e_has_loaded = true
 end
 
 function rwt.get_time()
@@ -78,6 +81,10 @@ function rwt.get_time()
 end
 
 function rwt.step(dt)
+	if not e_has_loaded then
+		rwt.set_time(0)
+	end
+
 	if setting_rwt_real=="independent" then
 		-- Regular stepping with dtime
 		e_time = e_time + dt		

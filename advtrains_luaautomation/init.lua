@@ -44,7 +44,8 @@ local filename=minetest.get_worldpath().."/advtrains_luaautomation"
 function atlatc.load()
 	local file, err = io.open(filename, "r")
 	if not file then
-		minetest.log("error", " Failed to read advtrains_luaautomation save data from file "..filename..": "..(err or "Unknown Error"))
+		minetest.log("warning", " Failed to read advtrains_luaautomation save data from file "..filename..": "..(err or "Unknown Error"))
+		minetest.log("warning", " (this is normal when first enabling advtrains on this world)")
 	else
 		atprint("luaautomation reading file:",filename)
 		local tbl = minetest.deserialize(file:read("*a"))
