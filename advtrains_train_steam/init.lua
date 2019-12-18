@@ -75,7 +75,6 @@ advtrains.register_wagon("newlocomotive", {
 	end,
 	drops={"default:steelblock 1"},
 	horn_sound = "advtrains_steam_whistle",
-	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
 }, S("Steam Engine"), "advtrains_engine_steam_inv.png")
 
 advtrains.register_wagon("detailed_steam_engine", {
@@ -158,8 +157,6 @@ advtrains.register_wagon("detailed_steam_engine", {
 	end,
 	drops={"default:steelblock 1"},
 	horn_sound = "advtrains_steam_whistle",
-	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
-
 }, S("Detailed Steam Engine"), "advtrains_detailed_engine_steam_inv.png")
 
 advtrains.register_wagon("wagon_default", {
@@ -205,7 +202,6 @@ advtrains.register_wagon("wagon_default", {
 	wagon_span=2.634,
 	collisionbox = {-1.0,-0.5,-1.0, 1.0,2.5,1.0},
 	drops={"default:steelblock 1"},
-	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
 }, S("Passenger Wagon"), "advtrains_wagon_inv.png")
 
 
@@ -229,7 +225,6 @@ advtrains.register_wagon("wagon_box", {
 	inventory_list_sizes = {
 		box=8*3,
 	},
-	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
 }, S("Box Wagon"), "advtrains_wagon_box_inv.png")
 
 minetest.register_craft({

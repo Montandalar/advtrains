@@ -41,7 +41,6 @@ advtrains.register_wagon("engine_industrial", {
 	collisionbox = {-1.0,-0.5,-1.0, 1.0,2.5,1.0},
 	drops={"default:steelblock 4"},
 	horn_sound = "advtrains_industrial_horn",
-	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
 }, S("Industrial Train Engine"), "advtrains_engine_industrial_inv.png")
 --big--
 advtrains.register_wagon("engine_industrial_big", {
@@ -79,7 +78,6 @@ advtrains.register_wagon("engine_industrial_big", {
 	collisionbox = {-1.0,-0.5,-1.0, 1.0,2.5,1.0},
 	drops={"default:steelblock 4"},
 	horn_sound = "advtrains_industrial_horn",
-	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
 }, S("Big Industrial Train Engine"), "advtrains_engine_industrial_inv.png")
 advtrains.register_wagon("wagon_tank", {
 	mesh="advtrains_wagon_tank.b3d",
@@ -101,7 +99,6 @@ advtrains.register_wagon("wagon_tank", {
 	inventory_list_sizes = {
 		box=8*3,
 	},
-	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
 }, S("Industrial tank wagon"), "advtrains_wagon_tank_inv.png")
 advtrains.register_wagon("wagon_wood", {
 	mesh="advtrains_wagon_wood.b3d",
@@ -123,5 +120,4 @@ advtrains.register_wagon("wagon_wood", {
 	inventory_list_sizes = {
 		box=8*3,
 	},
-	glow = -1, --supposed to disable effect of light to texture color, so that the entity always appears as full-bright
 }, S("Industrial wood wagon"), "advtrains_wagon_wood_inv.png")
