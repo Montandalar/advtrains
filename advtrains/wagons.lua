@@ -804,10 +804,10 @@ function wagon:show_bordcom(pname)
 	local data = advtrains.wagons[self.id]
 	
 	local form = "size[11,9]label[0.5,0;AdvTrains Boardcom v0.1]"
-	form=form.."textarea[0.5,1.5;7,1;text_outside;"..attrans("Text displayed outside on train")..";"..(train.text_outside or "").."]"
-	form=form.."textarea[0.5,3;7,1;text_inside;"..attrans("Text displayed inside train")..";"..(train.text_inside or "").."]"
-	form=form.."field[7.5,1.75;3,1;line;"..attrans("Line")..";"..(train.line or "").."]"
-	form=form.."field[7.5,3.25;3,1;routingcode;"..attrans("Routingcode")..";"..(train.routingcode or "").."]"
+	form=form.."textarea[0.5,1.5;7,1;text_outside;"..attrans("Text displayed outside on train")..";"..(minetest.formspec_escape(train.text_outside or "")).."]"
+	form=form.."textarea[0.5,3;7,1;text_inside;"..attrans("Text displayed inside train")..";"..(minetest.formspec_escape(train.text_inside or "")).."]"
+	form=form.."field[7.5,1.75;3,1;line;"..attrans("Line")..";"..(minetest.formspec_escape(train.line or "")).."]"
+	form=form.."field[7.5,3.25;3,1;routingcode;"..attrans("Routingcode")..";"..(minetest.formspec_escape(train.routingcode or "")).."]"
 	--row 5 : train overview and autocoupling
 	if train.velocity==0 then
 		form=form.."label[0.5,4.5;Train overview /coupling control:]"

@@ -52,7 +52,7 @@ minetest.register_craftitem("advtrains_luaautomation:pcnaming",{
 						pn=name
 					end
 				end
-				minetest.show_formspec(pname, "atlatc_naming_"..minetest.pos_to_string(pos), "field[pn;Set name of component (empty to clear);"..pn.."]")
+				minetest.show_formspec(pname, "atlatc_naming_"..minetest.pos_to_string(pos), "field[pn;Set name of component (empty to clear);"..minetest.formspec_escape(pn).."]")
 			end
 		end
 	end,

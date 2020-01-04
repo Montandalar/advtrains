@@ -36,7 +36,7 @@ function ac.getform(pos, meta_p)
 	end
 	local sel = 1
 	for n,_ in pairs(atlatc.envs) do
-		envs_asvalues[#envs_asvalues+1]=n
+		envs_asvalues[#envs_asvalues+1]=minetest.formspec_escape(n)
 		if n==env then
 			sel=#envs_asvalues
 		end

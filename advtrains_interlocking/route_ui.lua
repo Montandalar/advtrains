@@ -25,13 +25,13 @@ function atil.show_route_edit_form(pname, sigd, routeid)
 	if not route then return end
 	
 	local form = "size[9,10]label[0.5,0.2;Route overview]"
-	form = form.."field[0.8,1.2;5.2,1;name;Route name;"..route.name.."]"
+	form = form.."field[0.8,1.2;5.2,1;name;Route name;"..minetest.formspec_escape(route.name).."]"
 	form = form.."button[5.5,0.9;1,1;setname;Set]"
 	
 	-- construct textlist for route information
 	local tab = {}
 	local function itab(t)
-		tab[#tab+1] = string.gsub(t, ",", " ")
+		tab[#tab+1] = minetest.formspec_escape(string.gsub(t, ",", " "))
 	end
 	itab("TCB "..sigd_to_string(sigd).." ("..tcbs.signal_name..") Route #"..routeid)
 	

@@ -180,7 +180,7 @@ local function mktcbformspec(tcbs, btnpref, offset, pname)
 		ts = ildb.get_ts(tcbs.ts_id)
 	end
 	if ts then
-		form = form.."label[0.5,"..offset..";Side "..btnpref..": "..ts.name.."]"
+		form = form.."label[0.5,"..offset..";Side "..btnpref..": "..minetest.formspec_escape(ts.name).."]"
 		form = form.."button[0.5,"..(offset+0.5)..";5,1;"..btnpref.."_gotots;Show track section]"
 		if ildb.may_modify_tcbs(tcbs) then
 			-- Note: the security check to prohibit those actions is located in database.lua in the corresponding functions.
@@ -315,7 +315,7 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 	if not ts_id then return end
 	
 	local form = "size[10,10]label[0.5,0.5;Track Section Detail - "..ts_id.."]"
-	form = form.."field[0.8,2;5.2,1;name;Section name;"..ts.name.."]"
+	form = form.."field[0.8,2;5.2,1;name;Section name;"..minetest.formspec_escape(ts.name).."]"
 	form = form.."button[5.5,1.7;1,1;setname;Set]"
 	local hint
 	
@@ -334,7 +334,7 @@ function advtrains.interlocking.show_ts_form(ts_id, pname, sel_tcb)
 			local other_ts = ildb.get_ts(other_id)
 			if other_ts then
 				if ildb.may_modify_ts(other_ts) then
-					form = form.."button[5.5,3;3.5,1;mklink;Join with "..other_ts.name.."]"
+					form = form.."button[5.5,3;3.5,1;mklink;Join with "..minetest.formspec_escape(other_ts.name).."]"
 					form = form.."button[9  ,3;0.5,1;cancellink;X]"
 				end
 			end
@@ -555,7 +555,7 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 	if not tcbs.routes then tcbs.routes = {} end
 	
 	local form = "size[7,10]label[0.5,0.5;Signal at "..minetest.pos_to_string(sigd.p).."]"
-	form = form.."field[0.8,1.5;5.2,1;name;Signal name;"..tcbs.signal_name.."]"
+	form = form.."field[0.8,1.5;5.2,1;name;Signal name;"..minetest.formspec_escape(tcbs.signal_name).."]"
 	form = form.."button[5.5,1.2;1,1;setname;Set]"
 	
 	if tcbs.routeset then
@@ -566,13 +566,13 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 			return
 		end
 		form = form.."label[0.5,2.5;A route is requested from this signal:]"
-		form = form.."label[0.5,3.0;"..rte.name.."]"
+		form = form.."label[0.5,3.0;"..minetest.formspec_escape(rte.name).."]"
 		if tcbs.route_committed then
 			form = form.."label[0.5,3.5;Route has been set.]"
 		else
 			form = form.."label[0.5,3.5;Waiting for route to be set...]"
 			if tcbs.route_rsn then
-				form = form.."label[0.5,4;"..tcbs.route_rsn.."]"
+				form = form.."label[0.5,4;"..minetest.formspec_escape(tcbs.route_rsn).."]"
 			end
 		end
 		if not tcbs.route_auto then

@@ -58,7 +58,7 @@ local function show_stoprailform(pos, player)
 	form = form.."dropdown[0.5,3;2;doors;Left,Right,Closed;"..door_dropdown[stdata.doors].."]"
 	form = form.."dropdown[3,3;1.5;reverse;---,Reverse;"..(stdata.reverse and 2 or 1).."]"
 	
-	form = form.."field[5,3.5;2,1;track;"..attrans("Track")..";"..stdata.track.."]"
+	form = form.."field[5,3.5;2,1;track;"..attrans("Track")..";"..minetest.formspec_escape(stdata.track).."]"
 	form = form.."field[5,4.5;2,1;wait;"..attrans("Stop Time")..";"..stdata.wait.."]"
 	
 	form = form.."textarea[0.5,4;4,2;ars;Trains stopping here (ARS rules);"..advtrains.interlocking.ars_to_text(stdata.ars).."]"
