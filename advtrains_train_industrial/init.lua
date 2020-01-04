@@ -14,7 +14,7 @@ advtrains.register_wagon("engine_industrial", {
 	seats = {
 		{
 			name=S("Driver Stand (right)"),
-			attach_offset={x=5, y=7, z=-8},
+			attach_offset={x=5, y=-3, z=-8},
 			view_offset={x=5.2, y=-4, z=0},
 			driving_ctrl_access=true,
 			group = "dstand",
@@ -58,7 +58,7 @@ advtrains.register_wagon("engine_industrial_big", {
 		},
 		{
 			name=S("Driver Stand (left)"),
-			attach_offset={x=5, y=7, z=-8},
+			attach_offset={x=5, y=-3, z=-8},
 			view_offset={x=-5.2, y=-4, z=0},
 			driving_ctrl_access=true,
 			group = "dstand",

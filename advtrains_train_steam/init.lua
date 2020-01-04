@@ -17,13 +17,13 @@ advtrains.register_wagon("newlocomotive", {
 	seats = {
 		{
 			name=S("Driver Stand (left)"),
-			attach_offset={x=-5, y=10, z=-10},
+			attach_offset={x=-5, y=0, z=-10},
 			view_offset={x=0, y=6, z=0},
 			group = "dstand",
 		},
 		{
 			name=S("Driver Stand (right)"),
-			attach_offset={x=5, y=10, z=-10},
+			attach_offset={x=5, y=0, z=-10},
 			view_offset={x=0, y=6, z=0},
 			group = "dstand",
 		},
