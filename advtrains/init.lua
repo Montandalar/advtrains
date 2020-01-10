@@ -343,15 +343,12 @@ advtrains.save_component = function (tbl, name)
 		minetest.log("error", " Failed to serialize advtrains save data!")
 		return
 	end
-	local temppath = advtrains.fpath.."_"..name.."~"
-	local file, err = io.open(temppath, "w")
-	if err then
-		minetest.log("error", " Failed to write advtrains save data to file "..temppath..": "..(err or "Unknown Error"))
-		return
+	local path = advtrains.fpath.."_"..name
+	local success = minetest.safe_file_write(path, datastr)
+	
+	if not success then
+		minetest.log("error", " Failed to write advtrains save data to file "..path)
 	end
-	file:write(datastr)
-	file:close()
-	os.rename(temppath, advtrains.fpath.."_"..name)
 	
 end
 
