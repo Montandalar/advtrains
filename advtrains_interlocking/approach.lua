@@ -73,17 +73,17 @@ advtrains.tnc_register_on_approach(function(pos, id, train, index, has_entered, 
 		--interpreting aspect and determining speed to proceed
 		if travsht then
 			--shunt move
-			if asp.shunt.free then
+			if asp.shunt then
 				nspd = SHUNT_SPEED_MAX
-			elseif asp.shunt.proceed_as_main and asp.main.free then
-				nspd = asp.main.speed
+			elseif asp.shunt.proceed_as_main and asp.main != 0 then
+				nspd = asp.main
 				travsht = false
 			end
 		else
 			--train move
-			if asp.main.free then
-				nspd = asp.main.speed
-			elseif asp.shunt.free then
+			if asp.main != 0 then
+				nspd = asp.main
+			elseif asp.shunt then
 				nspd = SHUNT_SPEED_MAX
 				travsht = true
 			end

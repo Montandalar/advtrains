@@ -6,10 +6,10 @@
 
 
 local setaspect = function(pos, node, asp)
-	if not asp.main.free then
+	if asp.main == 0 then
 		advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_danger"})
 	else
-		if asp.dst.free and asp.main.speed == -1 then
+		if asp.dst != 0 and asp.main == -1 then
 			advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_free"})
 		else
 			advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_slow"})
@@ -22,18 +22,10 @@ local setaspect = function(pos, node, asp)
 end
 
 local suppasp = {
-		main = {
-			free = nil,
-			speed = {6, -1},
-		},
-		dst = {
-			free = nil,
-			speed = nil,
-		},
-		shunt = {
-			free = false,
-			proceed_as_main = true,
-		},
+		main = {0, 6, -1},
+		dst = {0, false},
+		shunt = false,
+		proceed_as_main = true,
 		info = {
 			call_on = false,
 			dead_end = false,
@@ -74,10 +66,7 @@ minetest.register_node("advtrains_interlocking:ds_free", {
 		supported_aspects = suppasp,
 		get_aspect = function(pos, node)
 			return {
-				main = {
-					free = true,
-					speed = -1,
-				}
+				main = -1,
 			}
 		end,
 	},
@@ -98,10 +87,7 @@ minetest.register_node("advtrains_interlocking:ds_slow", {
 		supported_aspects = suppasp,
 		get_aspect = function(pos, node)
 			return {
-				main = {
-					free = true,
-					speed = 6,
-				}
+				main = 6,
 			}
 		end,
 	},

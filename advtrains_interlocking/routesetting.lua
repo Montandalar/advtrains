@@ -7,17 +7,9 @@ local function sigd_to_string(sigd)
 end
 
 local asp_generic_free = {
-	main = {
-		free = true,
-		speed = -1,
-	},
-	shunt = {
-		free = false,
-	},
-	dst = {
-		free = true,
-		speed = -1,
-	},
+	main = -1,
+	shunt = false,
+	dst = false,
 	info = {}
 }
 

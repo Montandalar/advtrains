@@ -95,24 +95,47 @@ Cancels the route that is set from the signal at pos. Has the same effect as cli
 
 get_aspect(pos)
 Returns the signal aspect of the signal at pos. A signal aspect has the following format:
-aspect = {
-	main = { -- the next track section in line. Shows blocked for shunt routes
-		free = <boolean>,
-		speed = <int km/h>,
-	},
-	shunt = { -- whether a "shunting allowed" aspect should be shown
-		free = <boolean>,
-	}
-	dst = { -- the aspect of the next main signal on (at end of) route
-		free = <boolean>,
-		speed = <int km/h>,
-	}
+asp = {
+	main = <int speed>,
+		-- Main signal aspect, tells state and permitted speed of next section
+		-- 0 = section is blocked
+		-- >0 = section is free, speed limit is this value
+		-- -1 = section is free, maximum speed permitted
+		-- false = Signal doesn't provide main signal information, retain current speed limit.
+	shunt = <boolean>,
+		-- Whether train may proceed as shunt move, on sight
+		-- main aspect takes precedence over this
+		-- When main==0, train switches to shunt move and is restricted to speed 8
+	proceed_as_main = <boolean>,
+		-- If an approaching train is a shunt move and 'shunt' is false,
+		-- the train may proceed as a train move under the "main" aspect
+		-- if the main aspect permits it (i.e. main!=0)
+		-- If this is not set, shunt moves are NOT allowed to switch to
+		-- a train move, and must stop even if "main" would permit passing.
+		-- This is intended to be used for "Halt for shunt moves" signs.
+	
+	dst = <int speed>,
+		-- Distant signal aspect, tells state and permitted speed of the section after next section
+		-- The character of these information is purely informational
+		-- At this time, this field is not actively used
+		-- 0 = section is blocked
+		-- >0 = section is free, speed limit is this value
+		-- -1 = section is free, maximum speed permitted
+		-- false = Signal doesn't provide distant signal information.
+	
 	info = {
-		call_on = <boolean>, -- Call-on route, expect train in track ahead
-		dead_end = <boolean>, -- Route ends on a dead end (e.g. bumper)
+		-- the character of call_on and dead_end is purely informative
+		call_on = <boolean>, -- Call-on route, expect train in track ahead (not implemented yet)
+		dead_end = <boolean>, -- Route ends on a dead end (e.g. bumper) (not implemented yet)
+
+		w_speed = <integer>,
+		-- "Warning speed restriction". Supposed for short-term speed
+		-- restrictions which always override any other restrictions
+		-- imposed by "speed" fields, until lifted by a value of -1
+		-- (Example: german Langsamfahrstellen-Signale)
 	}
 }
-As of August 2018, only the aspect.main.free field is ever used by the interlocking system.
+As of January 2020, the 'dst', 'call_on' and 'dead_end' fields are not used.
 
 # Lines
 

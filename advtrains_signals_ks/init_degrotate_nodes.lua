@@ -1,5 +1,5 @@
 -- Ks Signals for advtrains
--- will implement the advtrains signal API (which does not exist yet)
+-- will implement the advtrains signal API
 
 local function place_degrotate(pos, placer, itemstack, pointed_thing)
 	local yaw = placer:get_look_horizontal()

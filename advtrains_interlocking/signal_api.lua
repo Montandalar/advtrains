@@ -4,28 +4,38 @@
 --[[
 Signal aspect table:
 asp = {
-	main = {
-		free = <boolean>,
-		speed = <int km/h>,
-	},
-	shunt = {
-		free = <boolean>,
+	main = <int speed>,
+		-- Main signal aspect, tells state and permitted speed of next section
+		-- 0 = section is blocked
+		-- >0 = section is free, speed limit is this value
+		-- -1 = section is free, maximum speed permitted
+		-- false = Signal doesn't provide main signal information, retain current speed limit.
+	shunt = <boolean>,
 		-- Whether train may proceed as shunt move, on sight
 		-- main aspect takes precedence over this
-		proceed_as_main = <boolean>,
-		-- If an approaching train is a shunt move and "main.free" is set,
+		-- When main==0, train switches to shunt move and is restricted to speed 8
+	proceed_as_main = <boolean>,
+		-- If an approaching train is a shunt move and 'shunt' is false,
 		-- the train may proceed as a train move under the "main" aspect
+		-- if the main aspect permits it (i.e. main!=0)
 		-- If this is not set, shunt moves are NOT allowed to switch to
-		-- a train move, and must stop even if "main.free" is set.
+		-- a train move, and must stop even if "main" would permit passing.
 		-- This is intended to be used for "Halt for shunt moves" signs.
-	}
-	dst = {
-		free = <boolean>,
-		speed = <int km/h>,
-	}
+	
+	dst = <int speed>,
+		-- Distant signal aspect, tells state and permitted speed of the section after next section
+		-- The character of these information is purely informational
+		-- At this time, this field is not actively used
+		-- 0 = section is blocked
+		-- >0 = section is free, speed limit is this value
+		-- -1 = section is free, maximum speed permitted
+		-- false = Signal doesn't provide distant signal information.
+	
 	info = {
+		-- the character of call_on and dead_end is purely informative
 		call_on = <boolean>, -- Call-on route, expect train in track ahead (not implemented yet)
 		dead_end = <boolean>, -- Route ends on a dead end (e.g. bumper) (not implemented yet)
+
 		w_speed = <integer>,
 		-- "Warning speed restriction". Supposed for short-term speed
 		-- restrictions which always override any other restrictions
@@ -33,12 +43,6 @@ asp = {
 		-- (Example: german Langsamfahrstellen-Signale)
 	}
 }
--- For "speed" and "w_speed" fields, a value of -1 means that the
--- restriction is lifted. If they are omitted, the value imposed at
--- the last aspect received remains valid.
--- The "dst" subtable can be completely omitted when no explicit dst
--- aspect should be signalled to the train. In this case, the last
--- signalled dst aspect remains valid.
 
 == How signals actually work in here ==
 Each signal (in the advtrains universe) is some node that has at least the
@@ -87,22 +91,18 @@ advtrains = {
 				false: always shows "blocked", unchangable
 				true: always shows "free", unchangable
 		-- Any of the "speed" fields should contain a list of possible values
-		--  to be set as restriction. If omitted, this signal should never
-		--  set the corresponding "speed" field in the aspect, which means
-		--  that the previous speed limit stays valid
+		--  to be set as restriction. If omitted, the value of the described
+		--  field is always assumed to be false (no information)
+		-- A speed of 0 means that the signal can show a "blocked" aspect
+		--  (which is probably the case for most signals)
+		-- If the signal can signal "no information" on one of the fields
+		--  (thus false is an acceptable value), include false in the list
 		-- If your signal can only display a single speed (may it be -1),
 		--  always enclose that single value into a list. (such as {-1})
-		main = {
-			free = <boolean/nil>,
-			speed = {<speed1>, ..., <speedn>} or nil,
-		},
-		dst = {
-			free = <boolean/nil>,
-			speed = {<speed1>, ..., <speedn>} or nil,
-		},
-		shunt = {
-			free = <boolean/nil>,
-		},
+		main = {<speed1>, ..., <speedn>} or nil,
+		dst = {<speed1>, ..., <speedn>} or nil,
+		shunt = <boolean/nil>,
+		
 		info = {
 			call_on = <boolean/nil>,
 			dead_end = <boolean/nil>,
@@ -110,28 +110,36 @@ advtrains = {
 		}
 		
 	},
+	Example for supported_aspects:
+	supported_aspects = {
+		main = {0, 6, -1}, -- can show either "Section blocked", "Proceed at speed 6" or "Proceed at maximum speed"
+		dst = {0, false}, -- can show only if next signal shows "blocked", no other information.
+		shunt = false, -- shunting by this signal is never allowed.
+		
+		info = {
+			call_on = false,
+			dead_end = false,
+			w_speed = nil,
+		} -- none of the information can be shown by the signal
+		
+	},
+	
 	get_aspect = function(pos, node)
 		-- This function gets called by the train safety system. It
 		should return the aspect that this signal actually displays,
 		not preferably the input of set_aspect.
 		-- For regular, full-featured light signals, they will probably
 		honor all entries in the original aspect, however, e.g.
-		simple shunt signals always return main.free=true regardless of
+		simple shunt signals always return main=false regardless of
 		the set_aspect input because they can not signal "Halt" to
 		train moves.
 		-- advtrains.interlocking.DANGER contains a default "all-danger" aspect.
 		-- If your signal does not cover certain sub-tables of the aspect,
 		the following reasonable defaults are automatically assumed:
-		main = {
-			free = true,
-		}
-		dst = {
-			free = true,
-		}
-		shunt = {
-			free = false,
-			proceed_as_main = false,
-		}
+		main = false (unchanged)
+		dst = false (unchanged)
+		shunt = false (shunting not allowed)
+		info = {} (no further information)
 	end,
 }
 on_rightclick = advtrains.interlocking.signal_rc_handler
@@ -155,48 +163,14 @@ This function will query get_aspect to retrieve the new aspect.
 ]]--
 
 local DANGER = {
-	main = {
-		free = false,
-		speed = 0,
-	},
-	shunt = {
-		free = false,
-	},
-	dst = {
-		free = false,
-		speed = 0,
-	},
+	main = 0,
+	dst = false,
+	shunt = false,
 	info = {}
 }
 advtrains.interlocking.DANGER = DANGER
 
 local function fillout_aspect(asp)
-	if not asp.main then
-		asp.main = {
-			free = true,
-		}
-	elseif type(asp.main) ~= "table" then
-		asp.main = {
-			free = asp.main~=0,
-			speed = asp.main,
-		}
-	end
-	if not asp.dst then
-		asp.dst = {
-			free = true,
-		}
-	end 
-	if not asp.shunt then
-		asp.shunt = {
-			free = false,
-			proceed_as_main = false,
-		}
-	elseif type(asp.shunt) ~= "table" then
-		asp.shunt = {
-			free = asp.shunt,
-			proceed_as_main = asp.proceed_as_main,
-		}
-	end
 	if not asp.info then
 		asp.info = {}
 	end
@@ -458,8 +432,10 @@ function advtrains.interlocking.show_signal_aspect_selector(pname, p_suppasp, p_
 	local form = "size[7,5]label[0.5,0.5;Select Signal Aspect:]"
 	form = form.."label[0.5,1;"..purpose.."]"
 	
+	
+	--TODO
 	form = form.."label[0.5,1.5;== Main Signal ==]"
-	if suppasp.main.free == nil then
+	if suppasp.main == 0 then
 		local st = 2
 		if isasp and not isasp.main.free then st=1 end
 		form = form.."dropdown[0.5,2;2;main_free;danger,free;"..st.."]"

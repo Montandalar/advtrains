@@ -6,14 +6,14 @@
 
 local setaspectf = function(rot)
  return function(pos, node, asp)
-	if not asp.main.free then
-		if asp.shunt.free then
+	if asp.main == 0 then
+		if asp.shunt then
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_shunt_"..rot, param2 = node.param2})
 		else
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_danger_"..rot, param2 = node.param2})
 		end
 	else
-		if asp.dst.free and asp.main.speed == -1 then
+		if asp.dst != 0 and asp.main == -1 then
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_free_"..rot, param2 = node.param2})
 		else
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_slow_"..rot, param2 = node.param2})
@@ -22,19 +22,12 @@ local setaspectf = function(rot)
  end
 end
 
+
 local suppasp = {
-		main = {
-			free = nil,
-			speed = {6, -1},
-		},
-		dst = {
-			free = nil,
-			speed = nil,
-		},
-		shunt = {
-			free = nil,
-			proceed_as_main = true,
-		},
+		main = {0, 6, -1},
+		dst = {0, false},
+		shunt = nil,
+		proceed_as_main = true,
 		info = {
 			call_on = false,
 			dead_end = false,
@@ -45,7 +38,7 @@ local suppasp = {
 --Rangiersignal
 local setaspectf_ra = function(rot)
  return function(pos, node, asp)
-	if asp.shunt.free then
+	if asp.shunt then
 		advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:ra_shuntd_"..rot, param2 = node.param2})
 	else
 		advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:ra_danger_"..rot, param2 = node.param2})
@@ -58,17 +51,11 @@ local setaspectf_ra = function(rot)
 end
 
 local suppasp_ra = {
-		main = {
-			free = true,
-		},
-		dst = {
-			free = nil,
-			speed = nil,
-		},
-		shunt = {
-			free = nil,
-			proceed_as_main = false,
-		},
+		main = { false },
+		dst = { false },
+		shunt = nil,
+		proceed_as_main = false,
+		
 		info = {
 			call_on = false,
 			dead_end = false,
@@ -90,9 +77,9 @@ for _, rtab in ipairs({
 	local rot = rtab.rot
 	for typ, prts in pairs({
 			danger = {asp = advtrains.interlocking.DANGER, n = "slow", ici=true},
-			slow   = {asp = { main = { free = true, speed = 6 }, shunt = {proceed_as_main = true}} , n = "free"},
-			free   = {asp = { main = { free = true, speed = -1 }, shunt = {proceed_as_main = true}} , n = "shunt"},
-			shunt  = {asp = { main = {free = false}, shunt = {free = true} } , n = "danger"},
+			slow   = {asp = { main =  6, proceed_as_main = true} , n = "free"},
+			free   = {asp = { main = -1, proceed_as_main = true} , n = "shunt"},
+			shunt  = {asp = { main =  0, shunt = true} , n = "danger"},
 		}) do
 		minetest.register_node("advtrains_signals_ks:hs_"..typ.."_"..rot, {
 			description = "Ks Main Signal",
@@ -136,8 +123,8 @@ for _, rtab in ipairs({
 	
 	--Rangiersignale:
 	for typ, prts in pairs({
-			danger = {asp = { main = {free = true}, shunt = {free = false} }, n = "shuntd", ici=true},
-			shuntd = {asp = { main = {free = true}, shunt = {free = true} } , n = "danger"},
+			danger = {asp = { main = false, shunt = false }, n = "shuntd", ici=true},
+			shuntd = {asp = { main = false, shunt = true } , n = "danger"},
 		}) do
 		minetest.register_node("advtrains_signals_ks:ra_"..typ.."_"..rot, {
 			description = "Ks Shunting Signal",
@@ -181,13 +168,13 @@ for _, rtab in ipairs({
 	--Schilder:
 	for typ, prts in pairs({
 			-- Speed restrictions:
-			["8"] = {asp = { main = {free = true, speed = 8}, shunt = {free = true} }, n = "12", ici=true},
-			["12"] = {asp = { main = {free = true, speed = 12}, shunt = {free = true} }, n = "16"},
-			["16"] = {asp = { main = {free = true, speed = 16}, shunt = {free = true} }, n = "e"},
+			["8"] = {asp = { main = 8, shunt = true }, n = "12", ici=true},
+			["12"] = {asp = { main = 12, shunt = true }, n = "16"},
+			["16"] = {asp = { main = 16, shunt = true }, n = "e"},
 			-- Speed restriction lifted
-			["e"] = {asp = { main = {free = true, speed = -1}, shunt = {free = true} }, n = "hfs"},
+			["e"] = {asp = { main = -1, shunt = true }, n = "hfs"},
 			-- Halt for shunt moves:
-			["hfs"] = {asp = { main = {free = true}, shunt = {free = false} }, n = "8"},
+			["hfs"] = {asp = { main = false, shunt = false }, n = "8"},
 		}) do
 		minetest.register_node("advtrains_signals_ks:sign_"..typ.."_"..rot, {
 			description = "Signal Sign",
