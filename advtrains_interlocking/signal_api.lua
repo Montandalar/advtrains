@@ -31,16 +31,15 @@ asp = {
 		-- -1 = section is free, maximum speed permitted
 		-- false = Signal doesn't provide distant signal information.
 	
-	info = {
-		-- the character of call_on and dead_end is purely informative
-		call_on = <boolean>, -- Call-on route, expect train in track ahead (not implemented yet)
-		dead_end = <boolean>, -- Route ends on a dead end (e.g. bumper) (not implemented yet)
+	-- the character of call_on and dead_end is purely informative
+	call_on = <boolean>, -- Call-on route, expect train in track ahead (not implemented yet)
+	dead_end = <boolean>, -- Route ends on a dead end (e.g. bumper) (not implemented yet)
 
-		w_speed = <integer>,
-		-- "Warning speed restriction". Supposed for short-term speed
-		-- restrictions which always override any other restrictions
-		-- imposed by "speed" fields, until lifted by a value of -1
-		-- (Example: german Langsamfahrstellen-Signale)
+	w_speed = <integer>,
+	-- "Warning speed restriction". Supposed for short-term speed
+	-- restrictions which always override any other restrictions
+	-- imposed by "speed" fields, until lifted by a value of -1
+	-- (Example: german Langsamfahrstellen-Signale)
 	}
 }
 
@@ -103,11 +102,9 @@ advtrains = {
 		dst = {<speed1>, ..., <speedn>} or nil,
 		shunt = <boolean/nil>,
 		
-		info = {
-			call_on = <boolean/nil>,
-			dead_end = <boolean/nil>,
-			w_speed = {<speed1>, ..., <speedn>} or nil,
-		}
+		call_on = <boolean/nil>,
+		dead_end = <boolean/nil>,
+		w_speed = {<speed1>, ..., <speedn>} or nil,
 		
 	},
 	Example for supported_aspects:
@@ -116,11 +113,10 @@ advtrains = {
 		dst = {0, false}, -- can show only if next signal shows "blocked", no other information.
 		shunt = false, -- shunting by this signal is never allowed.
 		
-		info = {
-			call_on = false,
-			dead_end = false,
-			w_speed = nil,
-		} -- none of the information can be shown by the signal
+		call_on = false,
+		dead_end = false,
+		w_speed = nil,
+		-- none of the information can be shown by the signal
 		
 	},
 	
@@ -166,14 +162,34 @@ local DANGER = {
 	main = 0,
 	dst = false,
 	shunt = false,
-	info = {}
 }
 advtrains.interlocking.DANGER = DANGER
 
-local function fillout_aspect(asp)
-	if not asp.info then
-		asp.info = {}
+advtrains.interlocking.GENERIC_FREE = {
+	main = -1,
+	shunt = false,
+	dst = false,
+}
+
+local function convert_aspect_if_necessary(asp)
+	if type(asp.main) == "table" then
+		local newasp = {} 
+		if asp.main.free then
+			newasp.main = asp.main.speed
+		else
+			newasp.main = 0
+		end
+		if asp.dst.free then
+			newasp.dst = asp.dst.speed
+		else
+			newasp.dst = 0
+		end
+		newasp.proceed_as_main = asp.shunt.proceed_as_main
+		newasp.shunt = asp.shunt.free
+		-- Note: info table not transferred, it's not used right now
+		return newasp
 	end
+	return asp
 end
 
 function advtrains.interlocking.update_signal_aspect(tcbs)
@@ -193,7 +209,7 @@ function advtrains.interlocking.signal_after_dig(pos)
 end
 
 function advtrains.interlocking.signal_set_aspect(pos, asp)
-	fillout_aspect(asp)
+	asp = convert_aspect_if_necessary(asp)
 	local node=advtrains.ndb.get_node(pos)
 	local ndef=minetest.registered_nodes[node.name]
 	if ndef and ndef.advtrains and ndef.advtrains.set_aspect then
@@ -226,7 +242,16 @@ function advtrains.interlocking.signal_rc_handler(pos, node, player, itemstack, 
 		local ndef = minetest.registered_nodes[node.name]
 		if ndef.advtrains and ndef.advtrains.set_aspect then
 			-- permit to set aspect manually
-			minetest.show_formspec(pname, "at_il_sigasp_"..minetest.pos_to_string(pos), "field[aspect;Set Aspect ('A' to assign IP);D0D0D]")
+			local function callback(pname, aspect)
+				ndef.advtrains.set_aspect(pos, node, aspect)
+			end
+			local isasp = ndef.advtrains.get_aspect(pos, node)
+			
+			advtrains.interlocking.show_signal_aspect_selector(
+				pname,
+				ndef.advtrains.supported_aspects,
+				"Set aspect manually", callback,
+				isasp)
 		else
 			--static signal - only IP
 			advtrains.interlocking.show_ip_form(pos, pname)
@@ -234,45 +259,13 @@ function advtrains.interlocking.signal_rc_handler(pos, node, player, itemstack, 
 	end
 end
 
-minetest.register_on_player_receive_fields(function(player, formname, fields)
-	local pname = player:get_player_name()
-	local pts = string.match(formname, "^at_il_sigasp_(.+)$")
-	local pos
-	if pts then pos = minetest.string_to_pos(pts) end
-	if pos and fields.aspect then
-		if fields.aspect == "A" then
-			advtrains.interlocking.show_ip_form(pos, pname)
-			return
-		end
-		local mfs, msps, dfs, dsps, shs = string.match(fields.aspect, "^([FD])([-0-9]+)([FD])([-0-9]+)([FD])$")
-		local asp = {
-			main = {
-				free = mfs=="F",
-				speed = tonumber(msps),
-			},
-			shunt = {
-				free = shs=="F",
-			},
-			dst = {
-				free = dfs=="F",
-				speed = tonumber(dsps),
-			},
-			info = {
-				call_on = false, -- Call-on route, expect train in track ahead
-				dead_end = false, -- Route ends on a dead end (e.g. bumper)
-			}
-		}
-		advtrains.interlocking.signal_set_aspect(pos, asp)
-	end
-end)
-
 -- Returns the aspect the signal at pos is supposed to show
 function advtrains.interlocking.signal_get_supposed_aspect(pos)
 	local sigd = advtrains.interlocking.db.get_sigd_for_signal(pos)
 	if sigd then
 		local tcbs = advtrains.interlocking.db.get_tcbs(sigd)
 		if tcbs.aspect then
-			return tcbs.aspect
+			return convert_aspect_if_necessary(tcbs.aspect)
 		end
 	end
 	return DANGER;
@@ -286,8 +279,7 @@ function advtrains.interlocking.signal_get_aspect(pos)
 	if ndef and ndef.advtrains and ndef.advtrains.get_aspect then
 		local asp = ndef.advtrains.get_aspect(pos, node)
 		if not asp then asp = DANGER end
-		fillout_aspect(asp)
-		return asp
+		return convert_aspect_if_necessary(asp)
 	end
 	return nil
 end
@@ -421,44 +413,45 @@ local players_aspsel = {}
 suppasp: "supported_aspects" table
 purpose: form title string
 callback: func(pname, aspect) called on form submit
+isasp: aspect currently set
 ]]
-function advtrains.interlocking.show_signal_aspect_selector(pname, p_suppasp, p_purpose, callback, p_isasp)
+function advtrains.interlocking.show_signal_aspect_selector(pname, p_suppasp, p_purpose, callback, isasp)
 	local suppasp = p_suppasp or {
-		main = {}, dst = {}, shunt = {}, info = {},
+		main = {0, -1}, dst = {false}, shunt = false, info = {},
 	}
 	local purpose = p_purpose or ""
-	local isasp = p_isasp and fillout_aspect(p_isasp)
 	
 	local form = "size[7,5]label[0.5,0.5;Select Signal Aspect:]"
 	form = form.."label[0.5,1;"..purpose.."]"
 	
-	
-	--TODO
 	form = form.."label[0.5,1.5;== Main Signal ==]"
-	if suppasp.main == 0 then
-		local st = 2
-		if isasp and not isasp.main.free then st=1 end
-		form = form.."dropdown[0.5,2;2;main_free;danger,free;"..st.."]"
-	end
-	if suppasp.main.speed then
-		local selid = 1
-		if isasp and isasp.main.speed then
-			for idx, spv in ipairs(suppasp.main.speed) do
-				if spv == isasp.main.speed then
-					selid = idx
-					break
-				end
-			end
+	local selid = 1
+	local entries = {}
+	for idx, spv in ipairs(suppasp.main) do
+		local entry
+		if spv == 0 then
+			entry = "Halt"
+		elseif spv == -1 then
+			entry = "Continue at maximum speed"
+		elseif not spv then
+			entry = "Continue\\, speed limit unchanged (no info)"
+		else
+			entry = "Continue at speed of "..spv				
 		end
-		form = form.."label[2.3,1;Speed:]"
-		form = form.."dropdown[3,2;2;main_speed;"..table.concat(suppasp.main.speed, ",")..";"..selid.."]"
+		-- hack: the crappy formspec system returns the label, not the index. save the index in it.
+		entries[idx] = idx.."| "..entry
+		if isasp and spv == (isasp.main or false) then
+			selid = idx
+		end
 	end
+	form = form.."dropdown[0.5,2;6;main;"..table.concat(entries, ",")..";"..selid.."]"
+
 	
 	form = form.."label[0.5,3;== Shunting ==]"
-	if suppasp.shunt.free == nil then
+	if suppasp.shunt == nil then
 		local st = 1
-		if isasp and isasp.shunt.free then st=2 end
-		form = form.."dropdown[0.5,3.5;2;shunt_free;---,allowed;"..st.."]"
+		if isasp and isasp.shunt then st=2 end
+		form = form.."dropdown[0.5,3.5;6;shunt_free;---,allowed;"..st.."]"
 	end
 		
 	form = form.."button_exit[0.5,4.5;  5,1;save;OK]"
@@ -483,12 +476,10 @@ local function usebool(sup, val, free)
 		return sup
 	end
 end
-local function usespeed(sup, val)
-	if sup then
-		return tonumber(val)
-	else
-		return nil
-	end
+
+-- other side of hack: extract the index
+local function ddindex(val)
+	return tonumber(string.match(val, "^(%d+)|"))
 end
 
 -- TODO use non-hacky way to parse outputs
@@ -499,17 +490,12 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if psl then
 		if formname == "at_il_sigaspdia_"..psl.token then
 			if fields.save then
+				local maini = ddindex(fields.main)
+				if not maini then return end
 				local asp = {
-					main = {
-						free = usebool(psl.suppasp.main.free, fields.main_free, "free"),
-						speed = usespeed(psl.suppasp.main.speed, fields.main_speed),
-					},
-					dst = {
-						free = true, speed = -1,
-					},
-					shunt = {
-						free = usebool(psl.suppasp.shunt.free, fields.shunt_free, "allowed"),
-					},
+					main = psl.suppasp.main[maini],
+					dst = false,
+					shunt = usebool(psl.suppasp.shunt, fields.shunt_free, "allowed"),
 					info = {}
 				}
 				psl.callback(pname, asp)

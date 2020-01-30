@@ -131,6 +131,37 @@ function ildb.load(data)
 	if data.npr_rails then
 		advtrains.interlocking.npr_rails = data.npr_rails
 	end
+	
+	--COMPATIBILITY to Signal aspect format
+	-- TODO remove in time...
+	for pts,tcb in pairs(track_circuit_breaks) do
+		for connid, tcbs in ipairs(tcb) do
+			if tcbs.routes then
+				for _,route in ipairs(tcbs.routes) do
+					if route.aspect then
+						-- transform the signal aspect format
+						local asp = route.aspect
+						if type(asp.main) == "table" then
+							atwarn("Transforming route aspect of signal",pts,"/",connid,"")
+							if asp.main.free then
+								asp.main = asp.main.speed
+							else
+								asp.main = 0
+							end
+							if asp.dst.free then
+								asp.dst = asp.dst.speed
+							else
+								asp.dst = 0
+							end
+							asp.proceed_as_main = asp.shunt.proceed_as_main
+							asp.shunt = asp.shunt.free
+							-- Note: info table not transferred, it's not used right now
+						end
+					end
+				end
+			end
+		end
+	end
 end
 
 function ildb.save()
@@ -149,6 +180,7 @@ end
 --[[
 TCB data structure
 {
+-- This is the "A" side of the TCB
 [1] = { -- Variant: with adjacent TCs.
 	ts_id = <id> -- ID of the assigned track section
 	signal = <pos> -- optional: when set, routes can be set from this tcb/direction and signal
@@ -164,6 +196,7 @@ TCB data structure
 	routes = { <route definition> } -- a collection of routes from this signal
 	route_auto = <boolean> -- When set, we will automatically re-set the route (designated by routeset)
 },
+-- This is the "B" side of the TCB
 [2] = { -- Variant: end of track-circuited area (initial state of TC)
 	ts_id = nil, -- this is the indication for end_of_interlocking
 	section_free = <boolean>, --this can be set by an exit node via mesecons or atlatc, 

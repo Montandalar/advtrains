@@ -75,13 +75,13 @@ advtrains.tnc_register_on_approach(function(pos, id, train, index, has_entered, 
 			--shunt move
 			if asp.shunt then
 				nspd = SHUNT_SPEED_MAX
-			elseif asp.shunt.proceed_as_main and asp.main != 0 then
+			elseif asp.proceed_as_main and asp.main ~= 0 then
 				nspd = asp.main
 				travsht = false
 			end
 		else
 			--train move
-			if asp.main != 0 then
+			if asp.main ~= 0 then
 				nspd = asp.main
 			elseif asp.shunt then
 				nspd = SHUNT_SPEED_MAX
@@ -98,6 +98,7 @@ advtrains.tnc_register_on_approach(function(pos, id, train, index, has_entered, 
 		end
 		
 		--atdebug("ns,ts", nspd, travspd)
+
 		lspd = travspd
 		
 		local udata = {signal_pos = spos}

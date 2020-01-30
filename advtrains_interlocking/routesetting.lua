@@ -6,13 +6,6 @@ local function sigd_to_string(sigd)
 	return minetest.pos_to_string(sigd.p).." / "..lntrans[sigd.s]
 end
 
-local asp_generic_free = {
-	main = -1,
-	shunt = false,
-	dst = false,
-	info = {}
-}
-
 local ildb = advtrains.interlocking.db
 local ilrs = {}
 
@@ -119,7 +112,7 @@ function ilrs.set_route(signal, route, try)
 			}
 			if c_tcbs.signal then
 				c_tcbs.route_committed = true
-				c_tcbs.aspect = route.aspect or asp_generic_free
+				c_tcbs.aspect = route.aspect or advtrains.interlocking.GENERIC_FREE
 				c_tcbs.route_origin = signal
 				advtrains.interlocking.update_signal_aspect(c_tcbs)
 			end

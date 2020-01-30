@@ -123,17 +123,15 @@ asp = {
 		-- -1 = section is free, maximum speed permitted
 		-- false = Signal doesn't provide distant signal information.
 	
-	info = {
-		-- the character of call_on and dead_end is purely informative
-		call_on = <boolean>, -- Call-on route, expect train in track ahead (not implemented yet)
-		dead_end = <boolean>, -- Route ends on a dead end (e.g. bumper) (not implemented yet)
+	-- the character of call_on and dead_end is purely informative
+	call_on = <boolean>, -- Call-on route, expect train in track ahead (not implemented yet)
+	dead_end = <boolean>, -- Route ends on a dead end (e.g. bumper) (not implemented yet)
 
-		w_speed = <integer>,
-		-- "Warning speed restriction". Supposed for short-term speed
-		-- restrictions which always override any other restrictions
-		-- imposed by "speed" fields, until lifted by a value of -1
-		-- (Example: german Langsamfahrstellen-Signale)
-	}
+	w_speed = <integer>,
+	-- "Warning speed restriction". Supposed for short-term speed
+	-- restrictions which always override any other restrictions
+	-- imposed by "speed" fields, until lifted by a value of -1
+	-- (Example: german Langsamfahrstellen-Signale)
 }
 As of January 2020, the 'dst', 'call_on' and 'dead_end' fields are not used.
 

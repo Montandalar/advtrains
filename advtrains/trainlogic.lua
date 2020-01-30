@@ -417,7 +417,7 @@ function advtrains.train_step_b(id, train, dtime)
 				if emerg then
 					v_target_apply(v_targets, VLEVER_EMERG, 0)
 				else
-					v_target_apply(v_targets, VLEVER_EMERG, braketar)
+					v_target_apply(v_targets, VLEVER_BRAKE, braketar)
 				end
 			else
 				v_target_apply(v_targets, VLEVER_ROLL, train.tarvelocity)

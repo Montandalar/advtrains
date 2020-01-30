@@ -112,7 +112,8 @@ route = {
 		next = <sigd>, -- of the next (note: next) TCB on the route
 		locks = {<pts> = "state"} -- route locks of this route segment
 	}
-	terminal = 
+	terminal = <sigd>,
+	aspect = <signal aspect>,--note, might change in future
 }
 The first item in the TCB path (namely i=0) is always the start signal of this route,
 so this is left out.

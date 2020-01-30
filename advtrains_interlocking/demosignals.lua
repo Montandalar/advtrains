@@ -9,7 +9,7 @@ local setaspect = function(pos, node, asp)
 	if asp.main == 0 then
 		advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_danger"})
 	else
-		if asp.dst != 0 and asp.main == -1 then
+		if asp.dst ~= 0 and asp.main == -1 then
 			advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_free"})
 		else
 			advtrains.ndb.swap_node(pos, {name="advtrains_interlocking:ds_slow"})

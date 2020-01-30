@@ -13,7 +13,7 @@ local setaspectf = function(rot)
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_danger_"..rot, param2 = node.param2})
 		end
 	else
-		if asp.dst != 0 and asp.main == -1 then
+		if asp.dst ~= 0 and asp.main == -1 then
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_free_"..rot, param2 = node.param2})
 		else
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_slow_"..rot, param2 = node.param2})
