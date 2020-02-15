@@ -2,18 +2,25 @@
 ## ADVTRAINS ## realistic trains in Minetest!
 by orwell96 and contributors(see below)
 
-For up-to-date information, visit https://forum.minetest.net/viewtopic.php?f=9&t=14726
+For up-to-date information, visit https://advtrains.de/
 
-
-Manual:
-See manual.pdf (might not be up to date)
-For information on LuaATC see the file inside the advtrains_luaautomation mod directory.
-
-License of code: LGPL 2.1
+License of code: GNU AGPL version 3
 License of media: CC-BY-SA 3.0
+
+(up to commit 1bb1d8, the license has been LGPL 2.1)
 
 Contributions:
 
+Coding:
+Various features and bugfixes have been contributed by:
+- gpcf
+- Blockhead
+- ywang
+Small code contributions:
+- h-v-smacker
+- NaruTrey
+
+Assets:
 Gravel Texture              : from Minetest Game
 Initial rail model/texture  : DS-minetest
 Models for signals/bumpers  : mbb
@@ -21,8 +28,6 @@ Steam engine / wagon texture: mbb
 Detailed Steam engine       : mbb / Krokoschlange(animation)
 Industrial engine/wagons    : mbb
 Inventory images            : mbb
-Small code contributions    : NaruTrey
-Major code contributions    : gpcf
 Mod Description             : hajo
 Sounds:
 advtrains_crossing_bell     : Codesound
@@ -36,6 +41,6 @@ gpcf (Linuxworks server)
 imcasper (tss Branch)
 
 
-If I forgot someone please punish me for that.
+If I forgot someone please punish me for that. Also see the Git commit log.
 
 You can see this mod in action on Linuxworks Next Generation server.
