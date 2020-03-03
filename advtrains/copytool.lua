@@ -48,10 +48,6 @@ minetest.register_tool("advtrains:copytool", {
 					return
 				end
 				
-				--[[local wid1 = advtrains.create_wagon("advtrains:KuHa_E231", pname)
-				local wid2 = advtrains.create_wagon("advtrains:MoHa_E231", pname)
-				local wid3 = advtrains.create_wagon("advtrains:KuHa_E231", pname)
-				advtrains.wagons[wid3].wagon_flipped = 1--]]
 				local wagons = {}
 				local n = 1
 				for _, wagonProto in pairs(advtrains.clipboard.wagons) do
@@ -68,8 +64,6 @@ minetest.register_tool("advtrains:copytool", {
 				train.routingcode = advtrains.clipboard.routingcode
 				train.line = advtrains.clipboard.line
 				
-				--minetest.after(2, function() advtrains.trains[id].tarvelocity = 2 end)
-				
 				if not advtrains.is_creative(pname) then
 					itemstack:take_item()
 				end
@@ -80,46 +74,28 @@ minetest.register_tool("advtrains:copytool", {
 	-- Copy: Take the pointed-at train and put it on the clipboard
 	on_use = function(itemstack, user, pointed_thing)
 		if not user:get_player_name() then return end
-		minetest.chat_send_player(user:get_player_name(), "Copy NYI")
 		minetest.chat_send_player(user:get_player_name(), string.format("%s", pointed_thing))
 		if (pointed_thing.type ~= "object") then return end
-		for k,v in pairs(pointed_thing) do
-			minetest.chat_send_player(user:get_player_name(), string.format("%s = %s", k, v))
-		end
-		minetest.chat_send_player(user:get_player_name(), string.format("%s", pointed_thing.ref:get_pos()))
-		minetest.chat_send_player(user:get_player_name(), string.format("Yaw=%f", pointed_thing.ref:get_yaw()))
---[[		for k,v in pairs(pos) do
-			minetest.chat_send_player(user:get_player_name(), string.format("%s = %s",k,v))
-		end--]]
+
 		local le = pointed_thing.ref:get_luaentity()
-		minetest.chat_send_player(user:get_player_name(), "---")
 		if (le == nil) then
 			minetest.chat_send_player(user:get_player_name(), "No such lua entity!")
 			return
 		end
-		for k,v in pairs(le) do
-			minetest.chat_send_player(user:get_player_name(), string.format("%s = %s",k,v))
-		end
-		minetest.chat_send_player(user:get_player_name(), "---")
-		
+
 		local wagon = advtrains.wagons[le.id]
 		if (not (le.id and advtrains.wagons[le.id])) then
 			minetest.chat_send_player(user:get_player_name(), string.format("No such wagon: %s", le.id))
 			return
 		end
-		
-		for k,v in pairs(wagon) do
-			minetest.chat_send_player(user:get_player_name(), string.format("%s = %s",k,v))
-		end
-		minetest.chat_send_player(user:get_player_name(), "---")
-		
+
 		local train = advtrains.trains[wagon.train_id]
 		minetest.chat_send_player(user:get_player_name(), string.format("Train = %s", train))
 		if (not train) then
 			minetest.chat_send_player(user:get_player_name(), string.format("No such train: %s", wagon.train_id))
 			return
 		end
-		
+
 		-- Record the train length. The paste operation should require this much free space.
 		advtrains.clipboard = {
 			trainlen = math.ceil(train.trainlen),
@@ -130,16 +106,9 @@ minetest.register_tool("advtrains:copytool", {
 			wagons = {}
 		}
 		local trainLength = math.ceil(train.trainlen)
-		
-		minetest.chat_send_player(user:get_player_name(), "Train info---")
-		for k,v in pairs (train) do
-			minetest.chat_send_player(user:get_player_name(), string.format("%s = %s", k, v))
-		end
-		minetest.chat_send_player(user:get_player_name(), "---")
-		
+
 		local n = 1
 		for _, wagonid in pairs(train.trainparts) do
-			minetest.chat_send_player(user:get_player_name(), string.format("%d", wagonid))
 			local wagon = advtrains.wagons[wagonid]
 			advtrains.clipboard.wagons[n] = {
 				wagon_flipped = wagon.wagon_flipped,
@@ -148,24 +117,7 @@ minetest.register_tool("advtrains:copytool", {
 			n = n + 1
 		end
 		
-		for k,v in pairs(advtrains.clipboard) do
-			minetest.chat_send_player(user:get_player_name(), string.format("%s = %s", k, v))
-		end
-		for k,v in pairs(advtrains.clipboard.wagons) do
-			minetest.chat_send_player(user:get_player_name(), string.format("%s = %s", k, v))
-			for l,w in pairs(v) do
-				minetest.chat_send_player(user:get_player_name(), string.format("%s = %s", l, w))
-			end
-		end
-		
-		local player_yaw = user:get_look_horizontal()
-		minetest.chat_send_player(user:get_player_name(), string.format("Player yaw = %f", player_yaw))
-		local wagon_yaw = pointed_thing.ref:get_yaw()
-		minetest.chat_send_player(user:get_player_name(), string.format("Wagon yaw = %f", wagon_yaw))
-		
-		-- Decide front of train:
-		-- Locomotive on one end = loco-hauled, that end is front;
-		-- if (advtrains.wagons[train.trainparts[1]].is_locomotive) then -- do nothing, train is already in right order
+
 		local function flip_clipboard(wagon_clipboard)
 			local flipped = {}
 			local numWagons = #wagon_clipboard
@@ -188,22 +140,17 @@ minetest.register_tool("advtrains:copytool", {
 			return false
 		end
 
-		--[[minetest.chat_send_player(user:get_player_name(), ":::")
-		for k,v in pairs(backLoco) do
-			minetest.chat_send_player(user:get_player_name(), string.format("%s = %s", k, v))
-		end
-		minetest.chat_send_player(user:get_player_name(), ":::")
-		--]]
+		-- Decide on a new 'front of train' and possibly flip the train.
+		-- Locomotive on one end = loco-hauled, that end is front;
+		-- if (advtrains.wagons[train.trainparts[1]].is_locomotive) then -- do nothing, train is already in right order
 		local numWagons = #train.trainparts
 		local backLoco = train.trainparts[numWagons]
 		backLoco = is_loco(backLoco)
 		local frontLoco = train.trainparts[1]
 		frontLoco = is_loco(frontLoco)
-		minetest.chat_send_player(user:get_player_name(), string.format("///frontLoco = %s", frontLoco))
-		minetest.chat_send_player(user:get_player_name(), string.format("backLoco = %s///", backLoco))
 		if ((backLoco) and (not frontLoco)) then
 			advtrains.clipboard.wagons = flip_clipboard(advtrains.clipboard.wagons)
-			minetest.chat_send_player(user:get_player_name(), "Flipped train: Loco-hauled")
+			--minetest.chat_send_player(user:get_player_name(), "Flipped train: Loco-hauled")
 		end
 		-- locomotives on both ends = train is push-pull / multi-unit, has no front, do nothing
 		-- no locomotives on ends = rake of wagons, front is end closest to where player copied.
@@ -211,7 +158,7 @@ minetest.register_tool("advtrains:copytool", {
 
 			if (wagon.pos_in_trainparts / numWagons > 0.5) then -- towards the end of the rain
 				advtrains.clipboard.wagons = flip_clipboard(advtrains.clipboard.wagons)
-				minetest.chat_send_player(user:get_player_name(), "Flipped train: Rake")
+				--minetest.chat_send_player(user:get_player_name(), "Flipped train: Rake")
 			end
 		end
 	end
