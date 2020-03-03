@@ -70,13 +70,18 @@ minetest.register_tool("advtrains:copytool", {
 
 				local id=advtrains.create_new_train_at(pointed_thing.under, plconnid, 0, wagons)
 				local train = advtrains.trains[id]
+				train.off_track = train.end_index<train.path_trk_b
+				if (train.off_track) then
+					minetest.chat_send_player(pname, "Back of train would end up off track, cancelling.")
+					advtrains.remove_train(id)
+					return
+				end
 				train.text_outside = clipboard.text_outside
 				train.text_inside = clipboard.text_inside
 				train.routingcode = clipboard.routingcode
 				train.line = clipboard.line
 
-				return itemstack
-				
+				return
 			end)
 		end,
 	-- Copy: Take the pointed-at train and put it on the clipboard
