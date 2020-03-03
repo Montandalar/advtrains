@@ -36,37 +36,45 @@ minetest.register_tool("advtrains:copytool", {
 				local tconns=advtrains.get_track_connections(node.name, node.param2)
 				local yaw = placer:get_look_horizontal()
 				local plconnid = advtrains.yawToClosestConn(yaw, tconns)
-				
+
 				local prevpos = advtrains.get_adjacent_rail(pointed_thing.under, tconns, plconnid, {default=true})
 				if not prevpos then
 					minetest.chat_send_player(pname, "The track you are trying to place the wagon on is not long enough!")
 					return
 				end
-				
-				if (advtrains.clipboard == nil or advtrains.clipboard.wagons == nil) then
+
+				local meta = itemstack:get_meta()
+				if not meta then
+					minetest.chat_send_player(pname, attrans("The clipboard couldn't access the metadata. Paste failed."))
+				return
+				end
+				local clipboard = meta:get_string("clipboard")
+				if (clipboard == "") then
 					minetest.chat_send_player(pname, "The clipboard is empty.");
 					return
 				end
-				
+				clipboard = minetest.deserialize(clipboard)
+				if (clipboard.wagons == nil) then
+					minetest.chat_send_player(pname, "The clipboard is empty.");
+					return
+				end
+
 				local wagons = {}
 				local n = 1
-				for _, wagonProto in pairs(advtrains.clipboard.wagons) do
+				for _, wagonProto in pairs(clipboard.wagons) do
 					local wagon = advtrains.create_wagon(wagonProto.type, pname)
 					advtrains.wagons[wagon].wagon_flipped = wagonProto.wagon_flipped
 					wagons[n] = wagon
 					n = n + 1
 				end
-				
+
 				local id=advtrains.create_new_train_at(pointed_thing.under, plconnid, 0, wagons)
 				local train = advtrains.trains[id]
-				train.text_outside = advtrains.clipboard.text_outside
-				train.text_inside = advtrains.clipboard.text_inside
-				train.routingcode = advtrains.clipboard.routingcode
-				train.line = advtrains.clipboard.line
-				
-				if not advtrains.is_creative(pname) then
-					itemstack:take_item()
-				end
+				train.text_outside = clipboard.text_outside
+				train.text_inside = clipboard.text_inside
+				train.routingcode = clipboard.routingcode
+				train.line = clipboard.line
+
 				return itemstack
 				
 			end)
@@ -74,7 +82,6 @@ minetest.register_tool("advtrains:copytool", {
 	-- Copy: Take the pointed-at train and put it on the clipboard
 	on_use = function(itemstack, user, pointed_thing)
 		if not user:get_player_name() then return end
-		minetest.chat_send_player(user:get_player_name(), string.format("%s", pointed_thing))
 		if (pointed_thing.type ~= "object") then return end
 
 		local le = pointed_thing.ref:get_luaentity()
@@ -90,14 +97,13 @@ minetest.register_tool("advtrains:copytool", {
 		end
 
 		local train = advtrains.trains[wagon.train_id]
-		minetest.chat_send_player(user:get_player_name(), string.format("Train = %s", train))
 		if (not train) then
 			minetest.chat_send_player(user:get_player_name(), string.format("No such train: %s", wagon.train_id))
 			return
 		end
 
 		-- Record the train length. The paste operation should require this much free space.
-		advtrains.clipboard = {
+		local clipboard = {
 			trainlen = math.ceil(train.trainlen),
 			text_outside = train.text_outside,
 			text_inside = train.text_inside,
@@ -110,7 +116,7 @@ minetest.register_tool("advtrains:copytool", {
 		local n = 1
 		for _, wagonid in pairs(train.trainparts) do
 			local wagon = advtrains.wagons[wagonid]
-			advtrains.clipboard.wagons[n] = {
+			clipboard.wagons[n] = {
 				wagon_flipped = wagon.wagon_flipped,
 				type = wagon.type
 			}
@@ -149,7 +155,7 @@ minetest.register_tool("advtrains:copytool", {
 		local frontLoco = train.trainparts[1]
 		frontLoco = is_loco(frontLoco)
 		if ((backLoco) and (not frontLoco)) then
-			advtrains.clipboard.wagons = flip_clipboard(advtrains.clipboard.wagons)
+			clipboard.wagons = flip_clipboard(clipboard.wagons)
 			--minetest.chat_send_player(user:get_player_name(), "Flipped train: Loco-hauled")
 		end
 		-- locomotives on both ends = train is push-pull / multi-unit, has no front, do nothing
@@ -157,9 +163,18 @@ minetest.register_tool("advtrains:copytool", {
 		if ((not frontLoco) and (not backLoco)) then
 
 			if (wagon.pos_in_trainparts / numWagons > 0.5) then -- towards the end of the rain
-				advtrains.clipboard.wagons = flip_clipboard(advtrains.clipboard.wagons)
+				clipboard.wagons = flip_clipboard(clipboard.wagons)
 				--minetest.chat_send_player(user:get_player_name(), "Flipped train: Rake")
 			end
 		end
+		
+		local meta = itemstack:get_meta()
+		if not meta then
+			minetest.chat_send_player(pname, attrans("The clipboard couldn't access the metadata. Copy failed."))
+			return
+		end
+		meta:set_string("clipboard", minetest.serialize(clipboard))
+		minetest.chat_send_player(user:get_player_name(), attrans("Train copied!"))
+		return itemstack
 	end
 })
