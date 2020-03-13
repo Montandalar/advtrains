@@ -777,7 +777,7 @@ function wagon:show_wagon_properties(pname)
 	]]
 	local data = advtrains.wagons[self.id]
 	local form="size[5,5]"
-	form = form .. "field[0.5,1;4,1;whitelist;Allow these players to drive your wagon:;"..(data.whitelist or "").."]"
+	form = form .. "field[0.5,1;4,1;whitelist;Allow these players to access your wagon:;"..(data.whitelist or "").."]"
 	--seat groups access lists were here
 	form=form.."button_exit[0.5,3;4,1;save;"..attrans("Save wagon properties").."]"
 	minetest.show_formspec(pname, "advtrains_prop_"..self.id, form)
@@ -1010,6 +1010,20 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				end
 			end
 		end
+		uid=string.match(formname, "^advtrains_inv_(.+)$")
+		if uid then
+			local pname=player:get_player_name()
+			local data = advtrains.wagons[uid]
+			if fields.prop and data.owner==pname then
+				for _,wagon in pairs(minetest.luaentities) do
+					if wagon.is_wagon and wagon.initialized and wagon.id==uid then
+						minetest.chat_send_player(player:get_player_name(), string.format("Opening wagon props from inv... (id=%s)", uid))
+						wagon:show_wagon_properties(pname)
+						--wagon:handle_bordcom_fields(player:get_player_name(), formname, fields)
+					end
+				end
+			end
+		end
 	end)
 end)
 function wagon:seating_from_key_helper(pname, fields, no)
@@ -1165,6 +1179,14 @@ function advtrains.get_wagon_prototype(data)
 		wt="advtrains:wagon_placeholder"
 	end
 	return wt, advtrains.wagon_prototypes[wt]
+end
+
+function advtrains.standard_inventory_formspec(self, pname, invname)
+	return "size[8,11]"..
+			"list["..invname..";box;0,0;8,3;]"..
+			"button_exit[0,9;4,1;prop;"..attrans("Wagon properties").."]"..
+			"list[current_player;main;0,5;8,4;]"..
+			"listring[]"
 end
 
 function advtrains.register_wagon(sysname_p, prototype, desc, inv_img, nincreative)

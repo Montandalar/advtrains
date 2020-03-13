@@ -101,7 +101,9 @@ advtrains.register_wagon(name, prototype, description, inventory_image)
 	get_inventory_formspec = function(self, player_name, inventory_name)
 		return "<a formspec>"
 	end,
-	^- Function that should return the formspec to be displayed when <player> requests to open the wagon's inventory
+	^- Function that should return the formspec to be displayed when <player> requests to open the wagon's inventory.
+	^- advtrains.standard_inventory_formspec can be used for ordinary wagons with inventories to show
+	^- both the inventory grid and a 'Wagon properties' button.
 	^- Use "list["..inventory_name..";<list_name>;<X>,<Y>;<W>,<H>;<Start>]" to display a wagon's inventory list.
 
 	custom_on_step = function(self, dtime) end
