@@ -1182,11 +1182,21 @@ function advtrains.get_wagon_prototype(data)
 end
 
 function advtrains.standard_inventory_formspec(self, pname, invname)
-	return "size[8,11]"..
-			"list["..invname..";box;0,0;8,3;]"..
-			"button_exit[0,9;4,1;prop;"..attrans("Wagon properties").."]"..
-			"list[current_player;main;0,5;8,4;]"..
+	--[[minetest.chat_send_player(pname, string.format("self=%s, pname=%s, invname=%s", self, pname, invname))
+	for k,v in pairs(self) do
+		minetest.chat_send_player(pname, string.format("%s=%s", k,v))
+	end
+	minetest.chat_send_player(pname, string.format("***%s***", self.object:get_pos()))--]]
+	local data = advtrains.wagons[self.id]
+	local r = "size[8,11]"..
+			"list["..invname..";box;0,0;8,3;]"
+	minetest.chat_send_player(pname, string.format("self.owner=%s, pname=%s", data.owner, pname))
+	if data.owner==pname then
+		r = r .. "button_exit[0,9;4,1;prop;"..attrans("Wagon properties").."]"
+	end
+	r = r .. "list[current_player;main;0,5;8,4;]"..
 			"listring[]"
+	return r
 end
 
 function advtrains.register_wagon(sysname_p, prototype, desc, inv_img, nincreative)
