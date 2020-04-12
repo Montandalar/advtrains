@@ -1030,7 +1030,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			if fields.prop and data.owner==pname then
 				for _,wagon in pairs(minetest.luaentities) do
 					if wagon.is_wagon and wagon.initialized and wagon.id==uid then
-						minetest.chat_send_player(player:get_player_name(), string.format("Opening wagon props from inv... (id=%s)", uid))
 						wagon:show_wagon_properties(pname)
 						--wagon:handle_bordcom_fields(player:get_player_name(), formname, fields)
 					end
@@ -1206,7 +1205,6 @@ function advtrains.standard_inventory_formspec(self, pname, invname)
 	local data = advtrains.wagons[self.id]
 	local r = "size[8,11]"..
 			"list["..invname..";box;0,0;8,3;]"
-	minetest.chat_send_player(pname, string.format("self.owner=%s, pname=%s", data.owner, pname))
 	if data.owner==pname then
 		r = r .. "button_exit[0,9;4,1;prop;"..attrans("Wagon properties").."]"
 	end
