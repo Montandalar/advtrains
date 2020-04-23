@@ -73,6 +73,7 @@ function advtrains.pcall(fun)
 			end
 		end)
 	if not succ then
+		error("pcall")
 		reload_saves()
 	else
 		return return1, return2, return3, return4

@@ -63,6 +63,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				rules=advtrains.meseconrules,
 				["action_"..f.as] = function (pos, node)
 					advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_"..f.as..rotation, param2 = node.param2}, true)
+					advtrains.interlocking.signal_on_aspect_changed(pos)
 				end
 			}},
 			on_rightclick=function(pos, node, player)
@@ -74,6 +75,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 					advtrains.interlocking.show_ip_form(pos, pname)
 				elseif advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
 					advtrains.ndb.swap_node(pos, {name = "advtrains:retrosignal_"..f.as..rotation, param2 = node.param2}, true)
+					advtrains.interlocking.signal_on_aspect_changed(pos)
 				end
 			end,
 			-- new signal API
@@ -120,6 +122,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				rules=advtrains.meseconrules,
 				["action_"..f.as] = function (pos, node)
 					advtrains.setstate(pos, f.als, node)
+					advtrains.interlocking.signal_on_aspect_changed(pos)
 				end
 			}},
 			on_rightclick=function(pos, node, player)
@@ -131,6 +134,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 					advtrains.interlocking.show_ip_form(pos, pname)
 				elseif advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
 					advtrains.setstate(pos, f.als, node)
+					advtrains.interlocking.signal_on_aspect_changed(pos)
 				end
 			end,
 			-- new signal API

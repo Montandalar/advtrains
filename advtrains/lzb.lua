@@ -4,15 +4,22 @@
 --[[
 Documentation of train.lzb table
 train.lzb = {
-	trav = Current index that the traverser has advanced so far
-	oncoming = table containing oncoming signals, in order of appearance on the path
+	trav_index = Current index that the traverser has advanced so far
+	checkpoints = table containing oncoming signals, in order of index
 		{
 			pos = position of the point
-			idx = where this is on the path
-			spd = speed allowed to pass
-			fun = function(pos, id, train, index, speed, lzbdata)
+			index = where this is on the path
+			speed = speed allowed to pass. nil = no effect
+			callback = function(pos, id, train, index, speed, lzbdata)
 			-- Function that determines what to do on the train in the moment it drives over that point.
+			-- When spd==0, called instead when train has stopped in front
+			-- nil = no effect
+			lzbdata = {}
+			-- Table of custom data filled in by approach callbacks
+			-- Whenever an approach callback inserts an LZB checkpoint with changed lzbdata,
+			-- all consecutive approach callbacks will see these passed as lzbdata table.
 		}
+	trav_lzbdata = currently active lzbdata table at traverser index
 }
 each step, for every item in "oncoming", we need to determine the location to start braking (+ some safety margin)
 and, if we passed this point for at least one of the items, initiate brake.
@@ -45,6 +52,16 @@ function advtrains.set_lzb_param(par, val)
 	end
 end
 
+local function resolve_latest_lzbdata(ckp, index)
+	local i = #ckp
+	local ckpi
+	while i>0 do
+		ckpi = ckp[i]
+		if ckpi.index <= index and ckpi.lzbdata then
+			return ckpi.lzbdata
+		end
+	end
+end
 
 local function look_ahead(id, train)
 	
@@ -56,29 +73,64 @@ local function look_ahead(id, train)
 	--local aware_i = advtrains.path_get_index_by_offset(train, brake_i, AWARE_ZONE)
 	
 	local lzb = train.lzb
-	local trav = lzb.trav
-	
-	--train.debug = lspd
+	local trav = lzb.trav_index
+	-- retrieve latest lzbdata
+	local lzbdata = lzb.trav_lzbdata
+
+	if lzbdata.off_track then
+		--previous position was off track, do not scan any further
+	end
 	
 	while trav <= brake_i do
-		trav = trav + 1
 		local pos = advtrains.path_get(train, trav)
 		-- check offtrack
-		if trav > train.path_trk_f then
-			table.insert(lzb.oncoming, {
-				pos = pos,
-				idx = trav-1,
-				spd = 0,
-			})
+		if trav - 1 == train.path_trk_f then
+			lzbdata.off_track = true
+			advtrains.lzb_add_checkpoint(train, trav - 1, 0, nil, lzbdata)
 		else
 			-- run callbacks
 			-- Note: those callbacks are defined in trainlogic.lua for consistency with the other node callbacks
-			advtrains.tnc_call_approach_callback(pos, id, train, trav, lzb.data)
+			advtrains.tnc_call_approach_callback(pos, id, train, trav, lzb.trav_lzbdata)
 			
 		end
+		trav = trav + 1
+		
 	end
 	
-	lzb.trav = trav
+	lzb.trav_index = trav
+	
+end
+
+-- Flood-fills train.path_speed, based on this checkpoint 
+local function apply_checkpoint_to_path(train, checkpoint)
+	if not checkpoint.speed then
+		return
+	end
+	-- make sure path exists until checkpoint
+	local pos = advtrains.path_get(train, checkpoint.index)
+	
+	local brake_accel = advtrains.get_acceleration(train, 11)
+	
+	-- start with the checkpoint index at specified speed
+	local index = checkpoint.index
+	local p_speed -- speed in path_speed
+	local c_speed = checkpoint.speed -- calculated speed at current index
+	while true do
+		p_speed = train.path_speed[index]
+		if (p_speed and p_speed <= c_speed) or index < train.index then
+			--we're done. train already slower than wanted at this position
+			return
+		end
+		-- insert calculated target speed
+		train.path_speed[index] = c_speed
+		-- calculate c_speed at previous index
+		advtrains.path_get(train, index-1)
+		local eldist = train.path_dist[index] - train.path_dist[index-1]
+		-- Calculate the start velocity the train would have if it had a end velocity of c_speed and accelerating with brake_accel, after a distance of eldist:
+		-- v0² = v1² - 2*a*s
+		c_speed = math.sqrt( (c_speed * c_speed) - (2 * brake_accel * eldist) )
+		index = index - 1
+	end
 	
 end
 
@@ -90,95 +142,68 @@ s = v0 * -------  +  - * | ------- |    =  -----------
             a        2   \    a    /           2*a
 ]]
 
-local function apply_control(id, train)
-	local lzb = train.lzb
-	
-	local i = 1
-	while i<=#lzb.oncoming do
-		if lzb.oncoming[i].idx < train.index then
-			local ent = lzb.oncoming[i]
-			if ent.fun then
-				ent.fun(ent.pos, id, train, ent.idx, ent.spd, lzb.data)
-			end
-			
-			table.remove(lzb.oncoming, i)
-		else
-			i = i + 1
-		end
-	end
-	
-	for i, it in ipairs(lzb.oncoming) do
-		local a = advtrains.get_acceleration(train, 1) --should be negative
-		local v0 = train.velocity
-		local v1 = it.spd
-		if v1 and v1 <= v0 then
-			local s = (v1*v1 - v0*v0) / (2*a)
-			
-			local st = s + params.ADD_SLOW
-			if v0 > 3 then
-				st = s + params.ADD_FAST
-			end
-			if v0<=0 then
-				st = s + params.ADD_STAND
-			end
-			
-			local i = advtrains.path_get_index_by_offset(train, it.idx, -st)
-			
-			--train.debug = dump({v0f=v0*f, aff=a*f*f,v0=v0, v1=v1, f=f, a=a, s=s, st=st, i=i, idx=train.index})
-			if i <= train.index then
-				-- Gotcha! Braking...
-				train.ctrl.lzb = 1
-				--train.debug = train.debug .. "BRAKE!!!"
-				return
-			end
-			
-			i = advtrains.path_get_index_by_offset(train, i, -params.ZONE_ROLL)
-			if i <= train.index and v0>1 then
-				-- roll control
-				train.ctrl.lzb = 2
-				return
-			end
-			i = advtrains.path_get_index_by_offset(train, i, -params.ZONE_HOLD)
-			if i <= train.index and v0>1 then
-				-- hold speed
-				train.ctrl.lzb = 3
-				return
-			end
-		end
-	end
-	train.ctrl.lzb = nil
-end
-
-local function invalidate(train)
+-- Removes all LZB checkpoints and restarts the traverser at the current train index
+function advtrains.lzb_invalidate(train)
 	train.lzb = {
-		trav = atround(train.index),
-		data = {},
-		oncoming = {},
+		trav_index = atround(train.index),
+		trav_lzbdata = {},
+		checkpoints = {},
 	}
 end
 
-function advtrains.lzb_invalidate(train)
-	invalidate(train)
+-- LZB part of path_invalidate_ahead. Clears all checkpoints that are ahead of start_idx
+-- in contrast to path_inv_ahead, doesn't complain if start_idx is behind train.index, clears everything then
+function advtrains.lzb_invalidate_ahead(train, start_idx)
+	if train.lzb then
+		local idx = atfloor(start_idx)
+		local i = 1
+		while train.lzb.checkpoints[i] do
+			if train.lzb.checkpoints[i].idx >= idx then
+				table.remove(train.lzb.checkpoints, i)
+			else
+				i=i+1
+			end
+		end
+		-- re-apply all checkpoints to path_speed
+		train.path_speed = {}
+		for _,ckp in train.lzb.checkpoints do
+			apply_checkpoint_to_path(train, ckp)
+		end
+	end
 end
 
 -- Add LZB control point
--- udata: User-defined additional data
-function advtrains.lzb_add_checkpoint(train, index, speed, callback, udata)
+-- lzbdata: If you modify lzbdata in an approach callback, you MUST add a checkpoint AND pass the (modified) lzbdata into it.
+-- If you DON'T modify lzbdata, you MUST pass nil as lzbdata. Always modify the lzbdata table in place, never overwrite it!
+function advtrains.lzb_add_checkpoint(train, index, speed, callback, lzbdata)
 	local lzb = train.lzb
 	local pos = advtrains.path_get(train, index)
-	table.insert(lzb.oncoming, {
+	local lzbdata_c = nil
+	if lzbdata then
+		-- make a shallow copy of lzbdata
+		lzbdata_c = {}
+		for k,v in pairs(lzbdata) do lzbdata_c[k] = v end
+	end
+	local ckp = {
 		pos = pos,
-		idx = index,
-		spd = speed,
-		fun = callback,
-		udata = udata,
-	})
+		index = index,
+		speed = speed,
+		callback = callback,
+		lzbdata = lzbdata_c,
+	}
+	table.insert(lzb.checkpoints, ckp)
+	
+	apply_checkpoint_to_path(train, ckp)
 end
 
 
 advtrains.te_register_on_new_path(function(id, train)
-	invalidate(train)
+	advtrains.lzb_invalidate(train)
 	look_ahead(id, train)
+end)
+
+advtrains.te_register_on_invalidate_ahead(function(id, train)
+	advtrains.lzb_invalidate_ahead(train, start_idx)
 end)
 
 advtrains.te_register_on_update(function(id, train)
@@ -187,5 +212,5 @@ advtrains.te_register_on_update(function(id, train)
 		return
 	end
 	look_ahead(id, train)
-	apply_control(id, train)
+	--apply_control(id, train)
 end, true)

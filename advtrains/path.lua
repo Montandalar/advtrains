@@ -19,6 +19,8 @@
 --     When the day comes on that path!=node, these will only be set if this index represents a transition between rail nodes
 -- path_dist - The total distance of this path element from path element 0
 -- path_dir  - The direction of this path item's transition to the next path item, which is the angle of conns[path_cn[i]].c
+-- path_speed- Populated by the LZB system. The maximum speed (velocity) permitted in the moment this path item is passed.
+--             (this saves brake distance calculations every step to determine LZB control). nil means no limit.
 --Variables:
 -- path_ext_f/b - how far path[i] is set
 -- path_trk_f/b - how far the path extends along a track. beyond those values, paths are generated in a straight line.
@@ -51,6 +53,8 @@ function advtrains.path_create(train, pos, connid, rel_index)
 	train.path_dir = {
 		[0] = advtrains.conn_angle_median(conns[mconnid].c, conns[connid].c)
 	}
+	
+	train.path_speed = { }
 	
 	train.path_ext_f=0
 	train.path_ext_b=0
@@ -123,6 +127,7 @@ function advtrains.path_invalidate(train, ignore_lock)
 	train.path_cp = nil
 	train.path_cn = nil
 	train.path_dir = nil
+	train.path_speed = nil
 	train.path_ext_f=0
 	train.path_ext_b=0
 	train.path_trk_f=0
@@ -131,6 +136,28 @@ function advtrains.path_invalidate(train, ignore_lock)
 	train.path_req_b=0
 	
 	train.dirty = true
+	--atdebug(train.id, "Path invalidated")
+end
+
+-- Keeps the path intact, but invalidates all path nodes from the specified index (inclusive)
+-- onwards. This has the advantage that we don't need to recalculate the whole path, and we can do it synchronously.
+function advtrains.path_invalidate_ahead(train, start_idx)
+
+	local idx = atfloor(start_idx)
+	
+	if(idx <= train.index) then
+		advtrains.path_print(train, atwarn)
+		error("Train "+train.id+": Cannot path_invalidate_ahead start_idx="+idx+" as train has already passed!")
+	end
+	
+	local i = idx
+	while train.path[i] do
+		advtrains.occ.clear_item(train.id, advtrains.round_vector_floor_y(train.path[i]))
+	end
+	train.path_ext_f=idx - 1
+	train.path_trk_f=idx - 1
+	
+	advtrains.run_callbacks_invahead(train.id, train, idx)
 end
 
 -- Prints a path using the passed print function
@@ -141,12 +168,12 @@ function advtrains.path_print(train, printf)
 		printf("path_print: Path is invalidated/inexistant.")
 		return
 	end
-	printf("i:	CP	Position	Dir	CN		Dist")
+	printf("i:	CP	Position	Dir				CN		Dist		Speed")
 	for i = train.path_ext_b, train.path_ext_f do
 		if i==train.path_trk_b then
 			printf("--Back on-track border here--")
 		end
-		printf(i,":	",train.path_cp[i],"	",train.path[i],"	",train.path_dir[i],"	",train.path_cn[i],"		",train.path_dist[i],"")
+		printf(i,":	",train.path_cp[i],"	",train.path[i],"	",train.path_dir[i],"	",train.path_cn[i],"		",train.path_dist[i],"		",train.path_speed[i])
 		if i==train.path_trk_f then
 			printf("--Front on-track border here--")		
 		end
@@ -350,6 +377,7 @@ function advtrains.path_clear_unused(train)
 		train.path_ext_b = i + 1
 	end
 	
+	--[[ Why exactly are we clearing path from the front? This doesn't make sense!
 	for i = train.path_ext_f,train.path_req_f + PATH_CLEAR_KEEP,-1 do
 		advtrains.occ.clear_item(train.id, advtrains.round_vector_floor_y(train.path[i]))
 		train.path[i] = nil
@@ -358,14 +386,16 @@ function advtrains.path_clear_unused(train)
 		train.path_cn[i] = nil
 		train.path_dir[i+1] = nil
 		train.path_ext_f = i - 1
-	end
+	end ]]
 	train.path_trk_b = math.max(train.path_trk_b, train.path_ext_b)
-	train.path_trk_f = math.min(train.path_trk_f, train.path_ext_f)
+	--train.path_trk_f = math.min(train.path_trk_f, train.path_ext_f)
 	
 	train.path_req_f = math.ceil(train.index)
 	train.path_req_b = math.floor(train.end_index or train.index)
 end
 
+-- Scan the path of the train for position, without querying the occupation table
+-- returns index, or nil if pos is not on the path
 function advtrains.path_lookup(train, pos)
 	local cp = advtrains.round_vector_floor_y(pos)
 	for i = train.path_ext_b, train.path_ext_f do

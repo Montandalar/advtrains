@@ -36,6 +36,7 @@ end
 local t_accel_all={
 	[0] = -10,
 	[1] = -3,
+	[11] = -2, -- calculation base for LZB
 	[2] = -0.5,
 	[4] = 0.5,
 }
@@ -43,9 +44,18 @@ local t_accel_all={
 local t_accel_eng={
 	[0] = 0,
 	[1] = 0,
+	[11] = 0,
 	[2] = 0,
 	[4] = 1.5,
 }
+
+local VLEVER_EMERG = 0
+local VLEVER_BRAKE = 1
+local VLEVER_LZBCALC = 11
+local VLEVER_ROLL = 2
+local VLEVER_HOLD = 3
+local VLEVER_ACCEL = 4
+
 
 tp_player_tmr = 0
 
@@ -190,6 +200,8 @@ end
 
 function advtrains.get_acceleration(train, lever)
 	local acc_all = t_accel_all[lever]
+	if not acc_all then return 0 end
+	
 	local acc_eng = t_accel_eng[lever]
 	local nwagons = #train.trainparts
 	if nwagons == 0 then
@@ -215,14 +227,16 @@ local function mkcallback(name)
 		assertt(func, "function")
 		table.insert(callt, func)
 	end
-	return callt, function(id, train)
+	return callt, function(id, train, param1, param2, param3)
 		for _,f in ipairs(callt) do
-			f(id, train)
+			f(id, train, param1, param2, param3)
 		end
 	end
 end
 
 local callbacks_new_path, run_callbacks_new_path = mkcallback("new_path")
+local callbacks_invahead
+callbacks_invahead, advtrains.run_callbacks_invahead = mkcallback("invalidate_ahead") -- (id, train, start_idx)
 local callbacks_update, run_callbacks_update = mkcallback("update")
 local callbacks_create, run_callbacks_create = mkcallback("create")
 local callbacks_remove, run_callbacks_remove = mkcallback("remove")
@@ -304,6 +318,10 @@ function advtrains.train_ensure_init(id, train)
 	return true
 end
 
+local function v_target_apply(v_targets, lever, vel)
+	v_targets[lever] = v_targets[lever] and math.min(v_targets[lever], vel) or vel
+end
+
 function advtrains.train_step_b(id, train, dtime)
 	if train.no_step or train.wait_for_path or not train.path then return end
 	
@@ -311,18 +329,29 @@ function advtrains.train_step_b(id, train, dtime)
 	advtrains.path_get(train, atfloor(train.index + 2))
 	advtrains.path_get(train, atfloor(train.end_index - 1))
 	
+	--[[ again, new velocity control:
+	There are two heterogenous means of control:
+	-> set a fixed acceleration and ignore speed (user)
+	-> steer towards a target speed, distance doesn't matter
+		-> needs to specify the maximum acceleration/deceleration values they are willing to accelerate/brake with
+	-> Reach a target speed after a certain distance (LZB, handled specially)
+	
+	]]--
+	
 	--- 3. handle velocity influences ---
+	-- Variables for "desired velocities" of various parts of the code
+	local v_targets = {} --Table keys: VLEVER_*
+	
 	local train_moves=(train.velocity~=0)
-	local tarvel_cap = train.speed_restriction
 	
 	if train.recently_collided_with_env then
-		tarvel_cap=0
 		if not train_moves then
 			train.recently_collided_with_env=nil--reset status when stopped
 		end
+		v_target_apply(v_targets, VLEVER_EMERG, 0)
 	end
 	if train.locomotives_in_train==0 then
-		tarvel_cap=0
+		v_target_apply(v_targets, VLEVER_ROLL, 0)
 	end
 	
 	--- 3a. this can be useful for debugs/warnings and is used for check_trainpartload ---
@@ -337,27 +366,17 @@ function advtrains.train_step_b(id, train, dtime)
 	local back_off_track=train.end_index<train.path_trk_b
 	train.off_track = front_off_track or back_off_track
 	
-	if front_off_track then
-		tarvel_cap=0
-	end
-	if back_off_track then -- eventually overrides front_off_track restriction
-		tarvel_cap=1
+	if back_off_track then
+		v_target_apply(v_targets, VLEVER_EMERG, 1)
+	else
+		if front_off_track then
+			v_target_apply(v_targets, VLEVER_EMERG, 0)
+		end
 	end
 	
-	-- Driving control rework:
-	--[[
-	Items are only defined when something is controlling them.
-	In order of precedence.
-	train.ctrl = {
-		lzb  = restrictive override from LZB
-		user = User input from driverstand
-		atc  = ATC command override (determined here)
-	}
-	The code here determines the precedence and writes the final control into train.lever
-	]]
 	
 	--interpret ATC command and apply auto-lever control when not actively controlled
-	local trainvelocity = train.velocity
+	local v0 = train.velocity
 	
 	if train.ctrl.user then
 		advtrains.atc.train_reset_command(train)
@@ -368,7 +387,7 @@ function advtrains.train_step_b(id, train, dtime)
 			braketar = 0
 			emerg = true
 		end
-		if braketar and braketar>=trainvelocity then
+		if braketar and braketar>=v0 then
 			train.atc_brake_target=nil
 			braketar = nil
 		end
@@ -391,86 +410,95 @@ function advtrains.train_step_b(id, train, dtime)
 		end
 		
 		train.ctrl.atc = nil
-		if train.tarvelocity and train.tarvelocity>trainvelocity then
-			train.ctrl.atc=4
+		if train.tarvelocity and train.tarvelocity>v0 then
+			v_target_apply(v_targets, VLEVER_ACCEL, train.tarvelocity)
 		end
-		if train.tarvelocity and train.tarvelocity<trainvelocity then
-			if (braketar and braketar<trainvelocity) then
+		if train.tarvelocity and train.tarvelocity<v0 then
+			if (braketar and braketar<v0) then
 				if emerg then
-					train.ctrl.atc = 0
+					v_target_apply(v_targets, VLEVER_EMERG, 0)
 				else
-					train.ctrl.atc=1
+					v_target_apply(v_targets, VLEVER_EMERG, braketar)
 				end
 			else
-				train.ctrl.atc=2
+				v_target_apply(v_targets, VLEVER_BRAKE, braketar)
 			end
 		end
 	end
 	
-	--if tarvel_cap and train.tarvelocity and tarvel_cap<train.tarvelocity then
-	--	train.tarvelocity=tarvel_cap
-	--end
-	
-	local tmp_lever
-	
-	for _, lev in pairs(train.ctrl) do
-		-- use the most restrictive of all control overrides
-		tmp_lever = math.min(tmp_lever or 4, lev)
+	--- 2b. look at v_target, determine the effective v_target and desired acceleration ---
+	local tv_target, tv_lever
+	for _,lever in ipairs({VLEVER_EMERG, VLEVER_BRAKE, VLEVER_ROLL, VLEVER_ACCEL}) do
+		if v_targets[lever] then
+			tv_target = v_targets[lever]
+			tv_lever = lever
+			break
+		end
+	end
+	--- 2c. If no tv_lever set, honor the user control ---
+	local a_lever = tv_lever
+	if not tv_lever then
+		a_lever = train.ctrl.user
+		if not a_lever then
+			-- default to holding current speed
+			a_lever = VLEVER_HOLD
+		end
 	end
 	
-	if not tmp_lever then
-		-- if there was no control at all, default to 3
-		tmp_lever = 3
-	end
+	train.lever = a_lever
 	
-	if tarvel_cap and trainvelocity>tarvel_cap then
-		tmp_lever = 0
-	end
-	
-	train.lever = tmp_lever
-	
-	--- 3a. actually calculate new velocity ---
-	if tmp_lever~=3 then
-		local accel = advtrains.get_acceleration(train, tmp_lever)
-		local vdiff = accel*dtime
-		
-		-- This should only be executed when we are accelerating
-		-- I suspect that this causes the braking bugs
-		if tmp_lever == 4 then
-		
-			-- ATC control exception: don't cross tarvelocity if
-			-- atc provided a target_vel
-			if train.tarvelocity then
-				local tvdiff = train.tarvelocity - trainvelocity
-				if tvdiff~=0 and math.abs(vdiff) > math.abs(tvdiff) then
-					--applying this change would cross tarvelocity
-					--atdebug("In Tvdiff condition, clipping",vdiff,"to",tvdiff)
-					--atdebug("vel=",trainvelocity,"tvel=",train.tarvelocity)
-					vdiff=tvdiff
-				end
+	--- 3a. calculate the acceleration required to reach the speed restriction in path_speed (LZB) ---
+	-- Iterates over the path nodes we WOULD pass if we were continuing with the speed assumed by actual_lever
+	-- and determines the MINIMUM of path_speed in this range.
+	-- Then, determines acceleration so that we can reach this 'overridden' target speed in this step (but short-circuited)
+	if not a_lever or a_lever > VLEVER_BRAKE then
+		-- only needs to run if we're not yet braking anyway
+		local tv_vdiff = advtrains.get_acceleration(train, tv_lever) * dtime
+		local dst_curr_v = (v0 + tv_vdiff) * dtime
+		local nindex_curr_v = advtrains.path_get_index_by_offset(train, train.index, dst_curr_v)
+		local i = atfloor(train.index)
+		local lzb_target
+		local psp
+		while true do
+			psp = train.path_speed[i]
+			if psp then
+				lzb_target = lzb_target and math.min(lzb_target, psp) or psp
 			end
-			if tarvel_cap and trainvelocity<=tarvel_cap and trainvelocity+vdiff>tarvel_cap then
-				vdiff = tarvel_cap - train.velocity
+			if i > nindex_curr_v then
+				break
 			end
-			local mspeed = (train.max_speed or 10)
-			if trainvelocity+vdiff > mspeed then
-				vdiff = mspeed - trainvelocity
-			end
+			i = i + 1
 		end
 		
-		if trainvelocity+vdiff < 0 then
-			vdiff = - trainvelocity
+		local dv
+		if lzb_target and lzb_target <= v0 then
+			-- apply to tv_target after the actual calculation happened
+			a_lever = VLEVER_BRAKE
+			tv_target = tv_target and math.min(tv_target, lzb_target) or lzb_target
 		end
-
-
-		train.acceleration=vdiff
-		train.velocity=train.velocity+vdiff
-		--if train.ctrl.user then
-		--	train.tarvelocity = train.velocity
-		--end
+	end
+	
+	--- 3b. now that we know tv_target and a_lever, calculate effective new v and change it on train
+	
+	local dv = advtrains.get_acceleration(train, a_lever) * dtime
+	local v1
+	local tv_effective = false
+	if tv_target and (math.abs(dv) > math.abs(tv_target - v0)) then
+		v1 = tv_target
+		tv_effective = true
 	else
-		train.acceleration = 0
+		v1 = v0 +dv
 	end
+	
+	if v1 > train.max_speed then
+		v1 = train.max_speed
+	end
+	if v1 < 0 then
+		v1 = 0
+	end
+	
+	train.acceleration = v1 - v0
+	train.velocity = v1
 	
 	--- 4. move train ---
 	
@@ -479,7 +507,10 @@ function advtrains.train_step_b(id, train, dtime)
 	local distance = (train.velocity*dtime) / pdist
 	
 	--debugging code
-	--train.debug = atdump(train.ctrl).."step_dist: "..math.floor(distance*1000)
+	--local debutg = advtrains.print_concat_table({"v0=",v0,"v1=",v1,"a_lever",a_lever,"tv_target",tv_target,"tv_eff",tv_effective})
+	--train.debug = debutg
+	
+	if advtrains.DFLAG and v1>0 then error("DFLAG") end
 	
 	train.index=train.index+distance
 	
