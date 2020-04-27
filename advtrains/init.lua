@@ -61,26 +61,6 @@ local function reload_saves()
 	end)
 end
 
-function advtrains.pcall(fun)
-	if no_action then return end
-	
-	local succ, return1, return2, return3, return4=xpcall(fun, function(err)
-			atwarn("Lua Error occured: ", err)
-			atwarn(debug.traceback())
-			if advtrains.atprint_context_tid then
-				advtrains.path_print(advtrains.trains[advtrains.atprint_context_tid], atdebug)
-				atwarn(advtrains.trains[advtrains.atprint_context_tid].debug)
-			end
-		end)
-	if not succ then
-		error("pcall")
-		reload_saves()
-	else
-		return return1, return2, return3, return4
-	end
-end
-
-
 advtrains.modpath = minetest.get_modpath("advtrains")
 
 --Advtrains dump (special treatment of pos and sigd)
@@ -569,7 +549,11 @@ advtrains.mainloop_runcnt=0
 
 local t = 0
 minetest.register_globalstep(function(dtime_mt)
-	return advtrains.pcall(function()
+		if no_action then
+			-- the advtrains globalstep is skipped by command. Return immediately
+			return
+		end
+
 		advtrains.mainloop_runcnt=advtrains.mainloop_runcnt+1
 		--atprint("Running the main loop, runcnt",advtrains.mainloop_runcnt)
 		--call load once. see advtrains.load() comment
@@ -615,7 +599,6 @@ minetest.register_globalstep(function(dtime_mt)
 			save_timer=save_interval
 			atprintbm("saving", t)
 		end
-	end)
 end)
 
 --if something goes wrong in these functions, there is no help. no pcall here.
@@ -644,6 +627,11 @@ function advtrains.save(remove_players_from_wagons)
 		atwarn("Instructed to save() but load() was never called!")
 		return
 	end
+	if no_action then
+		atlog("[save] Saving requested externally, but Advtrains step is disabled. Not saving any data as state may be inconsistent.")
+		return
+	end
+	
 	advtrains.avt_save(remove_players_from_wagons) --saving advtrains. includes ndb at advtrains.ndb.save_data()
 	if atlatc then
 		atlatc.save()
@@ -664,11 +652,9 @@ minetest.register_chatcommand("at_empty_seats",
         description = "Detach all players, especially the offline ones, from all trains. Use only when no one serious is on a train.", -- Full description
         privs = {train_operator=true, server=true}, -- Require the "privs" privilege to run
         func = function(name, param)
-			return advtrains.pcall(function()
 				atwarn("Data is being saved. While saving, advtrains will remove the players from trains. Save files will be reloaded afterwards!")
 				advtrains.save(true)
 				reload_saves()
-			end)
         end,
 })
 -- This chat command solves another problem: Trains getting randomly stuck.
@@ -678,12 +664,35 @@ minetest.register_chatcommand("at_reroute",
         description = "Delete all train routes, force them to recalculate", 
         privs = {train_operator=true}, -- Only train operator is required, since this is relatively safe.
         func = function(name, param)
-			return advtrains.pcall(function()
 				advtrains.invalidate_all_paths()
 				return true, "Successfully invalidated train routes"
-			end)
         end,
 })
+
+minetest.register_chatcommand("at_disable_step",
+	{
+        params = "<yes/no>", 
+        description = "Disable the advtrains globalstep temporarily", 
+        privs = {server=true},
+        func = function(name, param)
+			if minetest.is_yes(param) then
+				-- disable everything, and turn off saving
+				no_action = true;
+				atwarn("The advtrains globalstep has been disabled. Trains are not moving, and no data is saved! Run '/at_disable_step no' to enable again!")
+				return true, "Disabled advtrains successfully"
+			elseif no_action then
+				atwarn("Re-enabling advtrains globalstep...")
+				reload_saves()
+				return true
+			else
+				return false, "Advtrains is already running normally!"
+			end
+        end,
+})
+
+advtrains.is_no_action = function()
+	return no_action
+end
 
 
 local tot=(os.clock()-lot)*1000

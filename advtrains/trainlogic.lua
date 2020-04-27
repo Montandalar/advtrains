@@ -127,7 +127,6 @@ function advtrains.tp_player_to_train(player)
 	end
 end
 minetest.register_on_joinplayer(function(player)
-	return advtrains.pcall(function()
 		advtrains.hud[player:get_player_name()] = nil
 		advtrains.hhud[player:get_player_name()] = nil
 		--independent of this, cause all wagons of the train which are loaded to reattach their players
@@ -137,12 +136,10 @@ minetest.register_on_joinplayer(function(player)
 				wagon:reattach_all()
 			end
 		end
-	end)
 end)
 
 
 minetest.register_on_dieplayer(function(player)
-	return advtrains.pcall(function()
 		local pname=player:get_player_name()
 		local id=advtrains.player_to_train_mapping[pname]
 		if id then
@@ -156,7 +153,6 @@ minetest.register_on_dieplayer(function(player)
 				end
 			end
 		end
-	end)
 end)
 
 --[[
@@ -421,7 +417,7 @@ function advtrains.train_step_b(id, train, dtime)
 					v_target_apply(v_targets, VLEVER_EMERG, braketar)
 				end
 			else
-				v_target_apply(v_targets, VLEVER_BRAKE, braketar)
+				v_target_apply(v_targets, VLEVER_ROLL, braketar)
 			end
 		end
 	end

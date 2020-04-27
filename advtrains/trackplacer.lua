@@ -275,8 +275,7 @@ function tp.register_track_placer(nnprefix, imgprefix, dispname, def)
 		groups={advtrains_trackplacer=1, digtron_on_place=1},
 		liquids_pointable = def.liquids_pointable,
 		on_place = function(itemstack, placer, pointed_thing)
-			return advtrains.pcall(function()
-					local name = placer:get_player_name()
+				local name = placer:get_player_name()
 				if not name then
 				   return itemstack, false
 				end
@@ -303,7 +302,6 @@ function tp.register_track_placer(nnprefix, imgprefix, dispname, def)
 					end
 				end
 				return itemstack, true
-			end)
 		end,
 	})
 end
@@ -317,7 +315,6 @@ minetest.register_craftitem("advtrains:trackworker",{
 	wield_image = "advtrains_trackworker.png",
 	stack_max = 1,
 	on_place = function(itemstack, placer, pointed_thing)
-		return advtrains.pcall(function()
 			local name = placer:get_player_name()
 			if not name then
 				return
@@ -382,10 +379,8 @@ minetest.register_craftitem("advtrains:trackworker",{
 					advtrains.ndb.swap_node(pos, {name=nnprefix.."_"..suffix..modext[modpos+1], param2=node.param2})
 				end
 			end
-		end)
 	end,
 	on_use=function(itemstack, user, pointed_thing)
-		return advtrains.pcall(function()
 				local name = user:get_player_name()
 			if not name then
 			   return
@@ -430,7 +425,6 @@ minetest.register_craftitem("advtrains:trackworker",{
 			else
 				atprint(name, dump(tp.tracks))
 			end
-		end)
 	end,
 })
 

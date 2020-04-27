@@ -13,76 +13,74 @@ minetest.register_tool("advtrains:copytool", {
 	-- The front of the train is used as the start of the new train and it proceeds backwards from
 	-- the direction of travel.
 	on_place = function(itemstack, placer, pointed_thing)
-			return advtrains.pcall(function()
-				if ((not pointed_thing.type == "node") or (not placer.get_player_name)) then
-					return
-				end
-				local pname = placer:get_player_name()
-
-				local node=minetest.get_node_or_nil(pointed_thing.under)
-				if not node then atprint("[advtrains]Ignore at placer position") return itemstack end
-				local nodename=node.name
-				if(not advtrains.is_track_and_drives_on(nodename, {default=true})) then
-					atprint("no track here, not placing.")
-					return itemstack
-				end
-				if not minetest.check_player_privs(placer, {train_operator = true }) then
-					minetest.chat_send_player(pname, "You don't have the train_operator privilege.")
-					return itemstack
-				end
-				if not minetest.check_player_privs(placer, {train_admin = true }) and minetest.is_protected(pointed_thing.under, placer:get_player_name()) then
-					return itemstack
-				end
-				local tconns=advtrains.get_track_connections(node.name, node.param2)
-				local yaw = placer:get_look_horizontal()
-				local plconnid = advtrains.yawToClosestConn(yaw, tconns)
-
-				local prevpos = advtrains.get_adjacent_rail(pointed_thing.under, tconns, plconnid, {default=true})
-				if not prevpos then
-					minetest.chat_send_player(pname, "The track you are trying to place the wagon on is not long enough!")
-					return
-				end
-
-				local meta = itemstack:get_meta()
-				if not meta then
-					minetest.chat_send_player(pname, attrans("The clipboard couldn't access the metadata. Paste failed."))
+			if ((not pointed_thing.type == "node") or (not placer.get_player_name)) then
 				return
-				end
-				local clipboard = meta:get_string("clipboard")
-				if (clipboard == "") then
-					minetest.chat_send_player(pname, "The clipboard is empty.");
-					return
-				end
-				clipboard = minetest.deserialize(clipboard)
-				if (clipboard.wagons == nil) then
-					minetest.chat_send_player(pname, "The clipboard is empty.");
-					return
-				end
+			end
+			local pname = placer:get_player_name()
 
-				local wagons = {}
-				local n = 1
-				for _, wagonProto in pairs(clipboard.wagons) do
-					local wagon = advtrains.create_wagon(wagonProto.type, pname)
-					advtrains.wagons[wagon].wagon_flipped = wagonProto.wagon_flipped
-					wagons[n] = wagon
-					n = n + 1
-				end
+			local node=minetest.get_node_or_nil(pointed_thing.under)
+			if not node then atprint("[advtrains]Ignore at placer position") return itemstack end
+			local nodename=node.name
+			if(not advtrains.is_track_and_drives_on(nodename, {default=true})) then
+				atprint("no track here, not placing.")
+				return itemstack
+			end
+			if not minetest.check_player_privs(placer, {train_operator = true }) then
+				minetest.chat_send_player(pname, "You don't have the train_operator privilege.")
+				return itemstack
+			end
+			if not minetest.check_player_privs(placer, {train_admin = true }) and minetest.is_protected(pointed_thing.under, placer:get_player_name()) then
+				return itemstack
+			end
+			local tconns=advtrains.get_track_connections(node.name, node.param2)
+			local yaw = placer:get_look_horizontal()
+			local plconnid = advtrains.yawToClosestConn(yaw, tconns)
 
-				local id=advtrains.create_new_train_at(pointed_thing.under, plconnid, 0, wagons)
-				local train = advtrains.trains[id]
-				train.off_track = train.end_index<train.path_trk_b
-				if (train.off_track) then
-					minetest.chat_send_player(pname, "Back of train would end up off track, cancelling.")
-					advtrains.remove_train(id)
-					return
-				end
-				train.text_outside = clipboard.text_outside
-				train.text_inside = clipboard.text_inside
-				train.routingcode = clipboard.routingcode
-				train.line = clipboard.line
-
+			local prevpos = advtrains.get_adjacent_rail(pointed_thing.under, tconns, plconnid, {default=true})
+			if not prevpos then
+				minetest.chat_send_player(pname, "The track you are trying to place the wagon on is not long enough!")
 				return
-			end)
+			end
+
+			local meta = itemstack:get_meta()
+			if not meta then
+				minetest.chat_send_player(pname, attrans("The clipboard couldn't access the metadata. Paste failed."))
+			return
+			end
+			local clipboard = meta:get_string("clipboard")
+			if (clipboard == "") then
+				minetest.chat_send_player(pname, "The clipboard is empty.");
+				return
+			end
+			clipboard = minetest.deserialize(clipboard)
+			if (clipboard.wagons == nil) then
+				minetest.chat_send_player(pname, "The clipboard is empty.");
+				return
+			end
+
+			local wagons = {}
+			local n = 1
+			for _, wagonProto in pairs(clipboard.wagons) do
+				local wagon = advtrains.create_wagon(wagonProto.type, pname)
+				advtrains.wagons[wagon].wagon_flipped = wagonProto.wagon_flipped
+				wagons[n] = wagon
+				n = n + 1
+			end
+
+			local id=advtrains.create_new_train_at(pointed_thing.under, plconnid, 0, wagons)
+			local train = advtrains.trains[id]
+			train.off_track = train.end_index<train.path_trk_b
+			if (train.off_track) then
+				minetest.chat_send_player(pname, "Back of train would end up off track, cancelling.")
+				advtrains.remove_train(id)
+				return
+			end
+			train.text_outside = clipboard.text_outside
+			train.text_inside = clipboard.text_inside
+			train.routingcode = clipboard.routingcode
+			train.line = clipboard.line
+
+			return
 		end,
 	-- Copy: Take the pointed-at train and put it on the clipboard
 	on_use = function(itemstack, user, pointed_thing)

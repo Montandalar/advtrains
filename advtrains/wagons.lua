@@ -166,7 +166,6 @@ end
 
 -- Remove the wagon
 function wagon:on_punch(puncher, time_from_last_punch, tool_capabilities, direction)
-	return advtrains.pcall(function()
 		if not self:ensure_init() then return end
 		
 		local data = advtrains.wagons[self.id]
@@ -223,7 +222,6 @@ function wagon:on_punch(puncher, time_from_last_punch, tool_capabilities, direct
 		for _,item in ipairs(self.drops or {self.name}) do
 			inv:add_item("main", item)
 		end
-	end)
 end
 function wagon:destroy()
 	--some rules:
@@ -268,8 +266,12 @@ function wagon:is_driver_stand(seat)
 end
 
 function wagon:on_step(dtime)
-	return advtrains.pcall(function()
 		if not self:ensure_init() then return end
+		
+		if advtrains.is_no_action() then
+			self.object:remove()
+			return
+		end
 		
 		local t=os.clock()
 		local pos = self.object:getpos()
@@ -595,11 +597,9 @@ function wagon:on_step(dtime)
 		self.old_acceleration_vector=accelerationvec
 		self.old_yaw=yaw
 		atprintbm("wagon step", t)
-	end)
 end
 
 function wagon:on_rightclick(clicker)
-	return advtrains.pcall(function()
 		if not self:ensure_init() then return end
 		if not clicker or not clicker:is_player() then
 			return
@@ -687,7 +687,6 @@ function wagon:on_rightclick(clicker)
 				self:show_get_on_form(pname)
 			end
 		end
-	end)
 end
 
 function wagon:get_on(clicker, seatno)
@@ -1101,7 +1100,6 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
-	return advtrains.pcall(function()
 		local uid=string.match(formname, "^advtrains_geton_(.+)$")
 		if uid then
 			for _,wagon in pairs(minetest.luaentities) do
@@ -1185,7 +1183,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				end
 			end
 		end
-	end)
 end)
 function wagon:seating_from_key_helper(pname, fields, no)
 	local data = advtrains.wagons[self.id]
@@ -1389,7 +1386,6 @@ function advtrains.register_wagon(sysname_p, prototype, desc, inv_img, nincreati
 		groups = { not_in_creative_inventory = nincreative and 1 or 0},
 		
 		on_place = function(itemstack, placer, pointed_thing)
-			return advtrains.pcall(function()
 				if not pointed_thing.type == "node" then
 					return
 				end
@@ -1427,8 +1423,6 @@ function advtrains.register_wagon(sysname_p, prototype, desc, inv_img, nincreati
 					itemstack:take_item()
 				end
 				return itemstack
-				
-			end)
 		end,
 	})
 end

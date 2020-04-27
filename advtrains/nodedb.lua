@@ -282,7 +282,6 @@ function advtrains.get_rail_info_at(pos, drives_on)
 end
 
 ndb.run_lbm = function(pos, node)
-	return advtrains.pcall(function()
 		local cid=ndbget(pos.x, pos.y, pos.z)
 		if cid then
 			--if in database, detect changes and apply.
@@ -310,7 +309,6 @@ ndb.run_lbm = function(pos, node)
 			ndb.update(pos, node)
 		end
 		return false
-	end)
 end
 
 
@@ -358,9 +356,7 @@ ndb.restore_all = function()
 end
     
 minetest.register_on_dignode(function(pos, oldnode, digger)
-	return advtrains.pcall(function()
 		ndb.clear(pos)
-	end)
 end)
 
 function ndb.get_nodes()
@@ -381,14 +377,12 @@ minetest.register_chatcommand("at_sync_ndb",
         description = "Write node db back to map and find ghost nodes", -- Full description
         privs = {train_operator=true}, 
         func = function(name, param)
-			return advtrains.pcall(function()
 				if os.time() < ptime+30 then
 					return false, "Please wait at least 30s from the previous execution of /at_restore_ndb!"
 				end
 				local text = ndb.restore_all()
 				ptime=os.time()
 				return true, text
-			end)
         end,
     })
 

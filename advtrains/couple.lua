@@ -32,7 +32,6 @@ minetest.register_entity("advtrains:discouple", {
 	end,
 	get_staticdata=function() return "DISCOUPLE" end,
 	on_punch=function(self, player)
-		return advtrains.pcall(function()
 			local pname = player:get_player_name()
 			if pname and pname~="" and self.wagon then
 				if advtrains.safe_decouple_wagon(self.wagon.id, pname) then
@@ -41,10 +40,8 @@ minetest.register_entity("advtrains:discouple", {
 					minetest.add_entity(self.object:getpos(), "advtrains:lockmarker")
 				end
 			end
-		end)
 	end,
 	on_step=function(self, dtime)
-		return advtrains.pcall(function()
 			if not self.wagon then
 				self.object:remove()
 				return
@@ -58,7 +55,6 @@ minetest.register_entity("advtrains:discouple", {
 				self.object:remove()
 				return
 			end
-		end)
 	end,
 })
 
@@ -79,7 +75,6 @@ minetest.register_entity("advtrains:couple", {
 	is_couple=true,
 	static_save = false,
 	on_activate=function(self, staticdata)
-		return advtrains.pcall(function()
 			if staticdata=="COUPLE" then
 				--couple entities have no right to exist further...
 				atprint("Couple loaded from staticdata, destroying")
@@ -87,11 +82,9 @@ minetest.register_entity("advtrains:couple", {
 				return
 			end
 			self.object:set_armor_groups({immmortal=1})
-		end)
 	end,
 	get_staticdata=function(self) return "COUPLE" end,
 	on_rightclick=function(self, clicker)
-		return advtrains.pcall(function()
 			if not self.train_id_1 or not self.train_id_2 then return end
 			
 			local pname=clicker
@@ -102,15 +95,12 @@ minetest.register_entity("advtrains:couple", {
 			else
 				lockmarker(self.object)
 			end
-		end)
 	end,
 	on_step=function(self, dtime)
-		return advtrains.pcall(function()
 			if advtrains.wagon_outside_range(self.object:getpos()) then
 				self.object:remove()
 				return
 			end
-			advtrains.atprint_context_tid=self.train_id_1
 
 			if not self.train_id_1 or not self.train_id_2 then atprint("Couple: train ids not set!") self.object:remove() return end
 			local train1=advtrains.trains[self.train_id_1]
@@ -161,8 +151,6 @@ minetest.register_entity("advtrains:couple", {
 			end
 			atprintbm("couple step", t)
 			advtrains.atprint_context_tid=nil
-
-		end)
 	end,
 })
 minetest.register_entity("advtrains:lockmarker", {
@@ -175,7 +163,6 @@ minetest.register_entity("advtrains:lockmarker", {
 	is_lockmarker=true,
 	static_save = false,
 	on_activate=function(self, staticdata)
-		return advtrains.pcall(function()
 			if staticdata=="COUPLE" then
 				--couple entities have no right to exist further...
 				atprint("Couple loaded from staticdata, destroying")
@@ -184,7 +171,6 @@ minetest.register_entity("advtrains:lockmarker", {
 			end
 			self.object:set_armor_groups({immmortal=1})
 			self.life=5
-		end)
 	end,
 	get_staticdata=function(self) return "COUPLE" end,
 	on_step=function(self, dtime)
