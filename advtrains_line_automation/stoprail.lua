@@ -169,7 +169,8 @@ local adefunc = function(def, preset, suffix, rotation)
 				show_stoprailform(pos, player)
 			end,
 			advtrains = {
-				on_train_approach = function(pos,train_id, train, index)
+				on_train_approach = function(pos,train_id, train, index, has_entered)
+					if has_entered then return end -- do not stop again!
 					if train.path_cn[index] == 1 then
 						local pe = advtrains.encode_pos(pos)
 						local stdata = advtrains.lines.stops[pe]
@@ -180,7 +181,7 @@ local adefunc = function(def, preset, suffix, rotation)
 								stdata.ars = {default=true}
 							end
 							if stdata.ars and (stdata.ars.default or advtrains.interlocking.ars_check_rule_match(stdata.ars, train) ) then
-								advtrains.lzb_add_checkpoint(train, index, 2, nil)
+								advtrains.lzb_add_checkpoint(train, index, 0, nil)
 								local stn = advtrains.lines.stations[stdata.stn]
 								local stnname = stn and stn.name or "Unknown Station"
 								train.text_inside = "Next Stop:\n"..stnname

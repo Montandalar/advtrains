@@ -986,10 +986,10 @@ function wagon:show_bordcom(pname)
 	
 	-- Interlocking functionality: If the interlocking module is loaded, you can set the signal aspect
 	-- from inside the train
-	if advtrains.interlocking and train.lzb and #train.lzb.oncoming > 0 then
+	if advtrains.interlocking and train.lzb and #train.lzb.checkpoints > 0 then
 		local i=1
-		while train.lzb.oncoming[i] do
-			local oci = train.lzb.oncoming[i] --TODO repair this
+		while train.lzb.checkpoints[i] do
+			local oci = train.lzb.checkpoints[i]
 			if oci.udata and oci.udata.signal_pos then
 				if advtrains.interlocking.db.get_sigd_for_signal(oci.udata.signal_pos) then
 					form = form .. "button[4.5,8;5,1;ilrs;Remote Routesetting]"

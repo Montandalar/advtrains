@@ -182,9 +182,11 @@ minetest.register_node(nodename, {
 		^- called when a train leaves the rail
 		
 		-- The following function is only in effect when interlocking is enabled:
-		on_train_approach = function(pos, train_id, train, index, lzbdata)
+		on_train_approach = function(pos, train_id, train, index, has_entered, lzbdata)
 		^- called when a train is approaching this position, called exactly once for every path recalculation (which can happen at any time)
 		^- This is called so that if the train would start braking now, it would come to halt about(wide approx) 5 nodes before the rail.
+		^- has_entered: when true, the train is already standing on this node with its front tip, and the enter callback has already been called.
+		   Possibly, some actions need not to be taken in this case. Only set if it's the very first node the train is standing on.
 		^- lzbdata should be ignored and nothing should be assigned to it
 	}
 })

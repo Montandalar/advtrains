@@ -19,32 +19,34 @@ local function get_over_function(speed, shunt)
 		if speed == 0 and minetest.settings:get_bool("at_il_force_lzb_halt") then
 			atwarn(id,"overrun LZB 0 restriction (red signal) ",pos)
 			-- Set train 1 index backward. Hope this does not lead to bugs...
-			train.index = index - 0.5
-			train.velocity = 0
-			train.ctrl.lzb = 0
-			minetest.after(0, advtrains.invalidate_path, id)
+			--train.index = index - 0.5
+			train.speed_restriction = 0
 		else
 			train.speed_restriction = speed
 			train.is_shunt = shunt
 		end
+		--atdebug("train drove over IP: speed=",speed,"shunt=",shunt)
 	end
 end
 
-advtrains.tnc_register_on_approach(function(pos, id, train, index, lzbdata)
+advtrains.tnc_register_on_approach(function(pos, id, train, index, has_entered, lzbdata)
 
 	--atdebug(id,"IL ApprC",pos,index,lzbdata)
 	--train.debug = advtrains.print_concat_table({train.is_shunt,"|",index,"|",lzbdata})
 
 	local pts = advtrains.roundfloorpts(pos)
 	local cn  = train.path_cn[index]
-	local travsht = lzbdata.travsht
+	local travsht = lzbdata.il_shunt
+	
+	local travspd = lzbdata.il_speed
 	
 	if travsht==nil then
-		travsht = train.is_shunt
+		-- lzbdata has reset
+		travspd = train.speed_restriction
+		travsht = train.is_shunt or false
 	end
 	
-	local travspd = lzbdata.travspd
-	local travwspd = lzbdata.travwspd
+	
 	
 	-- check for signal
 	local asp, spos = il.db.get_ip_signal_asp(pts, cn)
@@ -66,7 +68,7 @@ advtrains.tnc_register_on_approach(function(pos, id, train, index, lzbdata)
 	--atdebug("trav: ",pos, cn, asp, spos, "travsht=", lzb.travsht)
 	local lspd
 	if asp then
-		--atdebug(id,"IL Signal",spos,asp)
+		--atdebug(id,"IL Signal",spos, asp, lzbdata, "trainstate", train.speed_restriction, train.is_shunt)
 		local nspd = 0
 		--interpreting aspect and determining speed to proceed
 		if travsht then
@@ -95,26 +97,15 @@ advtrains.tnc_register_on_approach(function(pos, id, train, index, lzbdata)
 			end
 		end
 		
-		local nwspd = asp.info.w_speed
-		if nwspd then
-			if nwspd == -1 then
-				travwspd = nil
-			else
-				travwspd = nwspd
-			end
-		end
-		--atdebug("ns,wns,ts,wts", nspd, nwspd, travspd, travwspd)
+		--atdebug("ns,ts", nspd, travspd)
 		lspd = travspd
-		if travwspd and (not lspd or lspd>travwspd) then
-			lspd = travwspd
-		end
 		
 		local udata = {signal_pos = spos}
 		local callback = get_over_function(lspd, travsht)
-		lzbdata.travsht = travsht
-		lzbdata.travspd = travspd
-		lzbdata.travwspd = travwspd
-		advtrains.lzb_add_checkpoint(train, index, lspd, callback, lzbdata)
+		lzbdata.il_shunt = travsht
+		lzbdata.il_speed = travspd
+		--atdebug("new lzbdata",lzbdata)
+		advtrains.lzb_add_checkpoint(train, index, lspd, callback, lzbdata, udata)
 	end
 end)
 

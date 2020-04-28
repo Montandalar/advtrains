@@ -56,6 +56,13 @@ local VLEVER_ROLL = 2
 local VLEVER_HOLD = 3
 local VLEVER_ACCEL = 4
 
+-- How far in front of a whole index with LZB 0 restriction the train should come to a halt
+-- value must be between 0 and 0.5, exclusively
+local LZB_ZERO_APPROACH_DIST = 0.1
+-- Speed the train temporarily approaches the stop point with
+local LZB_ZERO_APPROACH_SPEED = 0.2
+
+
 
 tp_player_tmr = 0
 
@@ -256,7 +263,6 @@ function advtrains.train_ensure_init(id, train)
 	--assertdef(train, "tarvelocity", 0)
 	assertdef(train, "acceleration", 0)
 	assertdef(train, "id", id)
-	assertdef(train, "ctrl", {})
 	
 	
 	if not train.drives_on or not train.max_speed then
@@ -350,11 +356,9 @@ function advtrains.train_step_b(id, train, dtime)
 		v_target_apply(v_targets, VLEVER_ROLL, 0)
 	end
 	
-	--- 3a. this can be useful for debugs/warnings and is used for check_trainpartload ---
-	local t_info, train_pos=sid(id), advtrains.path_get(train, atfloor(train.index))
-	if train_pos then
-		t_info=t_info.." @"..minetest.pos_to_string(train_pos)
-		--atprint("train_pos:",train_pos)
+	-- interlocking speed restriction
+	if train.speed_restriction then
+		v_target_apply(v_targets, VLEVER_BRAKE, train.speed_restriction)
 	end
 	
 	--apply off-track handling:
@@ -374,7 +378,7 @@ function advtrains.train_step_b(id, train, dtime)
 	--interpret ATC command and apply auto-lever control when not actively controlled
 	local v0 = train.velocity
 	
-	if train.ctrl.user then
+	if train.ctrl_user then
 		advtrains.atc.train_reset_command(train)
 	else
 		local braketar = train.atc_brake_target
@@ -405,7 +409,6 @@ function advtrains.train_step_b(id, train, dtime)
 			train.atc_delay = nil
 		end
 		
-		train.ctrl.atc = nil
 		if train.tarvelocity and train.tarvelocity>v0 then
 			v_target_apply(v_targets, VLEVER_ACCEL, train.tarvelocity)
 		end
@@ -417,28 +420,47 @@ function advtrains.train_step_b(id, train, dtime)
 					v_target_apply(v_targets, VLEVER_EMERG, braketar)
 				end
 			else
-				v_target_apply(v_targets, VLEVER_ROLL, braketar)
+				v_target_apply(v_targets, VLEVER_ROLL, train.tarvelocity)
 			end
 		end
 	end
 	
+	local userc = train.ctrl_user
+	if userc then
+		v_target_apply(v_targets, userc, userc==VLEVER_ACCEL and train.max_speed or 0)
+	end
+	
 	--- 2b. look at v_target, determine the effective v_target and desired acceleration ---
 	local tv_target, tv_lever
-	for _,lever in ipairs({VLEVER_EMERG, VLEVER_BRAKE, VLEVER_ROLL, VLEVER_ACCEL}) do
-		if v_targets[lever] then
-			tv_target = v_targets[lever]
-			tv_lever = lever
-			break
+	
+	if v_targets[VLEVER_ACCEL] then
+		if v_targets[VLEVER_ACCEL] > v0 then
+			tv_target = v_targets[VLEVER_ACCEL]
+			tv_lever = VLEVER_ACCEL
 		end
 	end
+	for _,lever in ipairs({VLEVER_ROLL, VLEVER_BRAKE, VLEVER_EMERG}) do
+		if v_targets[lever] then
+			if v_targets[lever] <= v0 then
+				if not tv_target then
+					tv_target = v_targets[lever]
+				else
+					tv_target = math.min(v_targets[lever], tv_target)
+				end
+			end
+			if v_targets[lever] < v0 then
+				tv_lever = lever
+			end
+		end
+	end
+	
+	--train.debug = dump({tv_target,tv_lever})
+	
 	--- 2c. If no tv_lever set, honor the user control ---
 	local a_lever = tv_lever
 	if not tv_lever then
-		a_lever = train.ctrl.user
-		if not a_lever then
-			-- default to holding current speed
-			a_lever = VLEVER_HOLD
-		end
+		-- default to holding current speed
+		a_lever = VLEVER_HOLD
 	end
 	
 	train.lever = a_lever
@@ -447,11 +469,15 @@ function advtrains.train_step_b(id, train, dtime)
 	-- Iterates over the path nodes we WOULD pass if we were continuing with the speed assumed by actual_lever
 	-- and determines the MINIMUM of path_speed in this range.
 	-- Then, determines acceleration so that we can reach this 'overridden' target speed in this step (but short-circuited)
+	local lzb_zeroappr_target_index
+	local new_index_v_base -- which v was assumed when curr_tv was calculated
+	local new_index_curr_tv -- pre-calculated new train index in lzb check
+	
 	if not a_lever or a_lever > VLEVER_BRAKE then
 		-- only needs to run if we're not yet braking anyway
-		local tv_vdiff = advtrains.get_acceleration(train, tv_lever) * dtime
-		local dst_curr_v = (v0 + tv_vdiff) * dtime
-		local nindex_curr_v = advtrains.path_get_index_by_offset(train, train.index, dst_curr_v)
+		new_index_v_base = v0 + (advtrains.get_acceleration(train, tv_lever) * dtime)
+		local dst_curr_v = new_index_v_base * dtime
+		new_index_curr_tv = advtrains.path_get_index_by_offset(train, train.index, dst_curr_v)
 		local i = atfloor(train.index)
 		local lzb_target
 		local psp
@@ -460,17 +486,44 @@ function advtrains.train_step_b(id, train, dtime)
 			if psp then
 				lzb_target = lzb_target and math.min(lzb_target, psp) or psp
 			end
-			if i > nindex_curr_v then
+			if i > new_index_curr_tv then
 				break
 			end
 			i = i + 1
 		end
 		
-		local dv
+		--train.debug = "newindex calc "..new_index_curr_tv.." basev="..new_index_v_base.." lzbtarget="..(lzb_target or "nil")
+		
 		if lzb_target and lzb_target <= v0 then
 			-- apply to tv_target after the actual calculation happened
 			a_lever = VLEVER_BRAKE
-			tv_target = tv_target and math.min(tv_target, lzb_target) or lzb_target
+			if tv_target and tv_target > lzb_target then
+				if lzb_target < LZB_ZERO_APPROACH_SPEED then
+					--atdebug("hit zeroappr lzb=",lzb_target, "tv=", tv_target)
+					--go forward with LZB_ZERO_APPROACH_SPEED if tv_target didn't tell us otherwise
+					tv_target = LZB_ZERO_APPROACH_SPEED
+					-- find the zero index we're approaching
+					local lzb_zeroappr_target_index = math.ceil(train.index)
+					while train.path_speed[lzb_zeroappr_target_index] and train.path_speed[lzb_zeroappr_target_index] > 0 do
+						lzb_zeroappr_target_index = lzb_zeroappr_target_index + 1
+						--atdebug("zeroappr advancing ",lzb_zeroappr_target_index)
+					end
+					-- it should now point to an index with path_speed==0. In case of weird things, points to some far away index, so doesn't matter
+					lzb_zeroappr_target_index = lzb_zeroappr_target_index - LZB_ZERO_APPROACH_DIST
+					--atdebug("zeroappr target idx ",lzb_zeroappr_target_index)
+					-- don't do anything when we are already at this index, and stop
+					if train.index >= lzb_zeroappr_target_index then
+						tv_target = 0
+						a_lever = VLEVER_BRAKE
+						lzb_zeroappr_target_index = nil
+						--atdebug("zeroappr cancelling train has passed idx=",train.index, "za_idx=",lzb_zeroappr_target_index)
+					end
+				else
+					tv_target = lzb_target
+				end
+			end
+			
+			
 		end
 	end
 	
@@ -480,11 +533,13 @@ function advtrains.train_step_b(id, train, dtime)
 	local v1
 	local tv_effective = false
 	if tv_target and (math.abs(dv) > math.abs(tv_target - v0)) then
+		--atdebug("hit tv_target ",tv_target,"with v=",v0, "dv=",dv)
 		v1 = tv_target
 		tv_effective = true
 	else
 		v1 = v0 +dv
 	end
+	--train.debug = "tv_target="..(tv_target or "nil").." v0="..v0.." v1="..v1
 	
 	if v1 > train.max_speed then
 		v1 = train.max_speed
@@ -493,22 +548,23 @@ function advtrains.train_step_b(id, train, dtime)
 		v1 = 0
 	end
 	
-	train.acceleration = v1 - v0
+	train.acceleration = (v1 - v0) / dtime
 	train.velocity = v1
 	
 	--- 4. move train ---
+	-- if we have calculated the new end index before, don't do that again
+	if not new_index_v_base or new_index_v_base ~= v1 then
+		local tv_vdiff = advtrains.get_acceleration(train, tv_lever) * dtime
+		local dst_curr_v = v1 * dtime
+		new_index_curr_tv = advtrains.path_get_index_by_offset(train, train.index, dst_curr_v)
+	end
 	
-	local idx_floor = math.floor(train.index)
-	local pdist = (train.path_dist[idx_floor+1] - train.path_dist[idx_floor])
-	local distance = (train.velocity*dtime) / pdist
-	
-	--debugging code
-	--local debutg = advtrains.print_concat_table({"v0=",v0,"v1=",v1,"a_lever",a_lever,"tv_target",tv_target,"tv_eff",tv_effective})
-	--train.debug = debutg
-	
-	if advtrains.DFLAG and v1>0 then error("DFLAG") end
-	
-	train.index=train.index+distance
+	-- if the zeroappr mechanism has hit, go no further than zeroappr index
+	if lzb_zeroappr_target_index and new_index_curr_tv > lzb_zeroappr_target_index then
+		--atdebug("zeroappr hitcond newidx_tv=",new_index_curr_tv, "za_idx=",lzb_zeroappr_target_index)
+		new_index_curr_tv = lzb_zeroappr_target_index
+	end
+	train.index = new_index_curr_tv
 	
 	recalc_end_index(train)
 
@@ -636,8 +692,9 @@ local callbacks_enter_node, run_callbacks_enter_node = mknodecallback("enter")
 local callbacks_leave_node, run_callbacks_leave_node = mknodecallback("leave")
 
 -- Node callback for approaching
--- Might be called multiple times, whenever path is recalculated
--- signature is function(pos, id, train, index, lzbdata)
+-- Might be called multiple times, whenever path is recalculated. Also called for the first node the train is standing on, then has_entered is true.
+-- signature is function(pos, id, train, index, has_entered, lzbdata)
+-- has_entered: true if the "enter" callback has already been executed for this train in this location
 -- lzbdata: arbitrary data (shared between all callbacks), deleted when LZB is restarted.
 -- These callbacks are called in order of distance as train progresses along tracks, so lzbdata can be used to
 -- keep track of a train's state once it passes this point
@@ -693,14 +750,16 @@ end
 
 function advtrains.tnc_call_approach_callback(pos, train_id, train, index, lzbdata)
 	--atdebug("tnc approach",pos,train_id, lzbdata)
+	local has_entered = atround(train.index) == index
+	
 	local node = advtrains.ndb.get_node(pos) --this spares the check if node is nil, it has a name in any case
 	local mregnode=minetest.registered_nodes[node.name]
 	if mregnode and mregnode.advtrains and mregnode.advtrains.on_train_approach then
-		mregnode.advtrains.on_train_approach(pos, train_id, train, index, lzbdata)
+		mregnode.advtrains.on_train_approach(pos, train_id, train, index, has_entered, lzbdata)
 	end
 	
 	-- call other registered callbacks
-	run_callbacks_approach_node(pos, train_id, train, index, lzbdata)
+	run_callbacks_approach_node(pos, train_id, train, index, has_entered, lzbdata)
 end
 
 

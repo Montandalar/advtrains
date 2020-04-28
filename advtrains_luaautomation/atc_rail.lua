@@ -199,7 +199,7 @@ advtrains.register_tracks("default", {
 					--do async. Event is fired in train steps
 					atlatc.interrupt.add(0, pos, {type="train", train=true, id=train_id})
 				end,
-				on_train_approach = function(pos, train_id, train, index, lzbdata)
+				on_train_approach = function(pos, train_id, train, index, has_entered, lzbdata)
 					-- Insert an event only if the rail indicated that it supports approach callbacks
 					local ph=minetest.pos_to_string(pos)
 					local railtbl = atlatc.active.nodes[ph]
@@ -208,7 +208,7 @@ advtrains.register_tracks("default", {
 					if railtbl and railtbl.data and railtbl.data.__approach_callback_mode then
 						local acm = railtbl.data.__approach_callback_mode
 						if acm==2 or (acm==1 and train.path_cn[index] == 1) then
-							local evtdata = {type="approach", approach=true, id=train_id}
+							local evtdata = {type="approach", approach=true, id=train_id, has_entered = has_entered}
 							-- This event is *required* to run synchronously, because it might set the ars_disable flag on the train and add LZB checkpoints,
 							-- although this is generally discouraged because this happens right in a train step
 							-- At this moment, I am not aware whether this may cause side effects, and I must encourage users not to do expensive calculations here.

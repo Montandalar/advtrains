@@ -27,8 +27,10 @@ attrans = minetest.get_translator ("advtrains")
 
 --advtrains
 
-DUMP_DEBUG_SAVE = false
-GENERATE_ATRICIFIAL_LAG = false
+local DUMP_DEBUG_SAVE = false
+local GENERATE_ATRICIFIAL_LAG = false
+local HOW_MANY_LAG = 1.0
+
 
 --Constant for maximum connection value/division of the circle
 AT_CMAX = 16
@@ -563,19 +565,12 @@ minetest.register_globalstep(function(dtime_mt)
 		
 		local dtime
 		if GENERATE_ATRICIFIAL_LAG then
-			dtime = 0.2
+			dtime = HOW_MANY_LAG
 			if os.clock()<t then
 				return
 			end
 			
-			t = os.clock()+0.2
-		else
-			--limit dtime: if trains move too far in one step, automation may cause stuck and wrongly braking trains
-			dtime=dtime_mt
-			if dtime>0.2 then
-				atprint("Limiting dtime to 0.2!")
-				dtime=0.2
-			end
+			t = os.clock()+HOW_MANY_LAG
 		end
 		
 		advtrains.mainloop_trainlogic(dtime)

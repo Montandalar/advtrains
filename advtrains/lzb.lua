@@ -18,13 +18,22 @@ train.lzb = {
 			-- Table of custom data filled in by approach callbacks
 			-- Whenever an approach callback inserts an LZB checkpoint with changed lzbdata,
 			-- all consecutive approach callbacks will see these passed as lzbdata table.
+			
+			udata = arbitrary user data, no official way to retrieve (do not use)
 		}
 	trav_lzbdata = currently active lzbdata table at traverser index
 }
-each step, for every item in "oncoming", we need to determine the location to start braking (+ some safety margin)
-and, if we passed this point for at least one of the items, initiate brake.
-When speed has dropped below, say 3, decrease the margin to zero, so that trains actually stop at the signal IP.
-The spd variable and travsht need to be updated on every aspect change. it's probably best to reset everything when any aspect changes
+The LZB subsystem keeps track of "checkpoints" the train will pass in the future, and has two main tasks:
+1. run approach callbacks, and run callbacks when passing LZB checkpoints
+2. keep track of the permitted speed at checkpoints, and make sure that the train brakes accordingly
+To perform 2, it populates the train.path_speed table which is handled along with the path subsystem.
+This table is used in trainlogic.lua/train_step_b() and applied to the velocity calculations.
+
+Note: in contrast to node enter callbacks, which are called when the train passes the .5 index mark, LZB callbacks are executed on passing the .0 index mark!
+If an LZB checkpoint has speed 0, the train will still enter the node (the enter callback will be called), but will stop at the 0.9 index mark (for details, see SLOW_APPROACH in trainlogic.lua)
+
+The start point for the LZB traverser (and thus the first node that will receive an approach callback) is floor(train.index) + 1. This means, once the LZB checkpoint callback has fired,
+this path node will not receive any further approach callbacks for the same approach situation
 ]]
 
 
@@ -61,6 +70,7 @@ local function resolve_latest_lzbdata(ckp, index)
 			return ckpi.lzbdata
 		end
 	end
+	return {}
 end
 
 local function look_ahead(id, train)
@@ -75,9 +85,11 @@ local function look_ahead(id, train)
 	local lzb = train.lzb
 	local trav = lzb.trav_index
 	-- retrieve latest lzbdata
-	local lzbdata = lzb.trav_lzbdata
-
-	if lzbdata.off_track then
+	if not lzb.trav_lzbdata then
+		lzb.trav_lzbdata = resolve_latest_lzbdata(lzb.checkpoints, trav)
+	end
+	
+	if lzb.trav_lzbdata.off_track then
 		--previous position was off track, do not scan any further
 	end
 	
@@ -85,8 +97,8 @@ local function look_ahead(id, train)
 		local pos = advtrains.path_get(train, trav)
 		-- check offtrack
 		if trav - 1 == train.path_trk_f then
-			lzbdata.off_track = true
-			advtrains.lzb_add_checkpoint(train, trav - 1, 0, nil, lzbdata)
+			lzb.trav_lzbdata.off_track = true
+			advtrains.lzb_add_checkpoint(train, trav - 1, 0, nil, lzb.trav_lzbdata)
 		else
 			-- run callbacks
 			-- Note: those callbacks are defined in trainlogic.lua for consistency with the other node callbacks
@@ -99,6 +111,27 @@ local function look_ahead(id, train)
 	
 	lzb.trav_index = trav
 	
+end
+
+local function call_runover_callbacks(id, train)
+	if not train.lzb then return end
+	
+	local i = 1
+	local idx = atfloor(train.index)
+	local ckp = train.lzb.checkpoints
+	while ckp[i] do
+		if ckp[i].index <= idx then
+			-- call callback
+			local it = ckp[i]
+			if it.callback then
+				it.callback(it.pos, id, train, it.index, it.speed, train.lzb.lzbdata)
+			end
+			-- note: lzbdata is always defined as look_ahead was called before
+			table.remove(ckp, i)
+		else
+			i = i + 1
+		end
+	end
 end
 
 -- Flood-fills train.path_speed, based on this checkpoint 
@@ -145,8 +178,7 @@ s = v0 * -------  +  - * | ------- |    =  -----------
 -- Removes all LZB checkpoints and restarts the traverser at the current train index
 function advtrains.lzb_invalidate(train)
 	train.lzb = {
-		trav_index = atround(train.index),
-		trav_lzbdata = {},
+		trav_index = atfloor(train.index) + 1,
 		checkpoints = {},
 	}
 end
@@ -175,7 +207,8 @@ end
 -- Add LZB control point
 -- lzbdata: If you modify lzbdata in an approach callback, you MUST add a checkpoint AND pass the (modified) lzbdata into it.
 -- If you DON'T modify lzbdata, you MUST pass nil as lzbdata. Always modify the lzbdata table in place, never overwrite it!
-function advtrains.lzb_add_checkpoint(train, index, speed, callback, lzbdata)
+-- udata: user-defined data, do not use externally
+function advtrains.lzb_add_checkpoint(train, index, speed, callback, lzbdata, udata)
 	local lzb = train.lzb
 	local pos = advtrains.path_get(train, index)
 	local lzbdata_c = nil
@@ -190,6 +223,7 @@ function advtrains.lzb_add_checkpoint(train, index, speed, callback, lzbdata)
 		speed = speed,
 		callback = callback,
 		lzbdata = lzbdata_c,
+		udata = udata,
 	}
 	table.insert(lzb.checkpoints, ckp)
 	
@@ -212,5 +246,5 @@ advtrains.te_register_on_update(function(id, train)
 		return
 	end
 	look_ahead(id, train)
-	--apply_control(id, train)
+	call_runover_callbacks(id, train)
 end, true)
