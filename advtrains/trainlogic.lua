@@ -469,7 +469,7 @@ function advtrains.train_step_b(id, train, dtime)
 	-- Iterates over the path nodes we WOULD pass if we were continuing with the speed assumed by actual_lever
 	-- and determines the MINIMUM of path_speed in this range.
 	-- Then, determines acceleration so that we can reach this 'overridden' target speed in this step (but short-circuited)
-	local lzb_zeroappr_target_index
+	local lzb_next_zero_barrier -- if defined, train should not pass this point as it's a 0-LZB
 	local new_index_v_base -- which v was assumed when curr_tv was calculated
 	local new_index_curr_tv -- pre-calculated new train index in lzb check
 	
@@ -485,6 +485,9 @@ function advtrains.train_step_b(id, train, dtime)
 			psp = train.path_speed[i]
 			if psp then
 				lzb_target = lzb_target and math.min(lzb_target, psp) or psp
+				if psp == 0 and not lzb_next_zero_barrier then
+					lzb_next_zero_barrier = i - LZB_ZERO_APPROACH_DIST
+				end
 			end
 			if i > new_index_curr_tv then
 				break
@@ -498,25 +501,15 @@ function advtrains.train_step_b(id, train, dtime)
 			-- apply to tv_target after the actual calculation happened
 			a_lever = VLEVER_BRAKE
 			if tv_target and tv_target > lzb_target then
-				if lzb_target < LZB_ZERO_APPROACH_SPEED then
-					--atdebug("hit zeroappr lzb=",lzb_target, "tv=", tv_target)
-					--go forward with LZB_ZERO_APPROACH_SPEED if tv_target didn't tell us otherwise
-					tv_target = LZB_ZERO_APPROACH_SPEED
-					-- find the zero index we're approaching
-					local lzb_zeroappr_target_index = math.ceil(train.index)
-					while train.path_speed[lzb_zeroappr_target_index] and train.path_speed[lzb_zeroappr_target_index] > 0 do
-						lzb_zeroappr_target_index = lzb_zeroappr_target_index + 1
-						--atdebug("zeroappr advancing ",lzb_zeroappr_target_index)
-					end
-					-- it should now point to an index with path_speed==0. In case of weird things, points to some far away index, so doesn't matter
-					lzb_zeroappr_target_index = lzb_zeroappr_target_index - LZB_ZERO_APPROACH_DIST
-					--atdebug("zeroappr target idx ",lzb_zeroappr_target_index)
-					-- don't do anything when we are already at this index, and stop
-					if train.index >= lzb_zeroappr_target_index then
+				if lzb_target < LZB_ZERO_APPROACH_SPEED and lzb_next_zero_barrier then
+					if train.index >= lzb_next_zero_barrier then
 						tv_target = 0
 						a_lever = VLEVER_BRAKE
-						lzb_zeroappr_target_index = nil
 						--atdebug("zeroappr cancelling train has passed idx=",train.index, "za_idx=",lzb_zeroappr_target_index)
+					else
+						-- if we are in front of a zero barrier, make sure we reach it by
+						-- keeping the velocity at a small value >0
+						tv_target = LZB_ZERO_APPROACH_SPEED
 					end
 				else
 					tv_target = lzb_target
@@ -560,9 +553,9 @@ function advtrains.train_step_b(id, train, dtime)
 	end
 	
 	-- if the zeroappr mechanism has hit, go no further than zeroappr index
-	if lzb_zeroappr_target_index and new_index_curr_tv > lzb_zeroappr_target_index then
+	if lzb_next_zero_barrier and new_index_curr_tv > lzb_next_zero_barrier then
 		--atdebug("zeroappr hitcond newidx_tv=",new_index_curr_tv, "za_idx=",lzb_zeroappr_target_index)
-		new_index_curr_tv = lzb_zeroappr_target_index
+		new_index_curr_tv = lzb_next_zero_barrier
 	end
 	train.index = new_index_curr_tv
 	
