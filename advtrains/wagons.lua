@@ -1074,10 +1074,10 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 	-- Interlocking functionality: If the interlocking module is loaded, you can set the signal aspect
 	-- from inside the train
 	if advtrains.interlocking then
-		if fields.ilrs and train.lzb and #train.lzb.oncoming > 0 then
+		if fields.ilrs and train.lzb and #train.lzb.checkpoints > 0 then
 			local i=1
-			while train.lzb.oncoming[i] do
-				local oci = train.lzb.oncoming[i]
+			while train.lzb.checkpoints[i] do
+				local oci = train.lzb.checkpoints[i]
 				if oci.udata and oci.udata.signal_pos then
 					local sigd = advtrains.interlocking.db.get_sigd_for_signal(oci.udata.signal_pos)
 					if sigd then
