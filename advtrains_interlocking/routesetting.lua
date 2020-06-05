@@ -282,6 +282,7 @@ end
 -- cancel: true in combination with newrte=nil causes cancellation of the current route.
 function ilrs.update_route(sigd, tcbs, newrte, cancel)
 	--atdebug("Update_Route for",sigd,tcbs.signal_name)
+	local has_changed_aspect = false
 	if tcbs.route_origin and not sigd_equal(tcbs.route_origin, sigd) then
 		--atdebug("Signal not in control, held by",tcbs.signal_name)
 		return
@@ -293,6 +294,7 @@ function ilrs.update_route(sigd, tcbs, newrte, cancel)
 		end
 		tcbs.route_committed = nil
 		tcbs.aspect = nil
+		has_changed_aspect = true
 		tcbs.routeset = nil
 		tcbs.route_auto = nil
 		tcbs.route_rsn = nil
@@ -320,9 +322,13 @@ function ilrs.update_route(sigd, tcbs, newrte, cancel)
 			end
 		else
 			--atdebug("Committed Route:",tcbs.routeset)
+			has_changed_aspect = true
 		end
 	end
-	advtrains.interlocking.update_signal_aspect(tcbs)
+	if has_changed_aspect then
+		-- FIX: prevent an minetest.after() loop caused by update_signal_aspect dispatching path invalidation, which in turn calls ARS again
+		advtrains.interlocking.update_signal_aspect(tcbs)
+	end
 	advtrains.interlocking.update_player_forms(sigd)
 end
 
