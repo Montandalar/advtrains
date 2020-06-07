@@ -536,38 +536,34 @@ function advtrains.train_step_c(id, train, dtime)
 
 						local col_tr = advtrains.occ.check_collision(testpos, id)
 						if col_tr then
-							if train.is_shunt or col_tr.is_shunt then
-								train.is_shunt = nil
-								col_tr.is_shunt = nil
-								minetest.after(0,advtrains.do_connect_trains, col_tr.id, train.id, train.velocity)
-							else
-								train.velocity = 0
-								advtrains.atc.train_reset_command(train)
-								collided = true
-							end
+							advtrains.train_check_couples(train)
+							train.velocity = 0
+							advtrains.atc.train_reset_command(train)
+							collided = true
 						end
-					end
-					--- 8b damage players ---
-					if is_loaded_area and (setting_overrun_mode=="drop" or setting_overrun_mode=="normal") then
-						local testpts = minetest.pos_to_string(testpos)
-						local player=advtrains.playersbypts[testpts]
-						if player and train.velocity>3 and player:get_hp()>0 and advtrains.is_damage_enabled(player:get_player_name()) then
-							--atdebug("damage found",player:get_player_name())
-							if setting_overrun_mode=="drop" then
-								--instantly kill player
-								--drop inventory contents first, to not to spawn bones
-								local player_inv=player:get_inventory()
-								for i=1,player_inv:get_size("main") do
-									minetest.add_item(testpos, player_inv:get_stack("main", i))
+
+						--- 8b damage players ---
+						if is_loaded_area and train.velocity > 3 and (setting_overrun_mode=="drop" or setting_overrun_mode=="normal") then
+							local testpts = minetest.pos_to_string(testpos)
+							local player=advtrains.playersbypts[testpts]
+							if player and player:get_hp()>0 and advtrains.is_damage_enabled(player:get_player_name()) then
+								--atdebug("damage found",player:get_player_name())
+								if setting_overrun_mode=="drop" then
+									--instantly kill player
+									--drop inventory contents first, to not to spawn bones
+									local player_inv=player:get_inventory()
+									for i=1,player_inv:get_size("main") do
+										minetest.add_item(testpos, player_inv:get_stack("main", i))
+									end
+									for i=1,player_inv:get_size("craft") do
+										minetest.add_item(testpos, player_inv:get_stack("craft", i))
+									end
+									-- empty lists main and craft
+									player_inv:set_list("main", {})
+									player_inv:set_list("craft", {})
 								end
-								for i=1,player_inv:get_size("craft") do
-									minetest.add_item(testpos, player_inv:get_stack("craft", i))
-								end
-								-- empty lists main and craft
-								player_inv:set_list("main", {})
-								player_inv:set_list("craft", {})
+								player:set_hp(0)
 							end
-							player:set_hp(0)
 						end
 					end
 				end
@@ -922,11 +918,21 @@ local CPL_ZONE = 2
 -- train.couple_* contain references to ObjectRefs of couple objects, which contain all relevant information
 -- These objectRefs will delete themselves once the couples no longer match
 local function createcouple(pos, train1, t1_is_front, train2, t2_is_front)
+	local id1 = train1.id
+	local id2 = train2.id
+	if train1.is_shunt or train2.is_shunt then
+		-- couple trains
+		train1.is_shunt = nil
+		train2.is_shunt = nil		
+		minetest.after(0, advtrains.safe_couple_trains, id1, id2, t1_is_front, t2_is_front, false, false, train1.velocity, train2.velocity)
+		return
+	end
+	
 	local obj=minetest.add_entity(pos, "advtrains:couple")
 	if not obj then error("Failed creating couple object!") return end
 	local le=obj:get_luaentity()
-	le.train_id_1=train1.id
-	le.train_id_2=train2.id
+	le.train_id_1=id1
+	le.train_id_2=id2
 	le.t1_is_front=t1_is_front
 	le.t2_is_front=t2_is_front
 	--atdebug("created couple between",train1.id,t1_is_front,train2.id,t2_is_front)

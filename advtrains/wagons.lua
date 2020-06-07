@@ -1072,9 +1072,9 @@ local function check_twagon_owner(train, b_first, pname)
 	return false
 end
 
-function advtrains.safe_couple_trains(id1, id2, t1f, t2f, pname, try_run)
+function advtrains.safe_couple_trains(id1, id2, t1f, t2f, pname, try_run,v1,v2)
 	
-	if not minetest.check_player_privs(pname, "train_operator") then
+	if pname and not minetest.check_player_privs(pname, "train_operator") then
 		minetest.chat_send_player(pname, "Missing train_operator privilege")
 		return false
 	end
@@ -1086,27 +1086,36 @@ function advtrains.safe_couple_trains(id1, id2, t1f, t2f, pname, try_run)
 		or not advtrains.train_ensure_init(id2, train2) then
 		return false
 	end
-	
-	local wck_t1 = check_twagon_owner(train1, t1f, pname)
-	local wck_t2 = check_twagon_owner(train2, t2f, pname)
-	
-	if wck_t1 or wck_t2 then
+	local wck_t1, wck_t2
+	if pname then
+		wck_t1 = check_twagon_owner(train1, t1f, pname)
+		wck_t2 = check_twagon_owner(train2, t2f, pname)
+	end
+	if (wck_t1 or wck_t2) or not pname then
+		if not v1 then
+			v1 = 0
+		end
+		if not v2 then
+			v2 = 0
+		end
 		if try_run then
 			return true
 		end
 		if t1f then
 			if t2f then
+				v1 = -v1
 				advtrains.invert_train(id1)
-				advtrains.do_connect_trains(id1, id2)
+				advtrains.do_connect_trains(id1, id2, v1+v2)
 			else
-				advtrains.do_connect_trains(id2, id1)
+				advtrains.do_connect_trains(id2, id1, v1+v2)
 			end
 		else
 			if t2f then
-				advtrains.do_connect_trains(id1, id2)
+				advtrains.do_connect_trains(id1, id2, v1+v2)
 			else
+				v2 = -v2
 				advtrains.invert_train(id2)
-				advtrains.do_connect_trains(id1, id2)
+				advtrains.do_connect_trains(id1, id2, v1+v2)
 			end
 		end
 		return true
