@@ -71,6 +71,10 @@ function r.fire_event(pos, evtdata)
 			if not train_id then return false end
 			train.is_shunt = true
 		end,
+		unset_shunt = function()
+			if not train_id then return false end
+			train.is_shunt = nil
+		end,
 		set_line = function(line)
 			if type(line)~="string" and type(line)~="number" then
 				return false

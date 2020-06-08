@@ -203,6 +203,10 @@ set_rc(routingcode)
 split_at_index(index, command)
 	Splits the train at the specified index, into a train with index-1 wagons and a second train starting with the index-th wagon.
 	command specifies an atc command to be sent to the second train after decoupling. 
+set_shunt()
+	Sets the train into shunting mode
+unset_shunt()
+	Sets the train into normal mode
 
 # Operator panel
 This simple node executes its actions when punched. It can be used to change a switch and update the corresponding signals or similar applications.
