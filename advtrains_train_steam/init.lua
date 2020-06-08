@@ -216,12 +216,7 @@ advtrains.register_wagon("wagon_box", {
 	collisionbox = {-1.0,-0.5,-1.0, 1.0,2.5,1.0},
 	drops={"default:steelblock 1"},
 	has_inventory = true,
-	get_inventory_formspec = function(self, pname, invname)
-		return "size[8,11]"..
-			"list["..invname..";box;0,0;8,3;]"..
-			"list[current_player;main;0,5;8,4;]"..
-			"listring[]"
-	end,
+	get_inventory_formspec = advtrains.standard_inventory_formspec,
 	inventory_list_sizes = {
 		box=8*3,
 	},

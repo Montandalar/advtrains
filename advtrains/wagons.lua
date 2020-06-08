@@ -777,7 +777,8 @@ function wagon:show_wagon_properties(pname)
 	]]
 	local data = advtrains.wagons[self.id]
 	local form="size[5,5]"
-	form = form .. "field[0.5,1;4,1;whitelist;Allow these players to drive your wagon:;"..(data.whitelist or "").."]"
+	form = form .. "field[0.5,1;4,1;whitelist;Allow these players to access your wagon:;"..(data.whitelist or "").."]"
+	form = form .. "field[0.5,2;4,1;roadnumber;Wagon road number:;"..(data.roadnumber or "").."]"
 	--seat groups access lists were here
 	form=form.."button_exit[0.5,3;4,1;save;"..attrans("Save wagon properties").."]"
 	minetest.show_formspec(pname, "advtrains_prop_"..self.id, form)
@@ -810,21 +811,23 @@ function wagon:show_bordcom(pname)
 	form=form.."field[7.5,3.25;3,1;routingcode;"..attrans("Routingcode")..";"..(minetest.formspec_escape(train.routingcode or "")).."]"
 	--row 5 : train overview and autocoupling
 	if train.velocity==0 then
-		form=form.."label[0.5,4.5;Train overview /coupling control:]"
+		form=form.."label[0.5,4;Train overview /coupling control:]"
 		linhei=5
 		local pre_own, pre_wl, owns_any = nil, nil, minetest.check_player_privs(pname, "train_admin")
 		for i, tpid in ipairs(train.trainparts) do
 			local ent = advtrains.wagons[tpid]
 			if ent then
+				local roadnumber = ent.roadnumber or ""
+				form = form .. string.format("button[%d,%d;%d,%d;%s;%s]", i, linhei, 1, 0.2, "wgprp"..i, roadnumber)
 				local ename = ent.type
-				form = form .. "item_image["..i..","..linhei..";1,1;"..ename.."]"
+				form = form .. "item_image["..i..","..(linhei+0.5)..";1,1;"..ename.."]"
 				if i~=1 then
 					if checklock(pname, ent.owner, pre_own, ent.whitelist, pre_wl) then
-						form = form .. "image_button["..(i-0.5)..","..(linhei+1)..";1,1;advtrains_discouple.png;dcpl_"..i..";]"
+						form = form .. "image_button["..(i-0.5)..","..(linhei+1.5)..";1,1;advtrains_discouple.png;dcpl_"..i..";]"
 					end
 				end
 				if i == data.pos_in_trainparts then
-					form = form .. "box["..(i-0.1)..","..(linhei-0.1)..";1,1;green]"
+					form = form .. "box["..(i-0.1)..","..(linhei+0.4)..";1,1;green]"
 				end
 				pre_own = ent.owner
 				pre_wl = ent.whitelist
@@ -916,6 +919,13 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 	for i, tpid in ipairs(train.trainparts) do
 		if fields["dcpl_"..i] then
 			advtrains.safe_decouple_wagon(tpid, pname)
+		elseif fields["wgprp"..i] then
+			for _,wagon in pairs(minetest.luaentities) do
+				if wagon.is_wagon and wagon.initialized and wagon.id==tpid then
+					wagon:show_wagon_properties(pname)
+					return
+				end
+			end
 		end
 	end
 	--check cpl_eid_front and _back of train
@@ -1000,6 +1010,9 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				if fields.whitelist then
 					data.whitelist = fields.whitelist
 				end
+				if fields.roadnumber then
+					data.roadnumber = fields.roadnumber
+				end
 			end
 		end
 		uid=string.match(formname, "^advtrains_bordcom_(.+)$")
@@ -1007,6 +1020,19 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			for _,wagon in pairs(minetest.luaentities) do
 				if wagon.is_wagon and wagon.initialized and wagon.id==uid then
 					wagon:handle_bordcom_fields(player:get_player_name(), formname, fields)
+				end
+			end
+		end
+		uid=string.match(formname, "^advtrains_inv_(.+)$")
+		if uid then
+			local pname=player:get_player_name()
+			local data = advtrains.wagons[uid]
+			if fields.prop and data.owner==pname then
+				for _,wagon in pairs(minetest.luaentities) do
+					if wagon.is_wagon and wagon.initialized and wagon.id==uid then
+						wagon:show_wagon_properties(pname)
+						--wagon:handle_bordcom_fields(player:get_player_name(), formname, fields)
+					end
 				end
 			end
 		end
@@ -1026,12 +1052,15 @@ function wagon:seating_from_key_helper(pname, fields, no)
 		end
 	end
 	if fields.inv and self.has_inventory and self.get_inventory_formspec then
+		minetest.close_formspec(pname, "advtrains_seating_"..self.id)
 		minetest.show_formspec(player:get_player_name(), "advtrains_inv_"..self.id, self:get_inventory_formspec(player:get_player_name(), make_inv_name(self.id)))
 	end
 	if fields.prop and data.owner==pname then
+		minetest.close_formspec(pname, "advtrains_seating_"..self.id)
 		self:show_wagon_properties(pname)
 	end
 	if fields.bordcom and self.seat_groups[sgr].driving_ctrl_access and advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist) then
+		minetest.close_formspec(pname, "advtrains_seating_"..self.id)
 		self:show_bordcom(pname)
 	end
 	if fields.dcwarn then
@@ -1174,6 +1203,23 @@ function advtrains.get_wagon_prototype(data)
 		wt="advtrains:wagon_placeholder"
 	end
 	return wt, advtrains.wagon_prototypes[wt]
+end
+
+function advtrains.standard_inventory_formspec(self, pname, invname)
+	--[[minetest.chat_send_player(pname, string.format("self=%s, pname=%s, invname=%s", self, pname, invname))
+	for k,v in pairs(self) do
+		minetest.chat_send_player(pname, string.format("%s=%s", k,v))
+	end
+	minetest.chat_send_player(pname, string.format("***%s***", self.object:get_pos()))--]]
+	local data = advtrains.wagons[self.id]
+	local r = "size[8,11]"..
+			"list["..invname..";box;0,0;8,3;]"
+	if data.owner==pname then
+		r = r .. "button_exit[0,9;4,1;prop;"..attrans("Wagon properties").."]"
+	end
+	r = r .. "list[current_player;main;0,5;8,4;]"..
+			"listring[]"
+	return r
 end
 
 function advtrains.register_wagon(sysname_p, prototype, desc, inv_img, nincreative)
