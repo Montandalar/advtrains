@@ -73,7 +73,10 @@ function atc.send_command(pos, par_tid, train_id_temp_debug)
 		else
 			atwarn("ATC rail at", pos, ": Sending command failed: There's no train at this position. This seems to be a bug.")
 			-- huch
-			advtrains.path_print(advtrains.trains[train_id_temp_debug], atdebug)
+			local train = advtrains.trains[train_id_temp_debug]
+			atlog("Train speed is",train.velocity,", have moved",train.dist_moved_this_step,", lever",train.lever)
+			advtrains.path_print(train, atlog)
+			
 		end
 	else
 		atwarn("ATC rail at", pos, ": Sending command failed: Entry for controller not found.")

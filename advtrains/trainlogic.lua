@@ -477,6 +477,7 @@ function advtrains.train_step_b(id, train, dtime)
 		-- only needs to run if we're not yet braking anyway
 		new_index_v_base = v0 + (advtrains.get_acceleration(train, tv_lever) * dtime)
 		local dst_curr_v = new_index_v_base * dtime
+		train.dist_moved_this_step = dst_curr_v
 		new_index_curr_tv = advtrains.path_get_index_by_offset(train, train.index, dst_curr_v)
 		local i = atfloor(train.index)
 		local lzb_target
@@ -549,6 +550,7 @@ function advtrains.train_step_b(id, train, dtime)
 	if not new_index_v_base or new_index_v_base ~= v1 then
 		local tv_vdiff = advtrains.get_acceleration(train, tv_lever) * dtime
 		local dst_curr_v = v1 * dtime
+		train.dist_moved_this_step = dst_curr_v
 		new_index_curr_tv = advtrains.path_get_index_by_offset(train, train.index, dst_curr_v)
 	end
 	
@@ -755,6 +757,7 @@ function advtrains.tnc_call_approach_callback(pos, train_id, train, index, lzbda
 	run_callbacks_approach_node(pos, train_id, train, index, has_entered, lzbdata)
 end
 
+-- === te callback definition for tnc node callbacks ===
 
 advtrains.te_register_on_new_path(function(id, train)
 	train.tnc = {
