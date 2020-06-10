@@ -178,9 +178,15 @@ function advtrains.path_get(train, index)
 		if adj_pos then
 			advtrains.occ.set_item(train.id, adj_pos, pef)
 		
+			-- If we have split points, notify accordingly
+			local mconnid = advtrains.get_matching_conn(adj_connid, #next_conns)
+			if #next_conns==3 and adj_connid==1 and train.points_split and train.points_split[advtrains.encode_pos(adj_pos)] then
+				--atdebug(id,"has split points restored at",adj_pos)
+				mconnid = 3
+			end
+		
 			adj_pos.y = adj_pos.y + nextrail_y
 			train.path_cp[pef] = adj_connid
-			local mconnid = advtrains.get_matching_conn(adj_connid, #next_conns)
 			train.path_cn[pef] = mconnid
 			train.path_dir[pef] = advtrains.conn_angle_median(next_conns[adj_connid].c, next_conns[mconnid].c)
 			train.path_trk_f = pef
@@ -211,9 +217,15 @@ function advtrains.path_get(train, index)
 		if adj_pos then
 			advtrains.occ.set_item(train.id, adj_pos, peb)
 			
+			-- If we have split points, notify accordingly
+			local mconnid = advtrains.get_matching_conn(adj_connid, #next_conns)
+			if #next_conns==3 and adj_connid==1 and train.points_split and train.points_split[advtrains.encode_pos(adj_pos)] then
+				atdebug(id,"has split points restored at",adj_pos)
+				mconnid = 3
+			end
+			
 			adj_pos.y = adj_pos.y + nextrail_y
 			train.path_cn[peb] = adj_connid
-			local mconnid = advtrains.get_matching_conn(adj_connid, #next_conns)
 			train.path_cp[peb] = mconnid
 			train.path_dir[peb] = advtrains.conn_angle_median(next_conns[mconnid].c, next_conns[adj_connid].c)
 			train.path_trk_b = peb
