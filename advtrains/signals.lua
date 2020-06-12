@@ -20,6 +20,18 @@ return {
 }
 end
 
+local suppasp = {
+		main = {0, false},
+		dst = {false},
+		shunt = nil,
+		proceed_as_main = true,
+		info = {
+			call_on = false,
+			dead_end = false,
+			w_speed = nil,
+		}
+}
+
 for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", als="green"}}) do
 
 	advtrains.trackplacer.register_tracktype("advtrains:retrosignal", "")
@@ -81,7 +93,8 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				end,
 				get_aspect = function(pos, node)
 					return aspect(r=="on")
-				end
+				end,
+				supported_aspects = suppasp,
 			},
 			can_dig = can_dig_func,
 		})
@@ -141,6 +154,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				get_aspect = function(pos, node)
 					return aspect(r=="on")
 				end,
+				supported_aspects = suppasp,
 				getstate = f.ls,
 				setstate = function(pos, node, newstate)
 					if newstate == f.als then
@@ -209,6 +223,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				get_aspect = function(pos, node)
 					return aspect(r=="on")
 				end,
+				supported_aspects = suppasp,
 				getstate = f.ls,
 				setstate = function(pos, node, newstate)
 					if newstate == f.als then

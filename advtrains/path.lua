@@ -141,22 +141,30 @@ end
 
 -- Keeps the path intact, but invalidates all path nodes from the specified index (inclusive)
 -- onwards. This has the advantage that we don't need to recalculate the whole path, and we can do it synchronously.
-function advtrains.path_invalidate_ahead(train, start_idx)
+function advtrains.path_invalidate_ahead(train, start_idx, ignore_when_passed)
 
 	local idx = atfloor(start_idx)
+	--atdebug("Invalidate_ahead:",train.id,"start_index",start_idx,"cur_idx",train.index)
 	
-	if(idx <= train.index) then
+	if(idx <= train.index - 0.5) then
+		if ignore_when_passed then
+			--atdebug("ignored passed")
+			return
+		end
 		advtrains.path_print(train, atwarn)
 		error("Train "+train.id+": Cannot path_invalidate_ahead start_idx="+idx+" as train has already passed!")
 	end
 	
-	local i = idx
+	-- leave current node in path, it won't change. What might change is the path onward from here (e.g. switch)
+	local i = idx + 1
 	while train.path[i] do
 		advtrains.occ.clear_item(train.id, advtrains.round_vector_floor_y(train.path[i]))
+		i = i+1
 	end
-	train.path_ext_f=idx - 1
-	train.path_trk_f=idx - 1
+	train.path_ext_f=idx
+	train.path_trk_f=math.min(idx, train.path_trk_f)
 	
+	-- callbacks called anyway for current node, because of LZB
 	advtrains.run_callbacks_invahead(train.id, train, idx)
 end
 

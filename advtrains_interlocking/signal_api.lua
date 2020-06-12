@@ -224,17 +224,17 @@ function advtrains.interlocking.signal_on_aspect_changed(pos)
 	if not ipts then return end
 	local ipos = minetest.string_to_pos(ipts)
 	
-	local tns = advtrains.occ.get_trains_over(ipos)
-	for id, sidx in pairs(tns) do
---		local train = advtrains.trains[id]
-		--if train.index <= sidx then
-		minetest.after(0, advtrains.invalidate_path, id)
-		--end
-	end
+	advtrains.invalidate_all_paths_ahead(ipos)
 end
 
 function advtrains.interlocking.signal_rc_handler(pos, node, player, itemstack, pointed_thing)
 	local pname = player:get_player_name()
+	local control = player:get_player_control()
+	if control.aux1 then
+		advtrains.interlocking.show_ip_form(pos, pname)
+		return
+	end
+	
 	local sigd = advtrains.interlocking.db.get_sigd_for_signal(pos)
 	if sigd then
 		advtrains.interlocking.show_signalling_form(sigd, pname)
@@ -243,7 +243,7 @@ function advtrains.interlocking.signal_rc_handler(pos, node, player, itemstack, 
 		if ndef.advtrains and ndef.advtrains.set_aspect then
 			-- permit to set aspect manually
 			local function callback(pname, aspect)
-				ndef.advtrains.set_aspect(pos, node, aspect)
+				advtrains.interlocking.signal_set_aspect(pos, aspect)
 			end
 			local isasp = ndef.advtrains.get_aspect(pos, node)
 			

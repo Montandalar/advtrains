@@ -190,15 +190,16 @@ function advtrains.lzb_invalidate_ahead(train, start_idx)
 		local idx = atfloor(start_idx)
 		local i = 1
 		while train.lzb.checkpoints[i] do
-			if train.lzb.checkpoints[i].idx >= idx then
+			if train.lzb.checkpoints[i].index >= idx then
 				table.remove(train.lzb.checkpoints, i)
 			else
 				i=i+1
 			end
 		end
+		train.lzb.trav_index = idx
 		-- re-apply all checkpoints to path_speed
 		train.path_speed = {}
-		for _,ckp in train.lzb.checkpoints do
+		for _,ckp in ipairs(train.lzb.checkpoints) do
 			apply_checkpoint_to_path(train, ckp)
 		end
 	end
@@ -236,8 +237,9 @@ advtrains.te_register_on_new_path(function(id, train)
 	look_ahead(id, train)
 end)
 
-advtrains.te_register_on_invalidate_ahead(function(id, train)
+advtrains.te_register_on_invalidate_ahead(function(id, train, start_idx)
 	advtrains.lzb_invalidate_ahead(train, start_idx)
+	look_ahead(id, train)
 end)
 
 advtrains.te_register_on_update(function(id, train)

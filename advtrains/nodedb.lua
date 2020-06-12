@@ -246,7 +246,7 @@ function ndb.update(pos, pnode)
 		local resid = (nid * 4) + (l2b(node.param2 or 0))
 		ndbset(pos.x, pos.y, pos.z, resid )
 		--atdebug("nodedb: updating node", pos, "stored nid",nid,"assigned",ndb_nodeids[nid],"resulting cid",resid)
-		minetest.after(0, advtrains.invalidate_all_paths, pos)
+		advtrains.invalidate_all_paths_ahead(pos)
 	else
 		--at this position there is no longer a node that needs to be tracked.
 		--atdebug("nodedb: updating node", pos, "cleared")

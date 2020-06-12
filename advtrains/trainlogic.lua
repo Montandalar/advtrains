@@ -1277,6 +1277,18 @@ function advtrains.invalidate_all_paths(pos)
 		advtrains.invalidate_path(id)
 	end
 end
+
+-- Calls invalidate_path_ahead on all trains occupying (having paths over) this node
+-- Can be called during train step.
+function advtrains.invalidate_all_paths_ahead(pos)
+	local tab = advtrains.occ.get_trains_over(pos)
+	
+	for id,index in pairs(tab) do
+		local train = advtrains.trains[id]
+		advtrains.path_invalidate_ahead(train, index, true)
+	end
+end
+
 function advtrains.invalidate_path(id)
 	--atdebug("Path invalidate:",id)
 	local v=advtrains.trains[id]
