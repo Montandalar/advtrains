@@ -30,7 +30,7 @@ function atc.train_set_command(train, command, arrow)
 	train.atc_command = command
 end
 
-function atc.send_command(pos, par_tid, train_id_temp_debug)
+function atc.send_command(pos, par_tid)
 	local pts=minetest.pos_to_string(pos)
 	if atc.controllers[pts] then
 		--atprint("Called send_command at "..pts)
@@ -73,9 +73,10 @@ function atc.send_command(pos, par_tid, train_id_temp_debug)
 		else
 			atwarn("ATC rail at", pos, ": Sending command failed: There's no train at this position. This seems to be a bug.")
 			-- huch
-			local train = advtrains.trains[train_id_temp_debug]
-			atlog("Train speed is",train.velocity,", have moved",train.dist_moved_this_step,", lever",train.lever)
-			advtrains.path_print(train, atlog)
+			--local train = advtrains.trains[train_id_temp_debug]
+			--atlog("Train speed is",train.velocity,", have moved",train.dist_moved_this_step,", lever",train.lever)
+			--advtrains.path_print(train, atlog)
+			-- TODO track again when ATC bugs occur...
 			
 		end
 	else
@@ -159,7 +160,7 @@ advtrains.atc_function = function(def, preset, suffix, rotation)
 			end,
 			advtrains = {
 				on_train_enter = function(pos, train_id)
-					atc.send_command(pos, nil, train_id)
+					atc.send_command(pos, train_id)
 				end,
 			},
 		}
