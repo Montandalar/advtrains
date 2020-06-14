@@ -208,6 +208,19 @@ function advtrains.hud_train_format(train, flip)
 	if train.speed_restriction == 0 then
 		firstLine = "OVERRUN RED SIGNAL! Examine situation and reverse train to move again."
 	end
+
+	local lzb = train.lzb
+	
+	local i = 1
+	while i<=#lzb.oncoming do
+		local k = lzb.oncoming[i]
+		secondLine = secondLine .. "\n".."LZB: speed limit ["..(k.spd or "E")..("] in %.1f m"):format(k.idx-train.index)
+		if k.spd == 0 then
+			break
+		end
+		i=i+1
+	end
+
 	
 	return (train.debug or "").."\n"..topLine.."\n"..firstLine.."\n"..secondLine
 end
