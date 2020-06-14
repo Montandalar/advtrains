@@ -220,7 +220,7 @@ function advtrains.path_get(train, index)
 			-- If we have split points, notify accordingly
 			local mconnid = advtrains.get_matching_conn(adj_connid, #next_conns)
 			if #next_conns==3 and adj_connid==1 and train.points_split and train.points_split[advtrains.encode_pos(adj_pos)] then
-				atdebug(id,"has split points restored at",adj_pos)
+				-- atdebug(id,"has split points restored at",adj_pos)
 				mconnid = 3
 			end
 			
