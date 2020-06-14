@@ -627,6 +627,16 @@ local function tnc_call_enter_callback(pos, train_id, train, index)
 
 	-- call other registered callbacks
 	run_callbacks_enter_node(pos, train_id, train, index)
+	
+	-- check for split points
+	if mregnode and mregnode.at_conns and #mregnode.at_conns == 3 and train.path_cp[index] == 3 then
+		-- train came from connection 3 of a switch, so it split points.
+		if not train.points_split then
+			train.points_split = {}
+		end
+		train.points_split[advtrains.encode_pos(pos)] = true
+		--atdebug(train_id,"split points at",pos)
+	end
 end
 local function tnc_call_leave_callback(pos, train_id, train, index)
 	--atdebug("tnc leave",pos,train_id)
@@ -638,6 +648,20 @@ local function tnc_call_leave_callback(pos, train_id, train, index)
 	
 	-- call other registered callbacks
 	run_callbacks_leave_node(pos, train_id, train, index)
+	
+	-- split points do not matter anymore. clear them
+	if train.points_split then
+		if train.points_split[advtrains.encode_pos(pos)] then
+			train.points_split[advtrains.encode_pos(pos)] = nil
+			--atdebug(train_id,"has passed split points at",pos)
+		end
+		-- any entries left?
+		for _,_ in pairs(train.points_split) do
+			return
+		end
+		train.points_split = nil
+	end
+	-- WARNING possibly unreachable place!
 end
 
 function advtrains.tnc_call_approach_callback(pos, train_id, train, index, lzbdata)

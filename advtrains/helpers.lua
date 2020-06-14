@@ -291,8 +291,9 @@ function advtrains.conn_matches_to(conn, other_conns)
 	return false
 end
 
-
+-- Going from the rail at pos (does not need to be rounded) along connection with id conn_idx, if there is a matching rail, return it and the matching connid
 -- returns: <adjacent pos>, <conn index of adjacent>, <my conn index>, <railheight of adjacent>
+-- parameter this_conns_p is connection table of this rail and is optional, is determined by get_rail_info_at if not provided.
 function advtrains.get_adjacent_rail(this_posnr, this_conns_p, conn_idx, drives_on)
 	local this_pos = advtrains.round_vector_floor_y(this_posnr)
 	local this_conns = this_conns_p
@@ -332,6 +333,9 @@ function advtrains.get_adjacent_rail(this_posnr, this_conns_p, conn_idx, drives_
 	return nil
 end
 
+-- when a train enters a rail on connid 'conn', which connid will it go out?
+-- nconns: number of connections in connection table
+-- returns: connid_out
 local connlku={[2]={2,1}, [3]={2,1,1}, [4]={2,1,4,3}}
 function advtrains.get_matching_conn(conn, nconns)
 	return connlku[nconns][conn]
