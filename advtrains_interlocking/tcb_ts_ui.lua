@@ -558,7 +558,7 @@ local sig_pselidx = {}
 -- Players having a signalling form open
 local p_open_sig_form = {}
 
-function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
+function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte, called_from_form_update)
 	if not minetest.check_player_privs(pname, "train_operator") then
 		minetest.chat_send_player(pname, "Insufficient privileges to use this!")
 		return
@@ -651,7 +651,10 @@ function advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
 	p_open_sig_form[pname] = sigd
 	
 	-- always a good idea to update the signal aspect
-	advtrains.interlocking.update_signal_aspect(tcbs)
+	if not called_from_form_update then
+	-- FIX prevent a callback loop
+		advtrains.interlocking.update_signal_aspect(tcbs)
+	end
 end
 
 function advtrains.interlocking.update_player_forms(sigd)
@@ -763,7 +766,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			tcbs.route_auto = false
 		end
 		
-		advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte)
+		advtrains.interlocking.show_signalling_form(sigd, pname, sel_rte, true)
 		return
 	end
 	

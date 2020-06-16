@@ -69,6 +69,7 @@ local function resolve_latest_lzbdata(ckp, index)
 		if ckpi.index <= index and ckpi.lzbdata then
 			return ckpi.lzbdata
 		end
+		i=i-1
 	end
 	return {}
 end
@@ -197,6 +198,8 @@ function advtrains.lzb_invalidate_ahead(train, start_idx)
 			end
 		end
 		train.lzb.trav_index = idx
+		-- FIX reset trav_lzbdata (look_ahead fetches these when required)
+		train.lzb.trav_lzbdata = nil
 		-- re-apply all checkpoints to path_speed
 		train.path_speed = {}
 		for _,ckp in ipairs(train.lzb.checkpoints) do

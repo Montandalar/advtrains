@@ -196,7 +196,6 @@ function o.get_trains_over(ppos)
 	local r = {}
 	local i = 1
 	while t[i] do
-		local train = advtrains.trains[t[i]]
 		local idx = t[i+1]
 		r[t[i]] = idx
 		i = i + 2
