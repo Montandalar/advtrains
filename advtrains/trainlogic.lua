@@ -906,7 +906,7 @@ function advtrains.split_train_at_index(train, index)
 		atwarn("Train",train_id,"is not initialized! Operation aborted!")
 		return
 	end
-	train.is_shunt = nil -- prevent immediate recoupling
+
 	local p_index=advtrains.path_get_index_by_offset(train, train.index, - data.pos_in_train + wagon.wagon_span)
 	local pos, connid, frac = advtrains.path_getrestore(train, p_index)
 	local tp = {}
@@ -944,10 +944,10 @@ local CPL_ZONE = 2
 local function createcouple(pos, train1, t1_is_front, train2, t2_is_front)
 	local id1 = train1.id
 	local id2 = train2.id
-	if train1.is_shunt or train2.is_shunt then
+	if train1.autocouple or train2.autocouple then
 		-- couple trains
-		train1.is_shunt = nil
-		train2.is_shunt = nil		
+		train1.autocouple = nil
+		train2.autocouple = nil		
 		minetest.after(0, advtrains.safe_couple_trains, id1, id2, t1_is_front, t2_is_front, false, false, train1.velocity, train2.velocity)
 		return
 	end

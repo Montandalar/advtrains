@@ -392,7 +392,7 @@ advtrains.avt_save = function(remove_players_from_wagons)
 				"trainparts", "recently_collided_with_env",
 				"atc_brake_target", "atc_wait_finish", "atc_command", "atc_delay", "door_open",
 				"text_outside", "text_inside", "line", "routingcode",
-				"il_sections", "speed_restriction", "is_shunt", "points_split",
+				"il_sections", "speed_restriction", "is_shunt", "points_split", "autocouple"
 			})
 			--then save it
 			tmp_trains[id]=v
