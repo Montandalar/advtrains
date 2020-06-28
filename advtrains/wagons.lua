@@ -921,7 +921,7 @@ function wagon:handle_bordcom_fields(pname, formname, fields)
 			advtrains.safe_decouple_wagon(tpid, pname)
 		elseif fields["wgprp"..i] then
 			for _,wagon in pairs(minetest.luaentities) do
-				if wagon.is_wagon and wagon.initialized and wagon.id==tpid then
+				if wagon.is_wagon and wagon.initialized and wagon.id==tpid and data.owner==pname then
 					wagon:show_wagon_properties(pname)
 					return
 				end
@@ -1029,7 +1029,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			local data = advtrains.wagons[uid]
 			if fields.prop and data.owner==pname then
 				for _,wagon in pairs(minetest.luaentities) do
-					if wagon.is_wagon and wagon.initialized and wagon.id==uid then
+					if wagon.is_wagon and wagon.initialized and wagon.id==uid and data.owner==pname then
 						wagon:show_wagon_properties(pname)
 						--wagon:handle_bordcom_fields(player:get_player_name(), formname, fields)
 					end
