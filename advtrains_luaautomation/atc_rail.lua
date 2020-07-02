@@ -74,7 +74,7 @@ function r.fire_event(pos, evtdata)
 			if not train_id then return false end
 			train.autocouple = nil
 		end,
-		set_autcouple = function ()
+		set_autocouple = function ()
 			if not train_id then return false end
 			train.autocouple = true			
 		end,
