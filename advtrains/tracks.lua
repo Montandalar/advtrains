@@ -210,6 +210,37 @@ advtrains.ap.t_45deg={
 	},
 	rotation={"", "_30", "_45", "_60"},
 }
+advtrains.ap.t_perpcrossing={
+	regstep = 1,
+	variant={
+		st={
+			conns = { {c=0}, {c=8}, {c=4}, {c=12} },
+			desc = "perpendicular crossing",
+			tpdouble = true,
+			tpsingle = true,
+			trackworker = "st",
+		},
+	},
+	regtp=true,
+	tpdefault="st",
+	rotation={"", "_30", "_45", "_60"},
+}
+advtrains.ap.t_9045crossing={
+	regstep = 1,
+	variant={
+		st={
+			conns = { {c=0}, {c=8}, {c=2}, {c=10} },
+			desc = "45/90 degree crossing",
+			tpdouble = true,
+			tpsingle = true,
+			trackworker = "st",
+		},
+	},
+	regtp=true,
+	tpdefault="st",
+	rotation={""},
+}
+
 advtrains.trackpresets = advtrains.ap
 
 --definition format: ([] optional)
