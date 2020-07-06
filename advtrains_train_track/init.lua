@@ -11,6 +11,29 @@ advtrains.register_tracks("default", {
 	description=attrans("Track"),
 	formats={},
 }, advtrains.ap.t_30deg_flat)
+
+-- Diamond Crossings
+-- perpendicular
+advtrains.register_tracks("default", {
+	nodename_prefix="advtrains:dtrack_xing",
+	texture_prefix="advtrains_dtrack_xing",
+	models_prefix="advtrains_dtrack_xing",
+	models_suffix=".obj",
+	shared_texture="advtrains_dtrack_shared.png",
+	description=attrans("Perpendicular Diamond Crossing Track"),
+	formats = {}
+}, advtrains.ap.t_perpcrossing)
+-- 45-90(
+advtrains.register_tracks("default", {
+	nodename_prefix="advtrains:dtrack_xing4590",
+	texture_prefix="advtrains_dtrack_xing4590",
+	models_prefix="advtrains_dtrack_xing4590",
+	models_suffix=".obj",
+	shared_texture="advtrains_dtrack_shared.png",
+	description=attrans("45/90 Degree Diamond Crossing Track"),
+	formats = {}
+}, advtrains.ap.t_9045crossing)
+
 --slopes
 advtrains.register_tracks("default", {
 	nodename_prefix="advtrains:dtrack",
