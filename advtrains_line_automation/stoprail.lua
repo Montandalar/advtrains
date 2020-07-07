@@ -204,14 +204,15 @@ local adefunc = function(def, preset, suffix, rotation)
 		}
 end
 
-
-advtrains.register_tracks("default", {
-	nodename_prefix="advtrains_line_automation:dtrack_stop",
-	texture_prefix="advtrains_dtrack_stop",
-	models_prefix="advtrains_dtrack",
-	models_suffix=".b3d",
-	shared_texture="advtrains_dtrack_shared_stop.png",
-	description="Station/Stop Rail",
-	formats={},
-	get_additional_definiton = adefunc,
-}, advtrains.trackpresets.t_30deg_straightonly)
+if minetest.get_modpath("advtrains_train_track") ~= nil then
+	advtrains.register_tracks("default", {
+		nodename_prefix="advtrains_line_automation:dtrack_stop",
+		texture_prefix="advtrains_dtrack_stop",
+		models_prefix="advtrains_dtrack",
+		models_suffix=".b3d",
+		shared_texture="advtrains_dtrack_shared_stop.png",
+		description="Station/Stop Rail",
+		formats={},
+		get_additional_definiton = adefunc,
+	}, advtrains.trackpresets.t_30deg_straightonly)
+end

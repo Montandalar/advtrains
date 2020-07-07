@@ -165,4 +165,11 @@ if advtrains.lines and advtrains.lines.sched then
 	end)
 end
 
+ac.trackdef_advtrains_defs = {
+	on_train_enter = function(pos, train_id)
+		--do async. Event is fired in train steps
+		atlatc.interrupt.add(0, pos, {type="train", train=true, id=train_id})
+	end,
+}
+
 atlatc.active=ac

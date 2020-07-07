@@ -131,46 +131,39 @@ function r.fire_event(pos, evtdata)
 	
 end
 
-advtrains.register_tracks("default", {
-	nodename_prefix="advtrains_luaautomation:dtrack",
-	texture_prefix="advtrains_dtrack_atc",
-	models_prefix="advtrains_dtrack",
-	models_suffix=".b3d",
-	shared_texture="advtrains_dtrack_shared_atc.png",
-	description=atltrans("LuaAutomation ATC Rail"),
-	formats={},
-	get_additional_definiton = function(def, preset, suffix, rotation)
-		return {
-			after_place_node = atlatc.active.after_place_node,
-			after_dig_node = atlatc.active.after_dig_node,
-
-			on_receive_fields = function(pos, ...)
-				atlatc.active.on_receive_fields(pos, ...)
-				
-				--set arrowconn (for ATC)
-				local ph=minetest.pos_to_string(pos)
-				local _, conns=advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
-				atlatc.active.nodes[ph].arrowconn=conns[1].c
-			end,
-
-			advtrains = {
-				on_train_enter = function(pos, train_id)
-					--do async. Event is fired in train steps
-					atlatc.interrupt.add(0, pos, {type="train", train=true, id=train_id})
+if minetest.get_modpath("advtrains_train_track") ~= nil then
+	advtrains.register_tracks("default", {
+		nodename_prefix="advtrains_luaautomation:dtrack",
+		texture_prefix="advtrains_dtrack_atc",
+		models_prefix="advtrains_dtrack",
+		models_suffix=".b3d",
+		shared_texture="advtrains_dtrack_shared_atc.png",
+		description=atltrans("LuaAutomation ATC Rail"),
+		formats={},
+		get_additional_definiton = function(def, preset, suffix, rotation)
+			return {
+				after_place_node = atlatc.active.after_place_node,
+				after_dig_node = atlatc.active.after_dig_node,
+				on_receive_fields = function(pos, ...)
+					atlatc.active.on_receive_fields(pos, ...)
+					--set arrowconn (for ATC)
+					local ph=minetest.pos_to_string(pos)
+					local _, conns=advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
+					atlatc.active.nodes[ph].arrowconn=conns[1].c
 				end,
-			},
-			luaautomation = {
-				fire_event=r.fire_event
-			},
-			digiline = {
-				receptor = {},
-				effector = {
-					action = atlatc.active.on_digiline_receive
+				advtrains = atlatc.active.trackdef_advtrains_defs,
+				luaautomation = {
+					fire_event=r.fire_event
 				},
-			},
-		}
-	end,
-}, advtrains.trackpresets.t_30deg_straightonly)
-
+				digiline = {
+					receptor = {},
+					effector = {
+						action = atlatc.active.on_digiline_receive
+					},
+				},
+			}
+		end,
+	}, advtrains.trackpresets.t_30deg_straightonly)
+end
 
 atlatc.rail = r

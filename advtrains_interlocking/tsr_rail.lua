@@ -42,14 +42,15 @@ local adefunc = function(def, preset, suffix, rotation)
 end
 
 
-
-advtrains.register_tracks("default", {
-	nodename_prefix="advtrains_interlocking:dtrack_npr",
-	texture_prefix="advtrains_dtrack_npr",
-	models_prefix="advtrains_dtrack",
-	models_suffix=".b3d",
-	shared_texture="advtrains_dtrack_shared_npr.png",
-	description="Point Speed Restriction Rail",
-	formats={},
-	get_additional_definiton = adefunc,
-}, advtrains.trackpresets.t_30deg_straightonly)
+if minetest.get_modpath("advtrains_train_track") ~= nil then
+	advtrains.register_tracks("default", {
+		nodename_prefix="advtrains_interlocking:dtrack_npr",
+		texture_prefix="advtrains_dtrack_npr",
+		models_prefix="advtrains_dtrack",
+		models_suffix=".b3d",
+		shared_texture="advtrains_dtrack_shared_npr.png",
+		description="Point Speed Restriction Rail",
+		formats={},
+		get_additional_definiton = adefunc,
+	}, advtrains.trackpresets.t_30deg_straightonly)
+end
