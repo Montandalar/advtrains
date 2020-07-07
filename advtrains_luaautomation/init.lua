@@ -33,9 +33,7 @@ dofile(mp.."/active_common.lua")
 dofile(mp.."/atc_rail.lua")
 dofile(mp.."/operation_panel.lua")
 dofile(mp.."/pcnaming.lua")
-if mesecon then
-	dofile(mp.."/p_mesecon_iface.lua")
-end
+
 dofile(mp.."/chatcmds.lua")
 
 

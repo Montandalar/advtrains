@@ -302,6 +302,7 @@ minetest.register_node("advtrains:across_on", {
 				advtrains.ndb.swap_node(pos, {name = "advtrains:across_off", param2 = node.param2}, true)
 			end
 		end,
+		fallback_state = "off",
 	},
 	on_rightclick=function(pos, node, player)
 		if advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then

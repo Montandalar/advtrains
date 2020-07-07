@@ -16,7 +16,7 @@ minetest.override_item("mesecons_switch:mesecon_switch_off", {
 	on_updated_from_nodedb = function(pos, node)
 		mesecon.receptor_off(pos)
 	end,
-	luaautomation = {
+	advtrains = {
 		getstate = "off",
 		setstate = function(pos, node, newstate)
 			if newstate=="on" then
@@ -41,7 +41,7 @@ minetest.override_item("mesecons_switch:mesecon_switch_on", {
 	on_updated_from_nodedb = function(pos, node)
 		mesecon.receptor_on(pos)
 	end,
-	luaautomation = {
+	advtrains = {
 		getstate = "on",
 		setstate = function(pos, node, newstate)
 			if newstate=="off" then
@@ -49,5 +49,6 @@ minetest.override_item("mesecons_switch:mesecon_switch_on", {
 				mesecon.receptor_off(pos)
 			end
 		end,
+		fallback_state = "off",
 	},
 })

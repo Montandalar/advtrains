@@ -97,3 +97,25 @@ function advtrains.is_passive(parpos, pnode)
 		return false
 	end
 end
+
+-- switches a node back to fallback state, if defined. Doesn't support pcnaming.
+function advtrains.set_fallback_state(pos, pnode)
+	local node=pnode or advtrains.ndb.get_node(pos)
+	local ndef=minetest.registered_nodes[node.name]
+	local st
+	if ndef and ndef.advtrains and ndef.advtrains.setstate
+			and ndef.advtrains.fallback_state then
+		if advtrains.get_train_at_pos(pos) then
+			return false
+		end
+		
+		if advtrains.interlocking and advtrains.interlocking.route.has_route_lock(minetest.pos_to_string(pos)) then
+			return false
+		end
+		
+		ndef.advtrains.setstate(pos, node, ndef.advtrains.fallback_state)
+		return true
+	end
+	
+	
+end

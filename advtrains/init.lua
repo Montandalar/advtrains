@@ -215,6 +215,10 @@ dofile(advtrains.modpath.."/craft_items.lua")
 
 dofile(advtrains.modpath.."/log.lua")
 dofile(advtrains.modpath.."/passive.lua")
+if mesecon then
+	dofile(advtrains.modpath.."/p_mesecon_iface.lua")
+end
+
 
 dofile(advtrains.modpath.."/lzb.lua")
 

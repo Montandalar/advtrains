@@ -206,6 +206,7 @@ function ilrs.free_route_locks_indiv(pts, ts, nocallbacks)
 	-- TODO use luaautomation timers?
 	if not nocallbacks then
 		minetest.after(0, ilrs.update_waiting, "lck", pts)
+		minetest.after(0.5, advtrains.set_fallback_state, minetest.string_to_pos(pts))
 	end
 end
 -- frees all route locks, even manual ones set with the tool, at a specific position
