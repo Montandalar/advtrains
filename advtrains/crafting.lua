@@ -2,41 +2,7 @@
 --crafting.lua
 --registers crafting recipes
 
---tracks
-minetest.register_craft({
-	output = 'advtrains:dtrack_placer 50',
-	recipe = {
-		{'default:steel_ingot', 'group:stick', 'default:steel_ingot'},
-		{'default:steel_ingot', 'group:stick', 'default:steel_ingot'},
-		{'default:steel_ingot', 'group:stick', 'default:steel_ingot'},
-	},
-})
-minetest.register_craft({
-	type = "shapeless",
-	output = 'advtrains:dtrack_slopeplacer 2',
-	recipe = {
-		"advtrains:dtrack_placer",
-		"advtrains:dtrack_placer",
-		"default:gravel",
-	},
-})
-
-minetest.register_craft({
-	output = 'advtrains:dtrack_bumper_placer 2',
-	recipe = {
-		{'group:wood', 'dye:red'},
-		{'default:steel_ingot', 'default:steel_ingot'},
-		{'advtrains:dtrack_placer', 'advtrains:dtrack_placer'},
-	},
-})
-minetest.register_craft({
-	type="shapeless",
-	output = 'advtrains:dtrack_detector_off_placer',
-	recipe = {
-		"advtrains:dtrack_placer",
-		"mesecons:wire_00000000_off"
-	},
-})
+--tracks: see advtrains_train_track
 --signals
 minetest.register_craft({
 	output = 'advtrains:retrosignal_off 2',

@@ -12,6 +12,15 @@ advtrains.register_tracks("default", {
 	formats={},
 }, advtrains.ap.t_30deg_flat)
 
+minetest.register_craft({
+	output = 'advtrains:dtrack_placer 50',
+	recipe = {
+		{'default:steel_ingot', 'group:stick', 'default:steel_ingot'},
+		{'default:steel_ingot', 'group:stick', 'default:steel_ingot'},
+		{'default:steel_ingot', 'group:stick', 'default:steel_ingot'},
+	},
+})
+
 -- Diamond Crossings
 -- perpendicular
 advtrains.register_tracks("default", {
@@ -23,6 +32,15 @@ advtrains.register_tracks("default", {
 	description=attrans("Perpendicular Diamond Crossing Track"),
 	formats = {}
 }, advtrains.ap.t_perpcrossing)
+
+minetest.register_craft({
+	output = 'advtrains:dtrack_xing_placer 3',
+	recipe = {
+		{'', 'advtrains:dtrack_placer', ''},
+		{'advtrains:dtrack_placer', 'advtrains:dtrack_placer', 'advtrains:dtrack_placer'},
+		{'', 'advtrains:dtrack_placer', ''}
+	}
+})
 -- 45-90(
 advtrains.register_tracks("default", {
 	nodename_prefix="advtrains:dtrack_xing4590",
@@ -33,6 +51,14 @@ advtrains.register_tracks("default", {
 	description=attrans("45/90 Degree Diamond Crossing Track"),
 	formats = {}
 }, advtrains.ap.t_9045crossing)
+minetest.register_craft({
+	output = 'advtrains:dtrack_xing4590_placer 2',
+	recipe = {
+		{'advtrains:dtrack_placer', '', ''},
+		{'advtrains:dtrack_placer', 'advtrains:dtrack_placer', 'advtrains:dtrack_placer'},
+		{'', '', 'advtrains:dtrack_placer'}
+	}
+})
 
 --slopes
 advtrains.register_tracks("default", {
@@ -46,6 +72,17 @@ advtrains.register_tracks("default", {
 	formats={vst1={true, false, true}, vst2={true, false, true}, vst31={true}, vst32={true}, vst33={true}},
 }, advtrains.ap.t_30deg_slope)
 
+minetest.register_craft({
+	type = "shapeless",
+	output = 'advtrains:dtrack_slopeplacer 2',
+	recipe = {
+		"advtrains:dtrack_placer",
+		"advtrains:dtrack_placer",
+		"default:gravel",
+	},
+})
+
+
 --bumpers
 advtrains.register_tracks("default", {
 	nodename_prefix="advtrains:dtrack_bumper",
@@ -57,6 +94,14 @@ advtrains.register_tracks("default", {
 	description=attrans("Bumper"),
 	formats={},
 }, advtrains.ap.t_30deg_straightonly)
+minetest.register_craft({
+	output = 'advtrains:dtrack_bumper_placer 2',
+	recipe = {
+		{'group:wood', 'dye:red'},
+		{'default:steel_ingot', 'default:steel_ingot'},
+		{'advtrains:dtrack_placer', 'advtrains:dtrack_placer'},
+	},
+})
 --legacy bumpers
 for _,rot in ipairs({"", "_30", "_45", "_60"}) do
 	minetest.register_alias("advtrains:dtrack_bumper"..rot, "advtrains:dtrack_bumper_st"..rot)
@@ -221,6 +266,14 @@ if mesecon then
 			}
 		end
 	}, advtrains.ap.t_30deg_straightonly_noplacer)
+	minetest.register_craft({
+	type="shapeless",
+	output = 'advtrains:dtrack_detector_off_placer',
+	recipe = {
+		"advtrains:dtrack_placer",
+		"mesecons:wire_00000000_off"
+	},
+})
 end
 --TODO legacy
 --I know lbms are better for this purpose
