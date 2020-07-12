@@ -39,6 +39,12 @@ AT_CMAX = 16
 
 advtrains = {trains={}, player_to_train_mapping={}}
 
+-- get wagon loading range
+advtrains.wagon_load_range = tonumber(minetest.settings:get("advtrains_wagon_load_range"))
+if not advtrains.wagon_load_range then
+	advtrains.wagon_load_range = tonumber(minetest.settings:get("active_block_range"))*16
+end
+
 --pcall
 local no_action=false
 

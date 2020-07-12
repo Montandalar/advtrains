@@ -14,6 +14,8 @@ advtrains.wagons = {}
 advtrains.wagon_prototypes = {}
 advtrains.wagon_objects = {}
 
+local unload_wgn_range = advtrains.wagon_load_range + 32
+
 local setting_show_ids = minetest.settings:get_bool("advtrains_show_ids")
 
 --
@@ -473,8 +475,29 @@ function wagon:on_step(dtime)
 			yaw=yaw+math.pi
 		end
 		
+		-- this timer runs off every 2 seconds.
 		self.updatepct_timer=(self.updatepct_timer or 0)-dtime
 		local updatepct_timer_elapsed = self.updatepct_timer<=0
+		
+		if updatepct_timer_elapsed then
+			--restart timer
+			self.updatepct_timer=2
+			-- perform checks that are not frequently needed
+			
+			-- unload entity if out of range (because relevant pr won't be merged in engine)
+			-- This is a WORKAROUND!
+			local outofrange = false
+			for _,p in pairs(minetest.get_connected_players()) do
+				if vector.distance(p:get_pos(),pos)>=unload_wgn_range then
+					outofrange = true
+				end
+			end
+			if outofrange then
+				--atdebug("wagon",self.id,"unloading (too far away)")
+				self.object:remove()
+			end
+		end
+		
 		if not self.old_velocity_vector 
 				or not vector.equals(velocityvec, self.old_velocity_vector)
 				or not self.old_acceleration_vector 
@@ -520,7 +543,6 @@ function wagon:on_step(dtime)
                 self.object:setyaw(yaw)
             end
 			
-			self.updatepct_timer=2
 			if self.update_animation then
 				self:update_animation(train.velocity, self.old_velocity)
 			end

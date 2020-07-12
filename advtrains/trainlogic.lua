@@ -851,7 +851,7 @@ function advtrains.update_trainpart_properties(train_id, invert_flipstate)
 end
 
 
-local ablkrng = minetest.settings:get("active_block_range")*16
+local ablkrng = advtrains.wagon_load_range
 -- This function checks whether entities need to be spawned for certain wagons, and spawns them.
 -- Called from train_step_*(), not required to check init.
 function advtrains.spawn_wagons(train_id)
@@ -862,7 +862,7 @@ function advtrains.spawn_wagons(train_id)
 		local data = advtrains.wagons[w_id]
 		if data then
 			if data.train_id ~= train_id then
-				atwarn("Train",train_id,"Wagon #",1,": Saved train ID",data.train_id,"did not match!")
+				atwarn("Train",train_id,"Wagon #",i,": Saved train ID",data.train_id,"did not match!")
 				data.train_id = train_id
 			end
 			if not advtrains.wagon_objects[w_id] or not advtrains.wagon_objects[w_id]:getyaw() then
@@ -878,6 +878,7 @@ function advtrains.spawn_wagons(train_id)
 				end
 				
 				if spawn then
+					--atdebug("wagon",w_id,"spawning")
 					local wt = advtrains.get_wagon_prototype(data)
 					local wagon = minetest.add_entity(pos, wt):get_luaentity()
 					wagon:set_id(w_id)

@@ -39,3 +39,9 @@ advtrains_prot_range_down (Track protection range [down]) int 1 0 10
 #    drop: Player is killed, all items are dropped as items on the tracks.
 #    normal: Player is killed, game-defined behavior is applied as if the player died by other means.
 advtrains_overrun_mode (Overrun mode) enum drop none,drop,normal
+
+#    Wagon entity loading/unloading range, in nodes
+#    When a wagon is within this range to a player, it is loaded
+#    When a wagon leaves this range + 32 nodes, it is unloaded
+#    If unset, defaults to active_block_range*16
+advtrains_wagon_load_range (Wagon Entity Load/Unload Range) int 96 32 512
