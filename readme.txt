@@ -35,6 +35,7 @@ advtrains_japan_horn        : Codesound
 advtrains_steam_whistle     : googol 
 advtrains_subway_horn       : https://freesound.org/people/Mullumbimby/sounds/385283/
 advtrains_subway_*          : Gabriel (gbl08ma)
+45 degree platforms design  : Och_Noe
 
 Testers:
 gpcf (Linuxworks server)
