@@ -68,6 +68,28 @@ function advtrains.register_platform(modprefix, preset)
 		paramtype = "light",
 		sunlight_propagates = true,
 	})
+	local diagonalbox_low = {
+			type = "fixed",
+			fixed = {
+				{-0.5,  -0.5, 0.5, -0.25, 0, -0.8 },
+				{-0.25, -0.5, 0.5 , 0,    0, -0.55},
+				{0,     -0.5, 0.5 , 0.25, 0, -0.3 },
+				{0.25 , -0.5, 0.5,  0.5,  0, -0.05}
+			}
+	}
+	minetest.register_node(modprefix..":platform_45_low_"..nodename, {
+		description = attrans("@1 Platform (low, 45 degree)", desc),
+		groups = {cracky = 1, not_blocking_trains = 1, platform=2},
+		sounds = default.node_sound_stone_defaults(),
+		drawtype = "mesh",
+		mesh = "advtrains_platform_diag_low.b3d",
+		selection_box = diagonalbox_low,
+		collision_box = diagonalbox_low,
+		tiles = {btex, btex.."^advtrains_platform_diag.png"},
+		paramtype2 = "facedir",
+		paramtype = "light",
+		sunlight_propagates = true,
+	})
 	minetest.register_craft({
 		type="shapeless",
 		output = modprefix .. ":platform_high_"..nodename.." 4",
