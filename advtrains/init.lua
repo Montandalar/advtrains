@@ -22,12 +22,8 @@ Copyright (C) 2016-2020  Moritz Blei (orwell96) and contributors
 local lot = os.clock()
 minetest.log("action", "[advtrains] Loading...")
 
--- Boilerplate to support localized strings if intllib mod is installed.
-if minetest.get_modpath("intllib") then
-    attrans = intllib.Getter()
-else
-    attrans = function(s,a,...)a={a,...}return s:gsub("@(%d+)",function(n)return a[tonumber(n)]end)end
-end
+-- There is no need to support 0.4.x anymore given that the compatitability with it is already broken by 1bb1d825f46af3562554c12fba35a31b9f7973ff
+attrans = minetest.get_translator ("advtrains")
 
 --advtrains
 

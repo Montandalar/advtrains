@@ -1,23 +1,23 @@
  
 core.register_craftitem("advtrains:boiler", {
-	description = "Boiler",
+	description = attrans("Boiler"),
 	inventory_image = "advtrains_boiler.png",
 })
 
  
 core.register_craftitem("advtrains:driver_cab", {
-	description = "driver's cab",
+	description = attrans("driver's cab"),
 	inventory_image = "advtrains_driver_cab.png",
 })
 
  
 core.register_craftitem("advtrains:wheel", {
-	description = "Wheel",
+	description = attrans("Wheel"),
 	inventory_image = "advtrains_wheel.png",
 })
 
 
 core.register_craftitem("advtrains:chimney", {
-	description = "Chimney",
+	description = attrans("Chimney"),
 	inventory_image = "advtrains_chimney.png",
 })
