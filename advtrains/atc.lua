@@ -128,9 +128,9 @@ advtrains.atc_function = function(def, preset, suffix, rotation)
 							if fields.mode then
 								meta:set_string("mode", idxtrans[fields.mode])
 								if fields.mode=="digiline" then
-									meta:set_string("infotext", attrans("ATC controller, mode @1\nChannel: @2", fields.mode, meta:get_string("command")) )
+									meta:set_string("infotext", attrans("ATC controller, mode @1\nChannel: @2", (fields.mode or "?"), meta:get_string("command")) )
 								else
-									meta:set_string("infotext", attrans("ATC controller, mode @1\nCommand: @2", fields.mode, meta:get_string("command")) )
+									meta:set_string("infotext", attrans("ATC controller, mode @1\nCommand: @2", (fields.mode or "?"), meta:get_string("command")) )
 								end
 								meta:set_string("formspec", atc.get_atc_controller_formspec(pos, meta))
 							end
@@ -141,9 +141,9 @@ advtrains.atc_function = function(def, preset, suffix, rotation)
 						meta:set_string("command_on", fields.command_on)
 						meta:set_string("channel", fields.channel)
 						if fields.mode=="digiline" then
-							meta:set_string("infotext", attrans("ATC controller, mode @1\nChannel: @2", fields.mode, meta:get_string("command")) )
+							meta:set_string("infotext", attrans("ATC controller, mode @1\nChannel: @2", (fields.mode or "?"), meta:get_string("command")) )
 						else
-							meta:set_string("infotext", attrans("ATC controller, mode @1\nCommand: @2", fields.mode, meta:get_string("command")) )
+							meta:set_string("infotext", attrans("ATC controller, mode @1\nCommand: @2", (fields.mode or "?"), meta:get_string("command")) )
 						end
 						meta:set_string("formspec", atc.get_atc_controller_formspec(pos, meta))
 						
