@@ -486,10 +486,10 @@ function wagon:on_step(dtime)
 			
 			-- unload entity if out of range (because relevant pr won't be merged in engine)
 			-- This is a WORKAROUND!
-			local outofrange = false
+			local outofrange = true
 			for _,p in pairs(minetest.get_connected_players()) do
-				if vector.distance(p:get_pos(),pos)>=unload_wgn_range then
-					outofrange = true
+				if vector.distance(p:get_pos(),pos)<=unload_wgn_range then
+					outofrange = false
 				end
 			end
 			if outofrange then
