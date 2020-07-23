@@ -274,10 +274,10 @@ function advtrains.hud_train_format(train, flip)
 		ht[#ht+1] = sformat("%d,85=(advtrains_hud_arrow.png^[multiply\\:cyan^[transformFY^[makealpha\\:#000000)", 1+train.tarvelocity*11)
 	end
 	local lzb = train.lzb
-	if lzb and lzb.oncoming then
-		local oc = lzb.oncoming
+	if lzb and lzb.checkpoints then
+		local oc = lzb.checkpoints
 		for i = 1, #oc do
-			local spd = oc[i].spd
+			local spd = oc[i].speed
 			local c = not spd and "lime" or (type(spd) == "number" and (spd == 0) and "red" or "orange") or nil
 			if c then
 				ht[#ht+1] = sformat("130,10=(advtrains_hud_bg.png^[resize\\:30x5^[colorize\\:%s)",c)
