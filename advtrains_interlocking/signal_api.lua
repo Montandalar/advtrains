@@ -175,6 +175,11 @@ local function fillout_aspect(asp)
 		asp.main = {
 			free = true,
 		}
+	elseif type(asp.main) ~= "table" then
+		asp.main = {
+			free = asp.main~=0,
+			speed = asp.main,
+		}
 	end
 	if not asp.dst then
 		asp.dst = {
@@ -185,6 +190,11 @@ local function fillout_aspect(asp)
 		asp.shunt = {
 			free = false,
 			proceed_as_main = false,
+		}
+	elseif type(asp.shunt) ~= "table" then
+		asp.shunt = {
+			free = asp.shunt,
+			proceed_as_main = asp.proceed_as_main,
 		}
 	end
 	if not asp.info then
