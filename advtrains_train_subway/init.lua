@@ -98,23 +98,46 @@ advtrains.register_wagon("subway_wagon", {
 	custom_on_step = function(self, dtime, data, train)
 		--set line number
 		local line = nil
-		if train.line then
-			local lint = string.sub(train.line, 1, 1)
-			line = tonumber(lint)
-			if lint=="X" then line="X" end
-		end
-		if line and line~=self.line_cache then
-			local new_line_tex="advtrains_subway_wagon.png^advtrains_subway_wagon_line"..line..".png"
-			self.object:set_properties({
-				textures={new_line_tex},
-		 	})
-			self.line_cache=line
-		elseif self.line_cache~=nil and line==nil then
-			self.object:set_properties({
-				textures=self.textures,
-		 	})
-			self.line_cache=nil
-		end
+		if train.line and self.line_cache ~= train.line then
+			self.line_cache=train.line
+			local lint = train.line
+			if string.sub(train.line, 1, 1) == "S" then
+				lint = string.sub(train.line,2)
+			end
+			if string.len(lint) == 1 then
+				if lint=="X" then line="X" end
+				line = tonumber(lint)
+			elseif string.len(lint) == 2 then
+				if tonumber(lint) then
+					line = lint
+				end
+			end
+			if line then
+				local new_line_tex="advtrains_subway_wagon.png"
+				if type(line)=="number" or line == "X" then
+					new_line_tex = new_line_tex.."^advtrains_subway_wagon_line"..line..".png"
+				else
+					local num = tonumber(line)
+					local red = math.fmod(line*67+101, 255)
+					local green = math.fmod(line*97+109, 255)
+					local blue = math.fmod(line*73+127, 255)
+					new_line_tex = new_line_tex..string.format("^(advtrains_subway_wagon_line.png^[colorize:#%X%X%X%X%X%X)^(advtrains_subway_wagon_line%s_.png^advtrains_subway_wagon_line_%s.png", math.floor(red/16), math.fmod(red,16), math.floor(green/16), math.fmod(green,16), math.floor(blue/16), math.fmod(blue,16), string.sub(line, 1, 1), string.sub(line, 2, 2))
+					if red + green + blue > 512 then
+						new_line_tex = new_line_tex .. "^[colorize:#000)"
+					else
+						new_line_tex = new_line_tex .. ")"
+					end
+				end
+				self.object:set_properties({
+						textures={new_line_tex},
+				})
+			elseif self.line_cache~=nil and line==nil then
+				self.object:set_properties({
+						textures=self.textures,
+				})
+				self.line_cache=nil
+			end
+		end	
 	end,
 }, S("Subway Passenger Wagon"), "advtrains_subway_wagon_inv.png")
 
