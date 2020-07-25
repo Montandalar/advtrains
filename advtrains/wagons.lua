@@ -810,10 +810,27 @@ function wagon:show_wagon_properties(pname)
 	]]
 	local data = advtrains.wagons[self.id]
 	local form="size[5,5]"
-	form = form .. "field[0.5,1;4,1;whitelist;Allow these players to access your wagon:;"..(data.whitelist or "").."]"
-	form = form .. "field[0.5,2;4,1;roadnumber;Wagon road number:;"..(data.roadnumber or "").."]"
-	--seat groups access lists were here
-	form=form.."button_exit[0.5,3;4,1;save;"..attrans("Save wagon properties").."]"
+	form = form .. "field[0.5,1;4.5,1;whitelist;Allow these players to access your wagon:;"..(data.whitelist or "").."]"
+	form = form .. "field[0.5,2;4.5,1;roadnumber;Wagon road number:;"..(data.roadnumber or "").."]"
+	local fc = ""
+	if data.fc then
+		fc = table.concat(data.fc, "!")
+	end
+	form = form .. "field[0.5,3;4.5,1;fc;Freight Code:;"..fc.."]"
+	if data.fc then
+		if not data.fcind then data.fcind = 1 end
+		if data.fcind > 1 then
+			form=form.."button[0.5,3.5;1,1;fcp;prev FC]"
+		end
+		form=form.."label[1.5,3.5;Current FC:]"
+
+		local cur = data.fc[data.fcind] or ""
+		form=form.."label[1.5,3.75;"..cur.."]"
+		if data.fcind < #data.fc then
+			form=form.."button[3.5,3.5;1,1;fcn;next FC]"
+		end
+	end
+	form=form.."button_exit[0.5,4.5;4,1;save;"..attrans("Save wagon properties").."]"
 	minetest.show_formspec(pname, "advtrains_prop_"..self.id, form)
 end
 
@@ -832,6 +849,14 @@ local function checklock(pname, own1, own2, wl1, wl2)
 	return advtrains.check_driving_couple_protection(pname, own1, wl1)
 		or advtrains.check_driving_couple_protection(pname, own2, wl2)
 end
+
+function string:split(sep)
+   local sep, fields = sep or ":", {}
+   local pattern = string.format("([^%s]+)", sep)
+   self:gsub(pattern, function(c) fields[#fields+1] = c end)
+   return fields
+end
+
 function wagon:show_bordcom(pname)
 	if not self:train() then return end
 	local train = self:train()
@@ -1045,6 +1070,27 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				end
 				if fields.roadnumber then
 					data.roadnumber = fields.roadnumber
+				end
+				if fields.fc then
+					data.fc = string.split(fields.fc, "!")
+					if not data.fcind then
+						data.fcind = 1
+					elseif data.fcind > #data.fc then
+						data.fcind = #data.fc
+					end
+				end
+				if fields.fcp then
+					if data.fcind > 1 then
+						data.fcind = data.fcind - 1
+					end
+					wagon.show_wagon_properties({id=uid}, pname)
+				end
+				if fields.fcn then
+					if data.fcind < #data.fc then
+						minetest.chat_send_all(data.fcind)
+						data.fcind = data.fcind + 1
+					end
+					wagon.show_wagon_properties({id=uid}, pname)
 				end
 			end
 		end
