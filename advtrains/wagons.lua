@@ -486,15 +486,26 @@ function wagon:on_step(dtime)
 			
 			-- unload entity if out of range (because relevant pr won't be merged in engine)
 			-- This is a WORKAROUND!
-			local outofrange = true
-			for _,p in pairs(minetest.get_connected_players()) do
-				if vector.distance(p:get_pos(),pos)<=unload_wgn_range then
-					outofrange = false
+			local players_in = false
+			for sno,pname in pairs(data.seatp) do
+				if minetest.get_player_by_name(pname) then
+					-- Fix: If the RTT is too high, a wagon might be recognized out of range even if a player sits in it
+					-- (client updates position not fast enough)
+					players_in = true
+					break
 				end
 			end
-			if outofrange then
-				--atdebug("wagon",self.id,"unloading (too far away)")
-				self.object:remove()
+			if not players_in then
+				local outofrange = true
+				for _,p in pairs(minetest.get_connected_players()) do
+					if vector.distance(p:get_pos(),pos)<=unload_wgn_range then
+						outofrange = false
+					end
+				end
+				if outofrange then
+					--atdebug("wagon",self.id,"unloading (too far away)")
+					self.object:remove()
+				end
 			end
 		end
 		
