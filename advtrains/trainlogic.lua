@@ -892,6 +892,36 @@ function advtrains.spawn_wagons(train_id)
 	end
 end
 
+function advtrains.split_train_at_fc(train)
+	-- splits train at first different current FC
+	local train_id = train.id
+	local fc = false
+	local ind = 0
+	for i = 1, #train.trainparts do
+		local w_id = train.trainparts[i]
+		local data = advtrains.wagons[w_id]
+		if data then
+			local wfc = advtrains.get_cur_fc(data)
+			if  wfc ~= "" then
+				if  fc then
+					if fc ~= wfc then
+						ind = i
+						break
+					end
+				else
+					fc = wfc
+				end
+			end
+		end
+	end
+	if ind > 0 then
+		return advtrains.split_train_at_index(train, ind), fc
+	end
+	if fc then
+		return nil, fc
+	end
+end
+
 function advtrains.split_train_at_index(train, index)
 	-- this function splits a train at index, creating a new train from the back part of the train.
 
@@ -1080,7 +1110,10 @@ function advtrains.do_connect_trains(first_id, second_id, vel)
 	end
 	
 	advtrains.remove_train(second_id)
-	
+	if vel < 0 then
+		advtrains.invert_train(first_id)
+		vel = -vel
+	end
 	first.velocity= vel or 0
 	
 	advtrains.update_trainpart_properties(first_id)

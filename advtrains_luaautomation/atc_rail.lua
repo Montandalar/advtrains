@@ -66,6 +66,15 @@ function r.fire_event(pos, evtdata)
 			end
 			return false
 		end,
+		split_at_fc = function(cmd)
+			assertt(cmd, "string")
+			if not train_id then return false end
+			local new_id, fc = advtrains.split_train_at_fc(train)
+			if new_id then
+				minetest.after(1,advtrains.atc.train_set_command,advtrains.trains[new_id], cmd, atc_arrow)
+			end
+			return fc
+		end,
 		set_shunt = function()
 			if not train_id then return false end
 			train.autocouple = true

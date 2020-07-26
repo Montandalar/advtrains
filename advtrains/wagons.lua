@@ -826,9 +826,7 @@ function wagon:show_wagon_properties(pname)
 
 		local cur = data.fc[data.fcind] or ""
 		form=form.."label[1.5,3.75;"..cur.."]"
-		if data.fcind < #data.fc then
-			form=form.."button[3.5,3.5;1,1;fcn;next FC]"
-		end
+		form=form.."button[3.5,3.5;1,1;fcn;next FC]"
 	end
 	form=form.."button_exit[0.5,4.5;4,1;save;"..attrans("Save wagon properties").."]"
 	minetest.show_formspec(pname, "advtrains_prop_"..self.id, form)
@@ -851,11 +849,61 @@ local function checklock(pname, own1, own2, wl1, wl2)
 end
 
 function string:split(sep)
-   local sep, fields = sep or ":", {}
+   local fields = {}
    local pattern = string.format("([^%s]+)", sep)
    self:gsub(pattern, function(c) fields[#fields+1] = c end)
    return fields
 end
+
+function wagon.set_fc(data, fcstr)
+	data.fc = string.split(fcstr, "!")
+	if not data.fcind then
+		data.fcind = 1
+	elseif data.fcind > #data.fc then
+		data.fcind = #data.fc
+	end	
+end
+
+function wagon.prev_fc(data)
+	if data.fcind > 1 then
+		data.fcind = data.fcind -1
+	end
+	if data.fcind == 1 and data.fcrev then
+		data.fcrev = nil
+	end
+end
+
+function wagon.next_fc(data)
+	if data.fcrev then
+		wagon.prev_fc(data)
+		return
+	end
+	if data.fcind < #data.fc then
+		data.fcind = data.fcind + 1
+	else
+		data.fcind = 1
+	end
+	if data.fcind == #data.fc and data.fc[data.fcind] == "?" then
+		data.fcrev = true
+		wagon.prev_fc(data)
+		return			
+	end
+end
+
+function advtrains.get_cur_fc(data)
+	if not ( data.fc and data.fcind ) then
+		return ""
+	end
+	return data.fc[data.fcind] or ""
+end
+
+function advtrains.step_fc(data)
+	wagon.next_fc(data)
+end
+
+
+
+
 
 function wagon:show_bordcom(pname)
 	if not self:train() then return end
@@ -1072,24 +1120,14 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 					data.roadnumber = fields.roadnumber
 				end
 				if fields.fc then
-					data.fc = string.split(fields.fc, "!")
-					if not data.fcind then
-						data.fcind = 1
-					elseif data.fcind > #data.fc then
-						data.fcind = #data.fc
-					end
+					wagon.set_fc(data, fields.fc)
 				end
 				if fields.fcp then
-					if data.fcind > 1 then
-						data.fcind = data.fcind - 1
-					end
+					wagon.prev_fc(data)
 					wagon.show_wagon_properties({id=uid}, pname)
 				end
 				if fields.fcn then
-					if data.fcind < #data.fc then
-						minetest.chat_send_all(data.fcind)
-						data.fcind = data.fcind + 1
-					end
+					wagon.next_fc(data)
 					wagon.show_wagon_properties({id=uid}, pname)
 				end
 			end
