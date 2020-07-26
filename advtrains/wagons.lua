@@ -874,6 +874,7 @@ function wagon.prev_fc(data)
 end
 
 function wagon.next_fc(data)
+	if not data.fc then return end
 	if data.fcrev then
 		wagon.prev_fc(data)
 		return
@@ -1127,7 +1128,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 					wagon.show_wagon_properties({id=uid}, pname)
 				end
 				if fields.fcn then
-					wagon.next_fc(data)
+					advtrains.step_fc(data)
 					wagon.show_wagon_properties({id=uid}, pname)
 				end
 			end

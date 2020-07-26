@@ -922,6 +922,16 @@ function advtrains.split_train_at_fc(train)
 	end
 end
 
+function advtrains.train_step_fc(train)
+	for i=1,#train.trainparts do
+		local w_id = train.trainparts[i]
+		local data = advtrains.wagons[w_id]
+		if data then
+			advtrains.step_fc(data)
+		end
+	end
+end
+
 function advtrains.split_train_at_index(train, index)
 	-- this function splits a train at index, creating a new train from the back part of the train.
 

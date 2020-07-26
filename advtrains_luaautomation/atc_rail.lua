@@ -75,6 +75,10 @@ function r.fire_event(pos, evtdata)
 			end
 			return fc
 		end,
+		step_fc = function()
+			if not train_id then return false end
+			advtrains.train_step_fc(train)
+		end,
 		set_shunt = function()
 			if not train_id then return false end
 			train.autocouple = true
