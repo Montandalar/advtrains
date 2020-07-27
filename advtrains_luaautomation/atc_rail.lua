@@ -73,7 +73,14 @@ function r.fire_event(pos, evtdata)
 			if new_id then
 				minetest.after(1,advtrains.atc.train_set_command,advtrains.trains[new_id], cmd, atc_arrow)
 			end
+			if fc == "" then
+				return nil
+			end
 			return fc
+		end,
+		train_length = function ()
+			if not train_id then return false end
+			return #train.trainparts
 		end,
 		step_fc = function()
 			if not train_id then return false end
