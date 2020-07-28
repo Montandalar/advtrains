@@ -206,12 +206,16 @@ split_at_index(index, command)
 split_at_fc(command)
 	Splits the train in such a way that all cars with non-empty
 	current FC of the first part of the train have the same FC. The
-	command specified is sent to the rear part, as with split_at_index.
-	It returns the fc of the cars of the first part.
+	command specified is sent to the rear part, as with
+	split_at_index.  It returns the fc of the cars of the first part.
 
-	Example: Train has current FCs "" "" "foo" "bar" "boo" "foo"
-	Result: first train: "" "" "foo"; second train: "bar" "boo" "foo"
+	Example : Train has current FCs "" "" "foo" "bar" "foo"
+	Result: first train: "" "" "foo"; second train: "bar" "foo"
 	The command returns "foo" in this case
+split_off_locomotive(command)
+	Splits off the locomotives at the front of the train, which are
+	identified by an empty FC.  command specifies the command to be
+	executed by the rear half of the train.
 step_fc()
 	Steps the FCs of all train cars forward
 train_length()

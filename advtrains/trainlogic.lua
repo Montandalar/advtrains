@@ -892,8 +892,10 @@ function advtrains.spawn_wagons(train_id)
 	end
 end
 
-function advtrains.split_train_at_fc(train)
-	-- splits train at first different current FC
+function advtrains.split_train_at_fc(train, count_empty)
+	-- splits train at first different current FC by convention,
+	-- locomotives have empty FC so are ignored
+	-- count_empty is used to split off locomotives
 	local train_id = train.id
 	local fc = false
 	local ind = 0
@@ -902,7 +904,7 @@ function advtrains.split_train_at_fc(train)
 		local data = advtrains.wagons[w_id]
 		if data then
 			local wfc = advtrains.get_cur_fc(data)
-			if  wfc ~= "" then
+			if  wfc ~= "" or count_empty then
 				if  fc then
 					if fc ~= wfc then
 						ind = i
