@@ -202,13 +202,26 @@ set_rc(routingcode)
 	The interlocking system uses this property for Automatic Routesetting.
 split_at_index(index, command)
 	Splits the train at the specified index, into a train with index-1 wagons and a second train starting with the index-th wagon.
-	command specifies an atc command to be sent to the second train after decoupling. 
+	command specifies an atc command to be sent to the second train after decoupling.
+split_at_fc(command)
+	Splits the train in such a way that all cars with non-empty
+	current FC of the first part of the train have the same FC. The
+	command specified is sent to the rear part, as with split_at_index.
+
+	Example: Train has current FCs "" "" "foo" "bar" "boo" "foo"
+	Result: first train: "" "" "foo"; second train: "bar" "boo" "foo"
+step_fc()
+	Steps the FCs of all train cars forward
+train_length()
+	returns the number of cars the train is composed of
 set_autocouple()
 	Sets the train into autocouple mode 
 unset_autocouple()
 	Unsets autocouple mode
+
 set_shunt(), unset_shunt()
 	deprecated aliases for set_autocouple() and unset_autocouple(), will be removed from a later release.
+
 
 # Operator panel
 This simple node executes its actions when punched. It can be used to change a switch and update the corresponding signals or similar applications.
