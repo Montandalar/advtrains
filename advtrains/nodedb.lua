@@ -30,6 +30,7 @@ local ndb={}
 --local variables for performance
 local ndb_nodeids={}
 local ndb_nodes={}
+local ndb_ver
 
 local function ndbget(x,y,z)
 	local ny=ndb_nodes[y]
@@ -57,6 +58,16 @@ local path=minetest.get_worldpath()..DIR_DELIM.."advtrains_ndb2"
 --nodeids get loaded by advtrains init.lua and passed here
 function ndb.load_data(data)
 	ndb_nodeids = data and data.nodeids or {}
+	ndb_ver = data and data.ver or 0
+	if ndb_ver < 1 then
+		for k,v in pairs(ndb_nodeids) do
+			if v == "advtrains:dtrack_xing4590_st" then
+				cidDepr = k
+			elseif v == "advtrains:dtrack_xing90plusx_45l" then
+				cidNew = k
+			end
+		end
+	end
 	local file, err = io.open(path, "rb")
 	if not file then
 		atwarn("Couldn't load the node database: ", err or "Unknown Error")
@@ -67,6 +78,9 @@ function ndb.load_data(data)
 		local hst_x=file:read(2)
 		local cid=file:read(2)
 		while hst_z and hst_y and hst_x and cid and #hst_z==2 and #hst_y==2 and #hst_x==2 and #cid==2 do
+			if (ndb_ver < 1 and cid == cidDepr) then
+				cid = cidNew
+			end
 			ndbset(bytes_to_int(hst_x), bytes_to_int(hst_y), bytes_to_int(hst_z), bytes_to_int(cid))
 			cnt=cnt+1
 			hst_z=file:read(2)
@@ -77,6 +91,7 @@ function ndb.load_data(data)
 		atlog("nodedb: read", cnt, "nodes.")
 		file:close()
 	end
+	ndb_ver = 1
 end
 
 --save
@@ -99,7 +114,7 @@ function ndb.save_data()
 		file:close()
 	end
 	os.rename(tmppath, path)
-	return {nodeids = ndb_nodeids}
+	return {nodeids = ndb_nodeids, ver = ndb_ver}
 end
 
 --function to get node. track database is not helpful here.
