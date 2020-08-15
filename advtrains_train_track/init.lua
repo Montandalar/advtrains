@@ -62,6 +62,25 @@ minetest.register_craft({
 		{'', '', 'advtrains:dtrack_placer'}
 	}
 })
+-- Deprecate any rails using the old name scheme
+minetest.register_lbm({
+	label = "Upgrade legacy 4590 rails",
+	name = "advtrains_train_track:replace_legacy_4590",
+	nodenames = {"advtrains:dtrack_xing4590_st"},
+	run_at_every_load = true,
+	action = function(pos, node)
+		minetest.log("actionPos!: " .. pos.x .. "," .. pos.y .. "," .. pos.z)
+		minetest.log("node!: " .. node.name .. "," .. node.param1 .. "," .. node.param2)
+		advtrains.ndb.swap_node(pos,
+		{
+			name="advtrains:dtrack_xing90plusx_45l",
+			param1=node.param1,
+			param2=node.param2,
+		})
+	end
+})
+-- This will replace any items left in the inventory
+minetest.register_alias("advtrains:dtrack_xing4590_placer", "advtrains:dtrack_xing90plusx_placer")
 
 -- Diagonal
 -- This set of rail crossings is named based on the angle of each intersecting
