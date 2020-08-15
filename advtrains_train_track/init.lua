@@ -41,24 +41,53 @@ minetest.register_craft({
 		{'', 'advtrains:dtrack_placer', ''}
 	}
 })
--- 45-90(
+
+-- 90plusx
+-- When you face east and param2=0, then this set of rails has a rail at 90
+-- degrees to the viewer, plus another rail crossing at 30, 45 or 60 degrees.
 advtrains.register_tracks("default", {
-	nodename_prefix="advtrains:dtrack_xing4590",
+	nodename_prefix="advtrains:dtrack_xing90plusx",
 	texture_prefix="advtrains_dtrack_xing4590",
-	models_prefix="advtrains_dtrack_xing4590",
+	models_prefix="advtrains_dtrack_xing90plusx",
 	models_suffix=".obj",
 	shared_texture="advtrains_dtrack_shared.png",
-	description=attrans("45/90 Degree Diamond Crossing Track"),
+	description=attrans("90+Angle Diamond Crossing Track"),
 	formats = {}
-}, advtrains.ap.t_9045crossing)
+}, advtrains.ap.t_90plusx_crossing)
 minetest.register_craft({
-	output = 'advtrains:dtrack_xing4590_placer 2',
+	output = 'advtrains:dtrack_xing90plusx_placer 2',
 	recipe = {
 		{'advtrains:dtrack_placer', '', ''},
 		{'advtrains:dtrack_placer', 'advtrains:dtrack_placer', 'advtrains:dtrack_placer'},
 		{'', '', 'advtrains:dtrack_placer'}
 	}
 })
+
+-- Diagonal
+-- This set of rail crossings is named based on the angle of each intersecting
+-- direction when facing east and param2=0. Rails with l/r swapped are mirror
+-- images. For example, 30r45l is the mirror image of 30l45r.
+advtrains.register_tracks("default", {
+	nodename_prefix="advtrains:dtrack_xingdiag",
+	texture_prefix="advtrains_dtrack_xingdiag",
+	models_prefix="advtrains_dtrack_xingdiag",
+	models_suffix=".obj",
+	shared_texture="advtrains_dtrack_shared.png",
+	description=attrans("Diagonal Diamond Crossing Track"),
+	formats = {},
+}, advtrains.ap.t_diagonalcrossing)
+minetest.register_craft({
+	output = 'advtrains:dtrack_xingdiag_placer 2',
+	recipe = {
+		{'advtrains:dtrack_placer', '', 'advtrains:dtrack_placer'},
+		{'', 'advtrains:dtrack_placer', ''},
+		{'advtrains:dtrack_placer', '', 'advtrains:dtrack_placer'}
+	}
+})
+---- Not included: very shallow crossings like (30/60)+45.
+---- At an angle of only 18.4 degrees, the models would not
+---- translate well to a block game.
+-- END crossings
 
 --slopes
 advtrains.register_tracks("default", {

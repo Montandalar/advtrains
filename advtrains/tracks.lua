@@ -225,20 +225,133 @@ advtrains.ap.t_perpcrossing={
 	tpdefault="st",
 	rotation={"", "_30", "_45", "_60"},
 }
-advtrains.ap.t_9045crossing={
+advtrains.ap.t_90plusx_crossing={
 	regstep = 1,
 	variant={
-		st={
-			conns = { {c=0}, {c=8}, {c=2}, {c=10} },
-			desc = "45/90 degree crossing",
+		["30l"]={
+			conns = { {c=0}, {c=8}, {c=1}, {c=9} },
+			desc = "30/90 degree crossing (left)",
 			tpdouble = true,
 			tpsingle = true,
-			trackworker = "st",
+			trackworker = "45l"
+		},
+		["45l"]={
+			conns = { {c=0}, {c=8}, {c=2}, {c=10} },
+			desc = "45/90 degree crossing (left)",
+			tpdouble = true,
+			tpsingle = true,
+			trackworker = "60l",
+		},
+		["60l"]={
+			conns = { {c=0}, {c=8}, {c=3}, {c=11}},
+			desc = "60/90 degree crossing (left)",
+			tpdouble = true,
+			tpsingle = true,
+			trackworker = "60r",
+		},
+		["60r"]={
+			conns = { {c=0}, {c=8}, {c=7}, {c=15} },
+			desc = "60/90 degree crossing (right)",
+			tpdouble = true,
+			tpsingle = true,
+			trackworker = "45r"
+		},
+		["45r"]={
+			conns = { {c=0}, {c=8}, {c=6}, {c=14} },
+			desc = "45/90 degree crossing (right)",
+			tpdouble = true,
+			tpsingle = true,
+			trackworker = "30r",
+		},
+		["30r"]={
+			conns = { {c=0}, {c=8}, {c=7}, {c=15}},
+			desc = "30/90 degree crossing (right)",
+			tpdouble = true,
+			tpsingle = true,
+			trackworker = "30l",
 		},
 	},
 	regtp=true,
-	tpdefault="st",
+	tpdefault="30l",
 	rotation={""},
+	trackworker = {
+		["30l"] = "45l",
+		["45l"] = "60l",
+		["60l"] = "60r",
+		["60r"] = "45r",
+		["45r"] = "30r",
+		["30r"] = "30l",
+	}
+}
+
+advtrains.ap.t_diagonalcrossing = {
+	regstep=1,
+	variant={
+		["30l45r"]={
+			conns = {{c=1}, {c=9}, {c=6}, {c=14}},
+			desc = "30left-45right diagonal crossing",
+			tpdouble=true,
+			tpsingle=true,
+			trackworker="60l30l",
+		},
+		["60l30l"]={
+			conns = {{c=3}, {c=11}, {c=1}, {c=9}},
+			desc = "30left-60right diagonal crossing",
+			tpdouble=true,
+			tpsingle=true,
+			trackworker="60l45r"
+		},
+		["60l45r"]={
+			conns = {{c=3}, {c=11}, {c=6}, {c=14}},
+			desc = "60left-45right diagonal crossing",
+			tpdouble=true,
+			tpsingle=true,
+			trackworker="60l60r"
+		},
+		["60l60r"]={
+			conns = {{c=3}, {c=11}, {c=5}, {c=13}},
+			desc = "60left-60right diagonal crossing",
+			tpdouble=true,
+			tpsingle=true,
+			trackworker="60r45l",
+		},
+		--If 60l60r had a mirror image, it would be here, but it's symmetric.
+		-- 60l60r is also equivalent to 30l30r but rotated 90 degrees.
+		["60r45l"]={
+			conns = {{c=5}, {c=13}, {c=2}, {c=10}},
+			desc = "60right-45left diagonal crossing",
+			tpdouble=true,
+			tpsingle=true,
+			trackworker="60r30r",
+		},
+		["60r30r"]={
+			conns = {{c=5}, {c=13}, {c=7}, {c=15}},
+			desc = "60right-30right diagonal crossing",
+			tpdouble=true,
+			tpsingle=true,
+			trackworker="30r45l",
+		},
+		["30r45l"]={
+			conns = {{c=7}, {c=15}, {c=2}, {c=10}},
+			desc = "30right-45left diagonal crossing",
+			tpdouble=true,
+			tpsingle=true,
+			trackworker="30l45r",
+		},
+
+	},
+	regtp=true,
+	tpdefault="30l45r",
+	rotation={""},
+	trackworker = {
+		["30l45r"] = "60l30l",
+		["60l30l"] = "60l45r",
+		["60l45r"] = "60l60r",
+		["60l60r"] = "60r45l",
+		["60r45l"] = "60r30r",
+		["60r30r"] = "30r45l",
+		["30r45l"] = "30l45r",
+	}
 }
 
 advtrains.trackpresets = advtrains.ap
