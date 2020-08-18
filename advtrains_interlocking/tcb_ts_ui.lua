@@ -70,6 +70,8 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 	--	end	
 	--end,
 	can_dig = function(pos, player)
+		if player == nil then return false end
+
 		local pname = player:get_player_name()
 
 		-- Those markers can only be dug when all adjacent TS's are set
