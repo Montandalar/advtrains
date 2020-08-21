@@ -892,16 +892,21 @@ function advtrains.spawn_wagons(train_id)
 	end
 end
 
-function advtrains.split_train_at_fc(train, count_empty)
+function advtrains.split_train_at_fc(train, count_empty, length_limit)
 	-- splits train at first different current FC by convention,
 	-- locomotives have empty FC so are ignored
 	-- count_empty is used to split off locomotives
+	-- length_limit limits the length of the first train to length_limit wagons
 	local train_id = train.id
 	local fc = false
 	local ind = 0
 	for i = 1, #train.trainparts do
 		local w_id = train.trainparts[i]
 		local data = advtrains.wagons[w_id]
+		if length_limit and i > length_limit then
+			ind = i
+			break
+		end
 		if data then
 			local wfc = advtrains.get_cur_fc(data)
 			if  wfc ~= "" or count_empty then

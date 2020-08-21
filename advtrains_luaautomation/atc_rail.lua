@@ -66,19 +66,19 @@ function r.fire_event(pos, evtdata)
 			end
 			return false
 		end,
-		split_at_fc = function(cmd)
+		split_at_fc = function(cmd, len)
 			assertt(cmd, "string")
 			if not train_id then return false end
-			local new_id, fc = advtrains.split_train_at_fc(train)
+			local new_id, fc = advtrains.split_train_at_fc(train, false, len)
 			if new_id then
 				minetest.after(1,advtrains.atc.train_set_command,advtrains.trains[new_id], cmd, atc_arrow)
 			end
 			return fc or ""
 		end,
-		split_off_locomotive = function(cmd)
+		split_off_locomotive = function(cmd, len)
 			assertt(cmd, "string")
 			if not train_id then return false end
-			local new_id, fc = advtrains.split_train_at_fc(train, true)
+			local new_id, fc = advtrains.split_train_at_fc(train, true, len)
 			if new_id then
 				minetest.after(1,advtrains.atc.train_set_command,advtrains.trains[new_id], cmd, atc_arrow)
 			end						

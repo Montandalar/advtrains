@@ -203,21 +203,38 @@ set_rc(routingcode)
 split_at_index(index, command)
 	Splits the train at the specified index, into a train with index-1 wagons and a second train starting with the index-th wagon.
 	command specifies an atc command to be sent to the second train after decoupling.
-split_at_fc(command)
+split_at_fc(command, len)
 	Splits the train in such a way that all cars with non-empty
 	current FC of the first part of the train have the same FC. The
 	command specified is sent to the rear part, as with
 	split_at_index.  It returns the fc of the cars of the first part.
 
+	The optional argument len specifies the maximum length for the
+	first part of the train. Say, we have len=3, and the train has ""
+	"" "foo" "foo" "foo" "bar", then the first train part will be ""
+	"" "foo".
+
 	Example : Train has current FCs "" "" "foo" "bar" "foo"
 	Result: first train: "" "" "foo"; second train: "bar" "foo"
 	The command returns "foo" in this case
-split_off_locomotive(command)
+split_off_locomotive(command, len)
 	Splits off the locomotives at the front of the train, which are
 	identified by an empty FC.  command specifies the command to be
 	executed by the rear half of the train.
+
+	The optional argument len specifies the maximum length for the
+	first part of the train. Say, we have len=3, and the train has ""
+	"" "foo" "foo" "foo" "bar", then the first train part will be ""
+	"" "foo".	
 step_fc()
-	Steps the FCs of all train cars forward
+	Steps the FCs of all train cars forward. FCs are composed of codes
+	separated by exclamation marks (!), for instance
+	"foo!bar!baz". Each wagon has a current FC, indicating its next
+	destination. Stepping the freight code forward, selects the next
+	code after the !. If the end of the string is reached, then the
+	first code is selected, except if the string ends with a question
+	mark, then the order is reversed.
+
 train_length()
 	returns the number of cars the train is composed of
 set_autocouple()
