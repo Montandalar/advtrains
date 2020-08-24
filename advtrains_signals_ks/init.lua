@@ -174,7 +174,8 @@ for _, rtab in ipairs({
 			-- Speed restriction lifted
 			["e"] = {asp = { main = -1, shunt = true }, n = "hfs"},
 			-- Halt for shunt moves:
-			["hfs"] = {asp = { main = false, shunt = false }, n = "8"},
+			["hfs"] = {asp = { main = false, shunt = false }, n = "pam"},
+			["pam"] = {asp = { main = -1, shunt = false, proceed_as_main = true}, n = "8"},
 		}) do
 		minetest.register_node("advtrains_signals_ks:sign_"..typ.."_"..rot, {
 			description = "Signal Sign",

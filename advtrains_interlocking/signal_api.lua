@@ -3,17 +3,18 @@
 
 --[[
 Signal aspect table:
+Note: All speeds are measured in m/s, aka the number of + signs in the HUD.
 asp = {
 	main = <int speed>,
 		-- Main signal aspect, tells state and permitted speed of next section
 		-- 0 = section is blocked
 		-- >0 = section is free, speed limit is this value
 		-- -1 = section is free, maximum speed permitted
-		-- false = Signal doesn't provide main signal information, retain current speed limit.
+		-- false/nil = Signal doesn't provide main signal information, retain current speed limit.
 	shunt = <boolean>,
 		-- Whether train may proceed as shunt move, on sight
 		-- main aspect takes precedence over this
-		-- When main==0, train switches to shunt move and is restricted to speed 8
+		-- When main==0, train switches to shunt move and is restricted to speed 6
 	proceed_as_main = <boolean>,
 		-- If an approaching train is a shunt move and 'shunt' is false,
 		-- the train may proceed as a train move under the "main" aspect
@@ -29,7 +30,7 @@ asp = {
 		-- 0 = section is blocked
 		-- >0 = section is free, speed limit is this value
 		-- -1 = section is free, maximum speed permitted
-		-- false = Signal doesn't provide distant signal information.
+		-- false/nil = Signal doesn't provide distant signal information.
 	
 	-- the character of call_on and dead_end is purely informative
 	call_on = <boolean>, -- Call-on route, expect train in track ahead (not implemented yet)
@@ -63,10 +64,16 @@ advtrains = {
 		-- This function gets called whenever the signal should display
 		-- a new or changed signal aspect. It is not required that
 		-- the signal actually displays the exact same aspect, since
-		-- some signals can not do this by design.
-		-- Example: pure shunt signals can not display a "main" aspect
-		-- and have no effect on train moves, so they will only ever
-		-- honor the shunt.free field for their aspect.
+		-- some signals can not do this by design. However, it must
+		-- display an aspect that is at least as restrictive as the passed
+		-- aspect as far as it is capable of doing so.
+		-- Examples:
+		-- - pure shunt signals can not display a "main" aspect
+		--   and have no effect on train moves, so they will only ever
+		--   honor the shunt.free field for their aspect.
+		-- - the german Hl system can only signal speeds of 40, 60
+		--   and 100 km/h, a speed of 80km/h should then be signalled
+		--   as 60 km/h instead.
 		-- In turn, it is not guaranteed that the aspect will fulfill the
 		-- criteria put down in supported_aspects.
 		-- If set_aspect is present, supported_aspects should also be declared.
