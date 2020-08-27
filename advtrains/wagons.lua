@@ -1171,7 +1171,7 @@ function wagon:seating_from_key_helper(pname, fields, no)
 	end
 	if fields.inv and self.has_inventory and self.get_inventory_formspec then
 		minetest.close_formspec(pname, "advtrains_seating_"..self.id)
-		minetest.show_formspec(player:get_player_name(), "advtrains_inv_"..self.id, self:get_inventory_formspec(player:get_player_name(), make_inv_name(self.id)))
+		minetest.show_formspec(pname, "advtrains_inv_"..self.id, self:get_inventory_formspec(pname, make_inv_name(self.id)))
 	end
 	if fields.prop and data.owner==pname then
 		minetest.close_formspec(pname, "advtrains_seating_"..self.id)
