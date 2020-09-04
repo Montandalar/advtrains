@@ -848,15 +848,15 @@ local function checklock(pname, own1, own2, wl1, wl2)
 		or advtrains.check_driving_couple_protection(pname, own2, wl2)
 end
 
-function string:split(sep)
+local function split(str, sep)
    local fields = {}
    local pattern = string.format("([^%s]+)", sep)
-   self:gsub(pattern, function(c) fields[#fields+1] = c end)
+   str:gsub(pattern, function(c) fields[#fields+1] = c end)
    return fields
 end
 
 function wagon.set_fc(data, fcstr)
-	data.fc = string.split(fcstr, "!")
+	data.fc = split(fcstr, "!")
 	if not data.fcind then
 		data.fcind = 1
 	elseif data.fcind > #data.fc then
