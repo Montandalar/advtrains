@@ -810,8 +810,8 @@ function wagon:show_wagon_properties(pname)
 	]]
 	local data = advtrains.wagons[self.id]
 	local form="size[5,5]"
-	form = form .. "field[0.5,1;4.5,1;whitelist;Allow these players to access your wagon:;"..(data.whitelist or "").."]"
-	form = form .. "field[0.5,2;4.5,1;roadnumber;Wagon road number:;"..(data.roadnumber or "").."]"
+	form = form .. "field[0.5,1;4.5,1;whitelist;Allow these players to access your wagon:;"..minetest.formspec_escape(data.whitelist or "").."]"
+	form = form .. "field[0.5,2;4.5,1;roadnumber;Wagon road number:;"..minetest.formspec_escape(data.roadnumber or "").."]"
 	local fc = ""
 	if data.fc then
 		fc = table.concat(data.fc, "!")
@@ -825,7 +825,7 @@ function wagon:show_wagon_properties(pname)
 		form=form.."label[1.5,3.5;Current FC:]"
 
 		local cur = data.fc[data.fcind] or ""
-		form=form.."label[1.5,3.75;"..cur.."]"
+		form=form.."label[1.5,3.75;"..minetest.formspec_escape(cur).."]"
 		form=form.."button[3.5,3.5;1,1;fcn;next FC]"
 	end
 	form=form.."button_exit[0.5,4.5;4,1;save;"..attrans("Save wagon properties").."]"
