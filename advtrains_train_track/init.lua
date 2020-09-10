@@ -21,6 +21,43 @@ minetest.register_craft({
 	},
 })
 
+-- y-turnout
+advtrains.register_tracks("default", {
+	nodename_prefix="advtrains:dtrack_sy",
+	texture_prefix="advtrains_dtrack_sy",
+	models_prefix="advtrains_dtrack_sy",
+	models_suffix=".obj",
+	shared_texture="advtrains_dtrack_shared.png",
+	description=attrans("Y-turnout"),
+	formats = {},
+}, advtrains.ap.t_yturnout)
+minetest.register_craft({
+	output = 'advtrains:dtrack_sy_placer 2',
+	recipe = {
+		{'advtrains:dtrack_placer', '', 'advtrains:dtrack_placer'},
+		{'', 'advtrains:dtrack_placer', ''},
+		{'', 'advtrains:dtrack_placer', ''},
+	},
+})
+--3-way turnout
+advtrains.register_tracks("default", {
+	nodename_prefix="advtrains:dtrack_s3",
+	texture_prefix="advtrains_dtrack_s3",
+	models_prefix="advtrains_dtrack_s3",
+	models_suffix=".obj",
+	shared_texture="advtrains_dtrack_shared.png",
+	description=attrans("3-way turnout"),
+	formats = {},
+}, advtrains.ap.t_s3way)
+minetest.register_craft({
+	output = 'advtrains:dtrack_s3_placer 1',
+	recipe = {
+		{'advtrains:dtrack_placer', 'advtrains:dtrack_placer', 'advtrains:dtrack_placer'},
+		{'', 'advtrains:dtrack_placer', ''},
+		{'', '', ''},
+	},
+})
+
 -- Diamond Crossings
 -- perpendicular
 advtrains.register_tracks("default", {

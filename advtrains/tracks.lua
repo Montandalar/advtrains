@@ -98,6 +98,61 @@ advtrains.ap.t_30deg_flat={
 	},
 	rotation={"", "_30", "_45", "_60"},
 }
+advtrains.ap.t_yturnout={
+	regstep=1,
+	variant={
+		l={
+			conns = conns3(0,7,9),
+			desc = "Y-turnout (left)",
+			switchalt = "r",
+			switchmc = "off",
+			switchst = "l",
+		},
+		r={
+			conns = conns3(0,9,7),
+			desc = "Y-turnout (right)",
+			switchalt = "l",
+			switchmc = "on",
+			switchst = "r",
+		}
+	},
+	regtp=true,
+	tpdefault="l",
+	rotation={"", "_30", "_45", "_60"},
+}
+advtrains.ap.t_s3way={
+	regstep=1,
+	variant={
+		l={
+			--conns = conns6(0,7,0,8,0,9),
+			conns = conns3(0,7,8),
+			desc = "3-way turnout (left)",
+			switchalt = "s",
+			--switchalt2 = ,
+			--switchmc = "off",
+			switchst="l",
+		},
+		s={
+			--conns = conns6(0,8,0,7,0,9),
+			conns = conns3(0,8,7),
+			desc = "3-way turnout (straight)",
+			switchalt ="r",
+			--switchmc = "on",
+			switchst = "s",
+		},
+		r={
+			--conns = conns6(0,9,0,8,0,7),
+			conns = conns3(0,9,8),
+			desc = "3-way turnout (right)",
+			switchalt = "l",
+			switchst="r"
+			--switchmc = "off",
+		}
+	},
+	regtp=true,
+	tpdefault="l",
+	rotation={"", "_30", "_45", "_60"},
+}
 advtrains.ap.t_30deg_slope={
 	regstep=1,
 	variant={
@@ -450,10 +505,11 @@ function advtrains.register_tracks(tracktype, def, preset)
 				
 				if var.switchalt and var.switchst then
 					local switchfunc=function(pos, node, newstate)
+						newstate = newstate or var.switchalt -- support for 3 (or more) state switches
 						-- this code is only called from the internal setstate function, which
 						-- ensures that it is safe to switch the turnout
 						if newstate~=var.switchst then
-							advtrains.ndb.swap_node(pos, {name=def.nodename_prefix.."_"..var.switchalt..rotation, param2=node.param2})
+							advtrains.ndb.swap_node(pos, {name=def.nodename_prefix.."_"..newstate..rotation, param2=node.param2})
 							advtrains.invalidate_all_paths(pos)
 						end
 					end
