@@ -334,9 +334,10 @@ function advtrains.get_adjacent_rail(this_posnr, this_conns_p, conn_idx, drives_
 end
 
 -- when a train enters a rail on connid 'conn', which connid will it go out?
--- nconns: number of connections in connection table
+-- nconns: number of connections in connection table:
+-- 2 = straight rail; 3 = turnout, 4 = crossing, 5 = three-way turnout (5th entry is a stub)
 -- returns: connid_out
-local connlku={[2]={2,1}, [3]={2,1,1}, [4]={2,1,4,3}}
+local connlku={[2]={2,1}, [3]={2,1,1}, [4]={2,1,4,3}, [5]={2,1,1,1}}
 function advtrains.get_matching_conn(conn, nconns)
 	return connlku[nconns][conn]
 end

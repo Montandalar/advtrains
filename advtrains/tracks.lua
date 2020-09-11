@@ -124,8 +124,7 @@ advtrains.ap.t_s3way={
 	regstep=1,
 	variant={
 		l={
-			--conns = conns6(0,7,0,8,0,9),
-			conns = conns3(0,7,8),
+			conns = { {c=0}, {c=7}, {c=8}, {c=9}, {["3"]=0} },
 			desc = "3-way turnout (left)",
 			switchalt = "s",
 			--switchalt2 = ,
@@ -133,16 +132,14 @@ advtrains.ap.t_s3way={
 			switchst="l",
 		},
 		s={
-			--conns = conns6(0,8,0,7,0,9),
-			conns = conns3(0,8,7),
+			conns = { {c=0}, {c=8}, {c=7}, {c=9}, {["3"]=0} },
 			desc = "3-way turnout (straight)",
 			switchalt ="r",
 			--switchmc = "on",
 			switchst = "s",
 		},
 		r={
-			--conns = conns6(0,9,0,8,0,7),
-			conns = conns3(0,9,8),
+			conns = { {c=0}, {c=9}, {c=8}, {c=7}, {["3"]=0} },
 			desc = "3-way turnout (right)",
 			switchalt = "l",
 			switchst="r"
