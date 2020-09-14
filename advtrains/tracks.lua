@@ -61,6 +61,7 @@ advtrains.ap.t_30deg_flat={
 			switchalt = "swlcr",
 			switchmc = "on",
 			switchst = "st",
+			switchprefix = "swl",
 		},
 		swlcr={
 			conns = conns3(0,7,8),
@@ -69,6 +70,7 @@ advtrains.ap.t_30deg_flat={
 			switchalt = "swlst",
 			switchmc = "off",
 			switchst = "cr",
+			switchprefix = "swl",
 		},
 		swrst={
 			conns = conns3(0,8,9),
@@ -77,6 +79,7 @@ advtrains.ap.t_30deg_flat={
 			switchalt = "swrcr",
 			switchmc = "on",
 			switchst = "st",
+			switchprefix = "swr",
 		},
 		swrcr={
 			conns = conns3(0,9,8),
@@ -85,6 +88,7 @@ advtrains.ap.t_30deg_flat={
 			switchalt = "swrst",
 			switchmc = "off",
 			switchst = "cr",
+			switchprefix = "swr",
 		},
 	},
 	regtp=true,
@@ -107,6 +111,7 @@ advtrains.ap.t_yturnout={
 			switchalt = "r",
 			switchmc = "off",
 			switchst = "l",
+			switchprefix = "",
 		},
 		r={
 			conns = conns3(0,9,7),
@@ -114,6 +119,7 @@ advtrains.ap.t_yturnout={
 			switchalt = "l",
 			switchmc = "on",
 			switchst = "r",
+			switchprefix = "",
 		}
 	},
 	regtp=true,
@@ -127,23 +133,22 @@ advtrains.ap.t_s3way={
 			conns = { {c=0}, {c=7}, {c=8}, {c=9}, {["3"]=0} },
 			desc = "3-way turnout (left)",
 			switchalt = "s",
-			--switchalt2 = ,
-			--switchmc = "off",
 			switchst="l",
+			switchprefix = "",
 		},
 		s={
 			conns = { {c=0}, {c=8}, {c=7}, {c=9}, {["3"]=0} },
 			desc = "3-way turnout (straight)",
 			switchalt ="r",
-			--switchmc = "on",
 			switchst = "s",
+			switchprefix = "",
 		},
 		r={
 			conns = { {c=0}, {c=9}, {c=8}, {c=7}, {["3"]=0} },
 			desc = "3-way turnout (right)",
 			switchalt = "l",
-			switchst="r"
-			--switchmc = "off",
+			switchst="r",
+			switchprefix = "",
 		}
 	},
 	regtp=true,
@@ -506,7 +511,7 @@ function advtrains.register_tracks(tracktype, def, preset)
 						-- this code is only called from the internal setstate function, which
 						-- ensures that it is safe to switch the turnout
 						if newstate~=var.switchst then
-							advtrains.ndb.swap_node(pos, {name=def.nodename_prefix.."_"..newstate..rotation, param2=node.param2})
+							advtrains.ndb.swap_node(pos, {name=def.nodename_prefix.."_"..(var.switchprefix or "")..newstate..rotation, param2=node.param2})
 							advtrains.invalidate_all_paths(pos)
 						end
 					end
