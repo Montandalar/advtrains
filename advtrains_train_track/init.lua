@@ -67,6 +67,22 @@ advtrains.register_tracks("default", {
 	description=attrans("Slip turnout"),
 	formats = {},
 }, advtrains.ap.t_kw)
+minetest.register_craft({
+	output = "advtrains:dtrack_kw_placer 1",
+	recipe = {
+		{'', 'advtrains:dtrack_placer', 'advtrains:dtrack_placer'},
+		{'advtrains:dtrack_placer', '', 'advtrains:dtrack_placer'},
+		{'advtrains:dtrack_placer', 'advtrains:dtrack_placer', ''},
+	},
+})
+minetest.register_craft({
+	output = "advtrains:dtrack_kw_placer 1",
+	recipe = {
+		{'advtrains:dtrack_placer', 'advtrains:dtrack_placer', ''},
+		{'advtrains:dtrack_placer', '', 'advtrains:dtrack_placer'},
+		{'', 'advtrains:dtrack_placer', 'advtrains:dtrack_placer'},
+	},
+})
 
 -- Diamond Crossings
 -- perpendicular
