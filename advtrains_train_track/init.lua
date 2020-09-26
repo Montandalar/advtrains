@@ -57,6 +57,16 @@ minetest.register_craft({
 		{'', '', ''},
 	},
 })
+-- Single/double slip turnout (DE: Einzel- und Doppel- kreuzungsweiche (EKW/DKW))
+advtrains.register_tracks("default", {
+	nodename_prefix="advtrains:dtrack_kw",
+	texture_prefix="advtrains_dtrack_kw",
+	models_prefix="advtrains_dtrack_kw",
+	models_suffix=".obj",
+	shared_texture="advtrains_dtrack_shared.png",
+	description=attrans("Slip turnout"),
+	formats = {},
+}, advtrains.ap.t_kw)
 
 -- Diamond Crossings
 -- perpendicular

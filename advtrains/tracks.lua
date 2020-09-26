@@ -411,6 +411,96 @@ advtrains.ap.t_diagonalcrossing = {
 	}
 }
 
+-- Single/double slip turnout (DE: Einfach/einzel- und Doppel- kreuzungsweiche (EKW/DKW))
+-- A diamond crossing and a turnout in one node. Very useful for large stations.
+advtrains.ap.t_kw={
+       regstep=1,
+       variant={
+               ["s2x3090rst"]={
+                       conns = { {c=0}, {c=8}, {c=9}, {c=1}},
+                       desc = "Double slip switch (right-hand, straight)",
+                       --switchalt="s2x3090rcr",
+                       switchalt="cr",
+                       switchst="st",
+                       switchprefix="s2x3090r",
+                       trackworker="s2x3090lst",
+               },
+               ["s2x3090rcr"]={
+                       conns = { {c=0}, {c=9}, {c=1}, {c=8}},
+                       desc = "Double slip switch (right-hand, diverge)",
+                       --switchalt="s2x3090rst",
+                       switchalt="st",
+                       switchst="cr",
+                       switchprefix="s2x3090r",
+                       trackworker="s2x3090lcr",
+               },
+               ["s2x3090lst"]={
+                       conns = { {c=0}, {c=8}, {c=7}, {c=15}},
+                       desc = "Double slip switch (left-hand, straight)",
+                       --switchalt="s2x3090lcr",
+                       switchalt="cr",
+                       switchst="st",
+                       switchprefix="s2x3090l",
+                       trackworker="s1x3090rst",
+               },
+               ["s2x3090lcr"]={
+                       conns = { {c=0}, {c=7}, {c=8}, {c=15}},
+                       desc = "Double slip switch (left-hand, diverge)",
+                       --switchalt="s2x3090lst",
+                       switchalt="st",
+                       switchst="cr",
+                       switchprefix="s2x3090l",
+                       trackworker="s1x3090rcr",
+               },
+               -- Conns system doesn't support these properly yet - make them just act like double slips
+               ["s1x3090rst"]={
+                       conns = { {c=0}, {c=8}, {c=9}, {c=1}},
+                       desc = "Single slip switch (right-hand, straight)",
+                       switchalt="cr",
+                       switchst="st",
+                       switchprefix="s1x3090r",
+                       trackworker="s1x3090lst",
+               },
+               ["s1x3090rcr"]={
+                       conns = { {c=0}, {c=9}, {c=1}, {c=8}},
+                       desc = "Single slip switch (right-hand, diverge)",
+                       switchalt="st",
+                       switchst="cr",
+                       switchprefix="s1x3090r",
+                       trackworker="s1x3090lcr",
+               },
+               ["s1x3090lst"]={
+                       conns = { {c=0}, {c=8}, {c=7}, {c=15}},
+                       desc = "Single slip switch (left-hand, straight)",
+                       switchalt="cr",
+                       switchst="st",
+                       switchprefix="s1x3090l",
+                       trackworker="s2x3090rst",
+               },
+               ["s1x3090lcr"]={
+                       conns = { {c=0}, {c=7}, {c=8}, {c=15}},
+                       desc = "Single slip switch (left-hand, diverge)",
+                       switchalt="st",
+                       switchst="cr",
+                       switchprefix="s1x3090l",
+                       trackworker="s2x3090rcr",
+               },
+       },
+       regtp=true,
+       tpdefault="s2x3090rst",
+       trackworker={
+               ["s2x3090rst"]="s2x3090lst",
+               ["s2x3090rcr"]="s2x3090lcr",
+               ["s2x3090lst"]="s1x3090rst",
+               ["s2x3090lcr"]="s1x3090rcr",
+               ["s1x3090rst"]="s1x3090lst",
+               ["s1x3090rcr"]="s1x3090lcr",
+               ["s1x3090lst"]="s2x3090rst",
+               ["s1x3090lcr"]="s2x3090rcr",
+       },
+       rotation={""},
+}
+
 advtrains.trackpresets = advtrains.ap
 
 --definition format: ([] optional)
@@ -740,12 +830,3 @@ advtrains.slope=sl
 	}
 	common={} change something on common rail appearance
 }]]
-
-
-
-
-
-
-
-
-
