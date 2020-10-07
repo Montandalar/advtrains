@@ -187,6 +187,21 @@ function wagon:on_punch(puncher, time_from_last_punch, tool_capabilities, direct
 			self:set_livery(puncher, itemstack, data)
 			return
 		end
+		-- check whether wagon has an inventory. Is is empty?
+		if self.has_inventory then
+			local inv=minetest.get_inventory({type="detached", name="advtrains_wgn_"..self.id})
+			if not inv then -- inventory is not initialized when wagon was never loaded - should never happen
+				atwarn("Destroying wagon with inventory, but inventory is not found? Shouldn't happen!")
+				return
+			end
+			for listname, _ in pairs(inv:get_lists()) do
+				if not inv:is_empty(listname) then
+					minetest.chat_send_player(puncher:get_player_name(), attrans("The wagon's inventory is not empty!"));
+					return
+				end
+			end
+		end
+		
 		if #(self:train().trainparts)>1 then
 		   minetest.chat_send_player(puncher:get_player_name(), attrans("Wagon needs to be decoupled from other wagons in order to destroy it."));
 		   return
