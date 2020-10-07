@@ -49,12 +49,13 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 		local tcbpts = meta:get_string("tcb_pos")
 		if tcbpts ~= "" then
 			local tcbpos = minetest.string_to_pos(tcbpts)
-			advtrains.interlocking.show_tcb_form(tcbpos, pname)
-		else
-			if not minetest.check_player_privs(pname, "interlocking") then
-				minetest.chat_send_player(pname, "Insufficient privileges to use this!")
-				return
+			local tcb = ildb.get_tcb(tcbpos)
+			if tcb then
+				advtrains.interlocking.show_tcb_form(tcbpos, pname)
+			else
+				minetest.chat_send_player(pname, "This TCB has been removed. Please dig marker.")
 			end
+		else
 			--unconfigured
 			minetest.chat_send_player(pname, "Configuring TCB: Please punch the rail you want to assign this TCB to.")
 			
@@ -88,6 +89,11 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 			if not tcb then return true end
 			for connid=1,2 do
 				if tcb[connid].ts_id or tcb[connid].signal then
+					minetest.chat_send_player(pname, "Can't remove TCB: Both sides must have no track section and no signal assigned!")
+					return false
+				end
+				if not ildb.may_modify_tcbs(tcb[connid]) then
+					minetest.chat_send_player(pname, "Can't remove TCB: Side "..connid.." forbids modification (shouldn't happen).")
 					return false
 				end
 			end
@@ -99,7 +105,15 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 		local tcbpts = oldmetadata.fields.tcb_pos
 		if tcbpts and tcbpts ~= "" then
 			local tcbpos = minetest.string_to_pos(tcbpts)
-			ildb.remove_tcb(tcbpos)
+			local success = ildb.remove_tcb(tcbpos)
+			if success and player then
+				minetest.chat_send_player(player:get_player_name(), "TCB has been removed.")
+			else
+				minetest.chat_send_player(player:get_player_name(), "Failed to remove TCB!")
+				minetest.set_node(pos, oldnode)
+				local meta = minetest.get_meta(pos)
+				meta:set_string("tcb_pos", minetest.pos_to_string(tcbpos))
+			end
 		end
 	end,
 })
@@ -118,7 +132,7 @@ minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 				local ok = ildb.create_tcb(pos)
 				
 				if not ok then
-					minetest.chat_send_player(pname, "Configuring TCB: TCB already exists at this position. Aborted.")
+					minetest.chat_send_player(pname, "Configuring TCB: TCB already exists at this position! It has now been re-assigned.")
 				end
 				
 				ildb.sync_tcb_neighbors(pos, 1)

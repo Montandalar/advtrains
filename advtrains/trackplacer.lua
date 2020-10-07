@@ -120,6 +120,11 @@ function tp.rail_and_can_be_bent(originpos, conn)
 			return advtrains.conn_matches_to(conn, cconns)
 		end
 	end
+	-- If the rail is not allowed to be modified, also only use if already in desired direction
+	if not advtrains.can_dig_or_modify_track(pos) then
+		local cconns=advtrains.get_track_connections(node.name, node.param2)
+		return advtrains.conn_matches_to(conn, cconns)
+	end
 	--rail at other end?
 	local adj1, adj2=tp.find_already_connected(pos)
 	if adj1 and adj2 then
@@ -326,15 +331,7 @@ minetest.register_craftitem("advtrains:trackworker",{
 				local node=minetest.get_node(pos)
 
 				--if not advtrains.is_track_and_drives_on(minetest.get_node(pos).name, advtrains.all_tracktypes) then return end
-				if advtrains.get_train_at_pos(pos) then return end
 				
-				if has_aux1_down then
-					--feature: flip the node by 180°
-					--i've always wanted this!
-					advtrains.ndb.swap_node(pos, {name=node.name, param2=(node.param2+2)%4})
-					return
-				end
-
 				local nnprefix, suffix, rotation=string.match(node.name, "^(.+)_([^_]+)(_[^_]+)$")
 				--atdebug(node.name.."\npattern recognizes:"..nnprefix.." / "..suffix.." / "..rotation)
 				--atdebug("nntab: ",tp.tracks[nnprefix])
@@ -346,6 +343,28 @@ minetest.register_craftitem("advtrains:trackworker",{
 						return
 					end
 				end
+				
+				-- check if the node is modify-protected
+				if advtrains.is_track_and_drives_on(minetest.get_node(pos).name, advtrains.all_tracktypes) then
+					-- is a track, we can query
+					local can_modify, reason = advtrains.can_dig_or_modify_track(pos)
+					if not can_modify then
+						local str = attrans("This track can not be rotated!")
+						if reason then
+							str = str .. " " .. reason
+						end
+						minetest.chat_send_player(placer:get_player_name(), str)
+						return
+					end
+				end
+				
+				if has_aux1_down then
+					--feature: flip the node by 180°
+					--i've always wanted this!
+					advtrains.ndb.swap_node(pos, {name=node.name, param2=(node.param2+2)%4})
+					return
+				end
+				
 				local modext=tp.tracks[nnprefix].twrotate[suffix]
 
 				if rotation==modext[#modext] then --increase param2
@@ -390,6 +409,21 @@ minetest.register_craftitem("advtrains:trackworker",{
 					return
 				  end
 				end
+				
+				-- check if the node is modify-protected
+				if advtrains.is_track_and_drives_on(minetest.get_node(pos).name, advtrains.all_tracktypes) then
+					-- is a track, we can query
+					local can_modify, reason = advtrains.can_dig_or_modify_track(pos)
+					if not can_modify then
+						local str = attrans("This track can not be changed!")
+						if reason then
+							str = str .. " " .. reason
+						end
+						minetest.chat_send_player(user:get_player_name(), str)
+						return
+					end
+				end
+				
 				local nextsuffix=tp.tracks[nnprefix].twcycle[suffix]
 				advtrains.ndb.swap_node(pos, {name=nnprefix.."_"..nextsuffix..rotation, param2=node.param2})
 				

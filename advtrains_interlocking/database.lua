@@ -526,6 +526,14 @@ function ildb.set_sigd_for_signal(pos, sigd)
 	signal_assignments[pts] = sigd
 end
 
+-- checks if there's any influence point set to this position
+function ildb.is_ip_at(pos)
+	local pts = advtrains.roundfloorpts(pos)
+	if influence_points[pts] then
+		return true
+	end
+	return false
+end
 
 -- checks if a signal is influencing here
 function ildb.get_ip_signal(pts, connid)

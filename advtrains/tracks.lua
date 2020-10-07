@@ -478,9 +478,7 @@ function advtrains.register_tracks(tracktype, def, preset)
 						not_blocking_trains=1,
 					},
 						
-					can_dig=function(pos)
-						return not advtrains.get_train_at_pos(pos)
-					end,
+					can_dig = advtrains.can_dig_or_modify_track,
 					after_dig_node=function(pos)
 						advtrains.ndb.update(pos)
 					end,
@@ -600,6 +598,26 @@ function advtrains.get_track_connections(name, param2)
 		end
 	end
 	return advtrains.rotate_conn_by(nodedef.at_conns, noderot*AT_CMAX/4), (nodedef.at_rail_y or 0), tracktype
+end
+
+-- Function called when a track is about to be dug or modified by the trackworker
+-- Returns either true (ok) or false,"translated string describing reason why it isn't allowed"
+function advtrains.can_dig_or_modify_track(pos)
+	if advtrains.get_train_at_pos(pos) then
+		return false, attrans("Position is occupied by a train.")
+	end
+	-- interlocking: tcb, signal IP a.s.o.
+	if advtrains.interlocking then
+		-- TCB?
+		if advtrains.interlocking.db.get_tcb(pos) then
+			return false, attrans("There's a Track Circuit Break here.")
+		end
+		-- signal ip?
+		if advtrains.interlocking.db.is_ip_at(pos) then
+			return false, attrans("There's a Signal Influence Point here.")
+		end
+	end
+	return true
 end
 
 -- slope placer. Defined in register_tracks.
