@@ -113,7 +113,8 @@ end
 -- See enqueue(). Same meaning, except that rwtime is relative to now.
 function sched.enqueue_in(rwtime, handler, evtdata, unitid, unitlim)
 	local ctime = ln.rwt.get_time()
-	sched.enqueue(ctime + rwtime, handler, evtdata, unitid, unitlim)
+	local rwtime_s = ln.rwt.to_secs(rwtime)
+	sched.enqueue(ctime + rwtime_s, handler, evtdata, unitid, unitlim)
 end
 
 -- Discards all schedules for unit "unitid" (removes them from the queue)
