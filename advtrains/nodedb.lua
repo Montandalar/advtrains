@@ -94,10 +94,19 @@ function ndb.load_data(data)
 	ndb_ver = 1
 end
 
+local windows_compat = false
 --save
 function ndb.save_data()
 	local tmppath = path.."~"
-	local file, err = io.open(tmppath, "wb")
+	local file, err
+	if windows_compat then
+		-- open ndb file directly
+		file, err = io.open(path, "wb")
+	else
+		-- open another file next to it, then replace atomically
+		file, err = io.open(tmppath, "wb")
+	end
+	
 	if not file then
 		atwarn("Couldn't save the node database: ", err or "Unknown Error")
 	else
@@ -113,7 +122,21 @@ function ndb.save_data()
 		end
 		file:close()
 	end
-	os.rename(tmppath, path)
+	
+	if not windows_compat then
+		local success, msg = os.rename(tmppath, path)
+		--local success, msg = nil, "test"
+		-- for windows, this fails if the file already exists. Enable windows compatibility and directly write to path.
+		if not success then
+			atlog("Replacing the nodedb file atomically failed:",msg)
+			atlog("Switching to Windows mode (will directly overwrite the nodedb file from now on)")
+			windows_compat = true
+			os.remove(tmppath)
+			-- try again
+			ndb.save_data()
+		end
+	end
+	
 	return {nodeids = ndb_nodeids, ver = ndb_ver}
 end
 
