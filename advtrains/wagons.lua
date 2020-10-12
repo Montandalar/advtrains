@@ -15,6 +15,20 @@ advtrains.wagon_prototypes = {}
 advtrains.wagon_objects = {}
 
 local unload_wgn_range = advtrains.wagon_load_range + 32
+function advtrains.outside_range(pos) -- returns true if the object is outside of unload_wgn_range of any player
+	-- this is part of a workaround until mintest core devs decide to fix a bug with static_save=false.
+	local outofrange = true
+	if not pos then
+		return true
+	end
+	for _,p in pairs(minetest.get_connected_players()) do
+		if vector.distance(p:get_pos(),pos)<=unload_wgn_range then
+			outofrange = false
+			break
+		end
+	end
+	return outofrange
+end
 
 local setting_show_ids = minetest.settings:get_bool("advtrains_show_ids")
 
@@ -511,13 +525,7 @@ function wagon:on_step(dtime)
 				end
 			end
 			if not players_in then
-				local outofrange = true
-				for _,p in pairs(minetest.get_connected_players()) do
-					if vector.distance(p:get_pos(),pos)<=unload_wgn_range then
-						outofrange = false
-					end
-				end
-				if outofrange then
+				if advtrains.outside_range(pos) then
 					--atdebug("wagon",self.id,"unloading (too far away)")
 					self.object:remove()
 				end

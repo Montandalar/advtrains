@@ -106,6 +106,10 @@ minetest.register_entity("advtrains:couple", {
 	end,
 	on_step=function(self, dtime)
 		return advtrains.pcall(function()
+			if advtrains.outside_range(self.object:getpos()) then
+				self.object:remove()
+				return
+			end
 			advtrains.atprint_context_tid=self.train_id_1
 
 			if not self.train_id_1 or not self.train_id_2 then atprint("Couple: train ids not set!") self.object:remove() return end
