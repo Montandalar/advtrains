@@ -111,6 +111,11 @@ function advtrains.register_platform(modprefix, preset)
 			"dye:yellow", preset, preset, preset
 		}
 	})
+    minetest.register_craft({
+        type="shapeless",
+        output = modprefix .. ":platform_45_low_"..nodename.." 2",
+        recipe = { modprefix .. ":platform_45_"..nodename },
+    })
 end
 
 
