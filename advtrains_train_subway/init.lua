@@ -6,12 +6,16 @@ local function subway_set_livery(self, puncher, itemstack,data)
 	local meta = itemstack:get_meta()
 	local color = meta:get_string("paint_color")
 	local alpha = tonumber(meta:get_string("alpha"))
+	local lintex = subway_get_line_texture(advtrains.trains[advtrains.wagons[self.id].train_id].line) --where do we get line from??
 	if color and color:find("^#%x%x%x%x%x%x$") then
-		if alpha == 0 then
-			data.livery = "advtrains_subway_wagon.png"
-		else 
-			data.livery = "advtrains_subway_wagon.png^(advtrains_subway_wagon_livery.png^[colorize:"..color..":"..alpha..")^advtrains_subway_wagon_extoverlay.png" -- livery texture has no own texture....
+		local newliv = "advtrains_subway_wagon.png"
+		if alpha ~= 0 then
+			newliv = newliv .."^(advtrains_subway_wagon_livery.png^[colorize:"..color..":"..alpha..")^advtrains_subway_wagon_extoverlay.png" -- livery texture has no own texture....
 		end
+		if lintex ~= nil then
+			newliv = newliv .. "^" .. lintex
+		end
+		data.livery = newliv
 		self:set_textures(data)
 	end
 end
@@ -22,6 +26,47 @@ local function subway_set_textures(self, data)
 		self.object:set_properties({
 				textures={data.livery}
 		})
+	end
+end
+
+function subway_get_line_texture(line)
+	if line == nil then return end
+	if line:find("[SsUuEe]", 1) == 1 then
+		line = line:sub(2)
+	end
+	local int = tonumber(line)
+	if int == nil then
+		if line:find("[xX]") then
+			-- X texture
+			return "advtrains_subway_wagon_lineX.png"
+		else
+			return nil
+		end
+	else
+		local strlen = #line
+		if strlen == 1 then
+			-- Texture 0-9
+			return string.format("advtrains_subway_wagon_line%d.png", line)
+		elseif strlen == 2 then
+			-- Hume2's algorithm for 2 digits
+			local num = tonumber(line)
+			local red = math.fmod(line*67+101, 255)
+			local green = math.fmod(line*97+109, 255)
+			local blue = math.fmod(line*73+127, 255)
+			newtex = string.format(
+				"(advtrains_subway_wagon_line.png^[colorize:#%X%X%X%X%X%X)^(advtrains_subway_wagon_line%s_.png^advtrains_subway_wagon_line_%s.png",
+				math.floor(red/16), math.fmod(red,16), math.floor(green/16), math.fmod(green,16), math.floor(blue/16), math.fmod(blue,16),
+				string.sub(line, 1, 1), string.sub(line, 2, 2)
+			)
+			if red + green + blue > 512 then
+				newtex = newtex .. "^[colorize:#000"
+			end
+			newtex = newtex .. ")"
+			return newtex
+		else
+			-- No texture
+			return nil
+		end
 	end
 end
 
@@ -125,52 +170,12 @@ advtrains.register_wagon("subway_wagon", {
 		if train.line and self.line_cache == train.line then
 			return
 		end
-
 		local line = train.line
 		self.line_cache = line
-
-		if line == nil then
-			return
-		end
-		if line:find("[SsUuEe]", 1) == 1 then
-			line = line:sub(2)
-		end
-		local newtex = data.livery or "advtrains_subway_wagon.png"
-		local int = tonumber(line)
-		if int == nil then
-			if line:find("[xX]") then
-				-- X texture
-				newtex = newtex .. "^advtrains_subway_wagon_lineX.png"
-			else
-				newtex = nil
-			end
-		else
-			local strlen = #line
-			if strlen == 1 then
-				-- Texture 0-9
-				newtex = string.format("%s^advtrains_subway_wagon_line%d.png", newtex, line)
-			elseif strlen == 2 then
-				-- Hume2's algorithm for 2 digits
-				local num = tonumber(line)
-				local red = math.fmod(line*67+101, 255)
-				local green = math.fmod(line*97+109, 255)
-				local blue = math.fmod(line*73+127, 255)
-				newtex = string.format(
-					"%s^(advtrains_subway_wagon_line.png^[colorize:#%X%X%X%X%X%X)^(advtrains_subway_wagon_line%s_.png^advtrains_subway_wagon_line_%s.png",
-					newtex, math.floor(red/16), math.fmod(red,16), math.floor(green/16), math.fmod(green,16), math.floor(blue/16), math.fmod(blue,16),
-					string.sub(line, 1, 1), string.sub(line, 2, 2)
-				)
-				if red + green + blue > 512 then
-					newtex = newtex .. "^[colorize:#000"
-				end
-				newtex = newtex .. ")"
-			else
-				-- No texture
-				newtex = nil
-			end
-		end
-		
-		if (newtex ~= nil) then
+		local lintex = subway_get_line_texture(line)
+		if (lintex ~= nil) then
+			local newtex = (data.livery or "advtrains_subway_wagon.png") .. "^" .. lintex
+			minetest.chat_send_all(string.format("New texture is: %s", newtex))
 			self.object:set_properties({textures = {newtex}})
 		end
 	end,--[[ --]]
