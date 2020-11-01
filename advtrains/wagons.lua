@@ -527,6 +527,10 @@ function wagon:on_step(dtime)
 			if not players_in then
 				if advtrains.outside_range(pos) then
 					--atdebug("wagon",self.id,"unloading (too far away)")
+                    -- Workaround until minetest engine deletes attached sounds
+                    if self.sound_loop_handle then
+                        minetest.sound_stop(self.sound_loop_handle)
+                    end
 					self.object:remove()
 				end
 			end
