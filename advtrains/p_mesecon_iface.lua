@@ -6,7 +6,7 @@ if not mesecon then return end
 minetest.override_item("mesecons_switch:mesecon_switch_off", {
 	groups = {
 		dig_immediate=2,
-		save_in_nodedb=1,
+		save_in_at_nodedb=1,
 	},
 	on_rightclick = function (pos, node)
 		advtrains.ndb.swap_node(pos, {name="mesecons_switch:mesecon_switch_on", param2=node.param2})
@@ -30,7 +30,7 @@ minetest.override_item("mesecons_switch:mesecon_switch_off", {
 minetest.override_item("mesecons_switch:mesecon_switch_on", {
 	groups = {
 		dig_immediate=2,
-		save_in_nodedb=1,
+		save_in_at_nodedb=1,
 		not_in_creative_inventory=1,
 	},
 	on_rightclick = function (pos, node)
