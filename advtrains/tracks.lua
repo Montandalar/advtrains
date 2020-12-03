@@ -307,7 +307,7 @@ advtrains.ap.t_90plusx_crossing={
 			trackworker = "60r",
 		},
 		["60r"]={
-			conns = { {c=0}, {c=8}, {c=7}, {c=15} },
+			conns = { {c=0}, {c=8}, {c=7}, {c=13} },
 			desc = "60/90 degree crossing (right)",
 			tpdouble = true,
 			tpsingle = true,
