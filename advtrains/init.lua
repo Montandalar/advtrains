@@ -462,6 +462,12 @@ advtrains.avt_save = function(remove_players_from_wagons)
 		end
 		file:write(dump(save_tbl))
 		file:close()
+		local file, err = io.open(advtrains.fpath.."_interlocking_DUMP", "w")
+		if err then
+			return
+		end
+		file:write(dump(il_save))
+		file:close()
 	end
 end
 
