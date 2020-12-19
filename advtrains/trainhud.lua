@@ -9,7 +9,6 @@ advtrains.hhud[player:get_player_name()] = nil
 end)
 
 local mletter={[1]="F", [-1]="R", [0]="N"}
-local doorstr={[-1]="|<>| >|<", [0]=">|< >|<", [1]=">|< |<>|"}
 
 function advtrains.on_control_change(pc, train, flip)
    	local maxspeed = train.max_speed or 10
@@ -164,49 +163,45 @@ function advtrains.hud_train_format(train, flip)
 	if not train then return "" end
 	
 	local max = train.max_speed or 10
-	local res = train.speed_restriction or max
+	local res = train.speed_restriction
 	local vel = advtrains.abs_ceil(train.velocity)
 	local vel_kmh=advtrains.abs_ceil(advtrains.ms_to_kmh(train.velocity))
 	
-	local levers = "B - o +"
+	local levers = {[0] = "EMG", "B 2", "B 1", " N ", " P "}
 	local tlev=train.lever
 	if train.velocity==0 and not train.active_control then tlev=1 end
-	if tlev == 0 then levers = ">BB< - o +" end
-	if tlev == 1 then levers = ">B< - o +" end
-	if tlev == 2 then levers = "B >-< o +" end
-	if tlev == 3 then levers = "B - >o< +" end
-	if tlev == 4 then levers = "B - o >+<" end
+	
+	local doorstr = function(side, open)
+		return (open and "<%s>" or ">%s<"):format(side)
+	end
 	
 	local topLine, firstLine
+	local st = {}
+	if train.debug then st = {train.debug} end
 	
-	local secondLine
-	if train.tarvelocity or train.atc_command then
-		local b="   "
-		local tvels=""
-		if train.tarvelocity then
-			local tvel = advtrains.abs_ceil(train.tarvelocity)
-			tvels = "|"..string.rep("+", tvel)..string.rep("_", max-tvel)
-		end
-		if train.atc_brake_target then
-			b="-B-"
-		end
-		local ad = ""
-		if train.atc_delay then
-			ad = " "..advtrains.abs_ceil(train.atc_delay).."s "
-		end
-		secondLine="ATC"..b..": "..tvels..ad..(train.atc_command or "")
-	else
-		secondLine = "Manual operation"
-		if train.ctrl.lzb then
-			secondLine = "-!- Safety override -!-"
-		end
+	st[#st+1] = ("[%s] [%s] [%s %s]%s [%s]"):format(
+		mletter[fct],
+		levers[tlev] or "N/A",
+		doorstr("L", train.door_open==-1),
+		doorstr("R", train.door_open==1),
+		train.is_shunt and " [SHUNT]" or "",
+		(train.tarvelocity or train.atc_command) and "ATC" or (train.ctrl.lzb and "LZB" or "MAN"))
+	
+	local velstr = function(vel, name)
+		return ("%s%02d m/s (%02d km/h)"):format(
+			name and (attrans(name).." ") or "",vel,advtrains.ms_to_kmh(vel))
 	end
-	local shtind = train.is_shunt and "S" or ">"
+	st[#st+1] = velstr(vel, "Speed:")
+	if max then st[#st+1] = velstr(max, "Max. Speed:") end
+	if res then st[#st+1] = res == 0
+		and attrans("OVERRUN RED SIGNAL! Examine situation and reverse train to move again.")
+		or velstr(res, "Restriction:") end
 	
-	topLine="  ["..mletter[fct].."]  {"..levers.."} "..doorstr[(train.door_open or 0)].."  "..(train.line and "L: "..train.line or "")
-	firstLine=attrans("Speed:").." |"..string.rep("+", vel)..string.rep("_", res-vel).."|"..string.rep("_", max-res)..shtind.." "..vel_kmh.." km/h"
-	if train.speed_restriction == 0 then
-		firstLine = "OVERRUN RED SIGNAL! Examine situation and reverse train to move again."
+	if train.tarvelocity or train.atc_command then
+		st[#st+1] = ("ATC: %s%s%s"):format(
+			train.tarvelocity and (velstr(train.tarvelocity).." ") or "",
+			train.atc_delay and advtrains.abs_ceil(train.atc_delay).."s " or "",
+			train.atc_command or "")
 	end
 
 	local lzb = train.lzb
@@ -214,7 +209,7 @@ function advtrains.hud_train_format(train, flip)
 	local i = 1
 	while i<=#lzb.oncoming do
 		local k = lzb.oncoming[i]
-		secondLine = secondLine .. "\n".."LZB: speed limit ["..(k.spd or "E")..("] in %.1f m"):format(k.idx-train.index)
+		st[#st+1] = "LZB: speed limit ["..(k.spd or "E")..("] in %.1f m"):format(k.idx-train.index)
 		if k.spd == 0 then
 			break
 		end
@@ -222,5 +217,5 @@ function advtrains.hud_train_format(train, flip)
 	end
 
 	
-	return (train.debug or "").."\n"..topLine.."\n"..firstLine.."\n"..secondLine
+	return table.concat(st,"\n")
 end
