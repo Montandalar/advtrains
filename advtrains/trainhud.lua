@@ -88,38 +88,55 @@ function advtrains.on_control_change(pc, train, flip)
 end
 function advtrains.update_driver_hud(pname, train, flip)
 	local inside=train.text_inside or ""
-	advtrains.set_trainhud(pname, inside.."\n"..advtrains.hud_train_format(train, flip))
+	local ft, ht = advtrains.hud_train_format(train, flip)
+	advtrains.set_trainhud(pname, inside.."\n"..ft, ht)
 end
 function advtrains.clear_driver_hud(pname)
 	advtrains.set_trainhud(pname, "")
 end
 
-function advtrains.set_trainhud(name, text)
+function advtrains.set_trainhud(name, text, driver)
 	local hud = advtrains.hud[name]
 	local player=minetest.get_player_by_name(name)
 	if not player then
 	   return
 	end
+	local driverhud = {
+		hud_elem_type = "image",
+		name = "ADVTRAINS_DRIVER",
+		position = {x=0.5, y=0.7},
+		offset = {x=0,y=5},
+		text = driver or "advtrains_hud_blank.png",
+		alignment = {x=0,y=1},
+		scale = {x=1,y=1},}
 	if not hud then
-		hud = {}
+		hud = {["driver"]={}}
 		advtrains.hud[name] = hud
 		hud.id = player:hud_add({
 			hud_elem_type = "text",
 			name = "ADVTRAINS",
 			number = 0xFFFFFF,
 			position = {x=0.5, y=0.7},
-			offset = {x=0, y=0},
+			offset = {x=0, y=-5},
 			text = text,
 			scale = {x=200, y=60},
-			alignment = {x=0, y=0},
+			alignment = {x=0, y=-1},
 		})
 		hud.oldText=text
-		return
-	elseif hud.oldText ~= text then
-		player:hud_change(hud.id, "text", text)
-		hud.oldText=text
+		hud.driver = player:hud_add(driverhud)
+	else
+		if hud.oldText ~= text then
+			player:hud_change(hud.id, "text", text)
+			hud.oldText=text
+		end
+		if hud.driver then
+			player:hud_change(hud.driver, "text", driver or "advtrains_hud_blank.png")
+		elseif driver then
+			hud.driver = player:hud_add(driverhud)
+		end
 	end
 end
+
 function advtrains.set_help_hud(name, text)
 	local hud = advtrains.hhud[name]
 	local player=minetest.get_player_by_name(name)
@@ -159,7 +176,6 @@ Value	Disp	Control	Meaning
 ]]
 
 function advtrains.hud_train_format(train, flip)
-	local fct=flip and -1 or 1
 	if not train then return "" end
 	
 	local max = train.max_speed or 10
@@ -167,25 +183,27 @@ function advtrains.hud_train_format(train, flip)
 	local vel = advtrains.abs_ceil(train.velocity)
 	local vel_kmh=advtrains.abs_ceil(advtrains.ms_to_kmh(train.velocity))
 	
-	local levers = {[0] = "EMG", "B 2", "B 1", " N ", " P "}
+	local levers = {
+		[0] = "advtrains_hud_red.png^advtrains_hud_emg.png",
+		"advtrains_hud_orange.png^advtrains_hud_b2.png",
+		"advtrains_hud_orange.png^advtrains_hud_b1.png",
+		"advtrains_hud_gray.png^advtrains_hud_n.png",
+		"advtrains_hud_blue.png^advtrains_hud_p.png"}
 	local tlev=train.lever
 	if train.velocity==0 and not train.active_control then tlev=1 end
 	
-	local doorstr = function(side, open)
-		return (open and "<%s>" or ">%s<"):format(side)
-	end
-	
-	local topLine, firstLine
 	local st = {}
 	if train.debug then st = {train.debug} end
 	
-	st[#st+1] = ("[%s] [%s] [%s %s]%s [%s]"):format(
-		mletter[fct],
-		levers[tlev] or "N/A",
-		doorstr("L", train.door_open==-1),
-		doorstr("R", train.door_open==1),
-		train.is_shunt and " [SHUNT]" or "",
-		(train.tarvelocity or train.atc_command) and "ATC" or (train.ctrl.lzb and "LZB" or "MAN"))
+	local ht = ("[combine:100x66:0,0=(%s):50,0=(%s):0,22=(%s):50,22=(%s):0,44=(%s):50,44=(%s)"):format(
+		("advtrains_hud_blue.png^advtrains_hud_%s.png"):format(flip and "r" or "f"),
+		levers[tlev or 32767] or "advtrains_hud_gray.png^advtrains_hud_na.png",
+		(train.tarvelocity or train.atc_command)
+			and "advtrains_hud_blue.png^advtrains_hud_atc.png"
+			or (train.ctrl.lzb and "advtrains_hud_red.png^advtrains_hud_lzb.png" or "advtrains_hud_gray.png^advtrains_hud_man.png"),
+		train.is_shunt and "advtrains_hud_orange.png^advtrains_hud_shunt.png" or "advtrains_hud_gray.png^advtrains_hud_shunt.png",
+		train.door_open == -1 and "advtrains_hud_blue.png^advtrains_hud_l_right.png" or "advtrains_hud_gray.png^advtrains_hud_l_right.png",
+		train.door_open == 1 and "advtrains_hud_blue.png^advtrains_hud_r.png" or "advtrains_hud_gray.png^advtrains_hud_r.png")
 	
 	local velstr = function(vel, name)
 		return ("%s%02d m/s (%02d km/h)"):format(
@@ -215,7 +233,6 @@ function advtrains.hud_train_format(train, flip)
 		end
 		i=i+1
 	end
-
 	
-	return table.concat(st,"\n")
+	return table.concat(st,"\n"), ht
 end
