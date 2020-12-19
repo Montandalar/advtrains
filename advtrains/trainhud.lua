@@ -195,7 +195,8 @@ function advtrains.hud_train_format(train, flip)
 	local st = {}
 	if train.debug then st = {train.debug} end
 	
-	local ht = ("[combine:100x66:0,0=(%s):50,0=(%s):0,22=(%s):50,22=(%s):0,44=(%s):50,44=(%s)"):format(
+	local ht = ("[combine:100x110:0,0=(%s):50,0=(%s):0,22=(%s):50,22=(%s):0,44=(%s):50,44=(%s):0,66=advtrains_hud_speed_bg.png"
+		..":%d,77=(advtrains_hud_speed_ind.png%s)"):format(
 		("advtrains_hud_blue.png^advtrains_hud_%s.png"):format(flip and "r" or "f"),
 		levers[tlev or 32767] or "advtrains_hud_gray.png^advtrains_hud_na.png",
 		(train.tarvelocity or train.atc_command)
@@ -203,36 +204,36 @@ function advtrains.hud_train_format(train, flip)
 			or (train.ctrl.lzb and "advtrains_hud_red.png^advtrains_hud_lzb.png" or "advtrains_hud_gray.png^advtrains_hud_man.png"),
 		train.is_shunt and "advtrains_hud_orange.png^advtrains_hud_shunt.png" or "advtrains_hud_gray.png^advtrains_hud_shunt.png",
 		train.door_open == -1 and "advtrains_hud_blue.png^advtrains_hud_l_right.png" or "advtrains_hud_gray.png^advtrains_hud_l_right.png",
-		train.door_open == 1 and "advtrains_hud_blue.png^advtrains_hud_r.png" or "advtrains_hud_gray.png^advtrains_hud_r.png")
-	
-	local velstr = function(vel, name)
-		return ("%s%02d m/s (%02d km/h)"):format(
-			name and (attrans(name).." ") or "",vel,advtrains.ms_to_kmh(vel))
+		train.door_open == 1 and "advtrains_hud_blue.png^advtrains_hud_r.png" or "advtrains_hud_gray.png^advtrains_hud_r.png",
+		vel*4.85, (res and res>=0) and "" or "^[resize\\:3x22")
+	local si = {}
+	if max < 20 then
+		si[#si+1] = ("%d,77=(advtrains_hud_speed_max.png^[resize\\:%dx22)"):format(max*5,100-max*5)
 	end
-	st[#st+1] = velstr(vel, "Speed:")
-	if max then st[#st+1] = velstr(max, "Max. Speed:") end
-	if res then st[#st+1] = res == 0
-		and attrans("OVERRUN RED SIGNAL! Examine situation and reverse train to move again.")
-		or velstr(res, "Restriction:") end
-	
-	if train.tarvelocity or train.atc_command then
-		st[#st+1] = ("ATC: %s%s%s"):format(
-			train.tarvelocity and (velstr(train.tarvelocity).." ") or "",
-			train.atc_delay and advtrains.abs_ceil(train.atc_delay).."s " or "",
-			train.atc_command or "")
+	if res and res>=0 then
+		si[#si+1] = ("%d,88=advtrains_hud_speed_limit.png"):format(res*4.85)
 	end
-
+	if train.tarvelocity then
+		si[#si+1] = ("%d,66=advtrains_hud_speed_atc.png"):format(train.tarvelocity*4.85)
+	end
 	local lzb = train.lzb
-	
-	local i = 1
-	while i<=#lzb.oncoming do
-		local k = lzb.oncoming[i]
-		st[#st+1] = "LZB: speed limit ["..(k.spd or "E")..("] in %.1f m"):format(k.idx-train.index)
-		if k.spd == 0 then
-			break
+	if lzb and lzb.oncoming then
+		for i = 1, #lzb.oncoming do
+			local k = lzb.oncoming[i]
+			if k.spd and k.spd >= 0 then
+				si[#si+1] = ("%d,102=advtrains_hud_speed_next.png"):format(k.spd*4.85)
+				break
+			end
 		end
-		i=i+1
 	end
 	
-	return table.concat(st,"\n"), ht
+	if res and res == 0 then
+		st[#st+1] = attrans("OVERRUN RED SIGNAL! Examine situation and reverse train to move again.")
+	end
+	
+	if train.atc_command then
+		st[#st+1] = ("ATC: %s%s"):format(train.atc_delay and advtrains.abs_ceil(train.atc_delay).."s " or "", train.atc_command or "")
+	end
+	
+	return table.concat(st,"\n"), #si>0 and ht..":"..table.concat(si,":") or ht
 end
