@@ -228,6 +228,8 @@ dofile(advtrains.modpath.."/lzb.lua")
 --load/save
 
 -- backup variables, used if someone should accidentally delete a sub-mod
+-- As of version 4, only used once during migration from version 3 to 4
+-- Since version 4, each of the mods stores a separate save file.
 local MDS_interlocking, MDS_lines
 
 
@@ -252,8 +254,12 @@ function advtrains.avt_load()
 	
 	local version = advtrains.read_component("version")
 	local tbl
-	if version and version == 3 then
-		-- we are dealing with the new, split-up system
+	if version and version == 4 then
+		advtrains.load_version_4()
+		return
+	-- NOTE: From here, legacy loading code!
+	elseif version and version == 3 then
+		-- we are dealing with the split-up system
 		minetest.log("action", "[advtrains] loading savefiles version 3")
 		local il_save = {
 			tcbs = true,
@@ -358,6 +364,63 @@ function advtrains.avt_load()
 	else
 		minetest.log("error", " Failed to deserialize advtrains save data: Not a table!")
 	end
+	-- moved from advtrains.load()
+	atlatc.load_pre_v4()
+	-- end of legacy loading code
+end
+
+function advtrains.load_version_4()
+	minetest.log("action", "[advtrains] loading savefiles version 4 (serialize_lib)")
+
+	--== load core ==
+	local at_save = serialize_lib.load_atomic(advtrains.fpath.."_core.ls")
+	if at_save then
+		advtrains.trains = at_save.trains
+		--Save the train id into the train table to avoid having to pass id around
+		for id, train in pairs(advtrains.trains) do
+			train.id = id
+		end
+		advtrains.wagons = at_save.wagons
+		advtrains.player_to_train_mapping = at_save.ptmap or {}
+		advtrains.ndb.load_data(at_save.ndb)
+		advtrains.atc.load_data(at_save.atc)
+
+		--remove wagon_save entries that are not part of a train
+		local todel=advtrains.merge_tables(advtrains.wagon_save)
+		for tid, train in pairs(advtrains.trains) do
+			train.id = tid
+			for _, wid in ipairs(train.trainparts) do
+				todel[wid]=nil
+			end
+		end
+		for wid, _ in pairs(todel) do
+			atwarn("Removing unused wagon", wid, "from wagon_save table.")
+			advtrains.wagon_save[wid]=nil
+		end
+	end
+	--== load interlocking ==
+	if advtrains.interlocking then
+		local il_save = serialize_lib.load_atomic(advtrains.fpath.."_interlocking.ls")
+		if il_save then
+			advtrains.interlocking.db.load(il_save)
+		end
+	end
+	
+	--== load lines ==
+	if advtrains.lines then
+		local ln_save = serialize_lib.load_atomic(advtrains.fpath.."_lines.ls")
+		if ln_save then
+			advtrains.lines.load(ln_save)
+		end
+	end
+	
+	--== load luaatc ==
+	if atlatc then
+		local la_save = serialize_lib.load_atomic(advtrains.fpath.."_atlatc.ls")
+		if la_save then
+			atlatc.load(la_save)
+		end
+	end
 end
 
 advtrains.save_component = function (tbl, name)
@@ -365,6 +428,7 @@ advtrains.save_component = function (tbl, name)
 	--
 	-- required for now to shrink the advtrains db to overcome lua
 	-- limitations.
+	-- Note: as of version 4, only used for the "advtrains_version" file
 	local datastr = minetest.serialize(tbl)
 	if not datastr then
 		minetest.log("error", " Failed to serialize advtrains save data!")
@@ -380,7 +444,7 @@ advtrains.save_component = function (tbl, name)
 end
 
 advtrains.avt_save = function(remove_players_from_wagons)
-	--atprint("saving")
+	--atdebug("Saving advtrains files (version 4)")
 	
 	if remove_players_from_wagons then
 		for w_id, data in pairs(advtrains.wagons) do
@@ -425,34 +489,57 @@ advtrains.avt_save = function(remove_players_from_wagons)
 	--versions:
 	-- 1 - Initial new save format.
 	-- 2 - version as of tss branch 11-2018+
+	-- 3 - split-up savefile system by gabriel
+	-- 4 - serialize_lib
+
+	-- save of core advtrains
+	local at_save={
+		trains = tmp_trains,
+		wagons = advtrains.wagons,
+		ptmap = advtrains.player_to_train_mapping,
+		atc = advtrains.atc.save_data(),
+		ndb = advtrains.ndb.save_data(),-- side effect: this saves advtrains_ndb file
+	}
+	
+	--save of interlocking
 	local il_save
 	if advtrains.interlocking then
 		il_save = advtrains.interlocking.db.save()
 	else
 		il_save = MDS_interlocking
 	end
+	
+	-- save of lines
 	local ln_save
 	if advtrains.lines then
 		ln_save = advtrains.lines.save()
 	else
 		ln_save = MDS_lines
 	end
-
-	local save_tbl={
-		trains = tmp_trains,
-		wagon_save = advtrains.wagons,
-		ptmap = advtrains.player_to_train_mapping,
-		atc = advtrains.atc.save_data(),
-		ndb = advtrains.ndb.save_data(),
-		lines = ln_save,
-		version = 3,
-	}
-	for i,k in pairs(save_tbl) do
-		advtrains.save_component(k,i)
+	
+	-- save of luaatc
+	local la_save
+	if atlatc then
+		la_save = atlatc.save()
 	end
 	
-	for i,k in pairs(il_save) do
-		advtrains.save_component(k,"interlocking_"..i)
+	-- parts table for serialize_lib API:
+	-- any table that is nil will not be included and thus not be overwritten
+	local parts_table = {
+		["core.ls"] = at_save,
+		["interlocking.ls"] = il_save,
+		["lines.ls"] = ln_save,
+		["atlatc.ls"] = la_save,
+	}
+	
+	--THE MAGIC HAPPENS HERE
+	local succ, err = serialize_lib.save_atomic_multiple(parts_table, advtrains.fpath.."_")
+	
+	if not succ then
+		atwarn("Saving failed: "..err)
+	else
+		-- store version
+		advtrains.save_component(4, "version")
 	end
 	
 	if DUMP_DEBUG_SAVE then
@@ -460,13 +547,7 @@ advtrains.avt_save = function(remove_players_from_wagons)
 		if err then
 			return
 		end
-		file:write(dump(save_tbl))
-		file:close()
-		local file, err = io.open(advtrains.fpath.."_interlocking_DUMP", "w")
-		if err then
-			return
-		end
-		file:write(dump(il_save))
+		file:write(dump(parts_table))
 		file:close()
 	end
 end
@@ -511,7 +592,7 @@ minetest.register_globalstep(function(dtime_mt)
 			advtrains_itm_mainloop(dtime)
 		end
 		if atlatc then
-			atlatc.mainloop_stepcode(dtime)
+			--atlatc.mainloop_stepcode(dtime)
 			atlatc.interrupt.mainloop(dtime)
 		end
 		if advtrains.lines then
@@ -537,9 +618,9 @@ end)
 -- first time called in main loop (after the init phase) because luaautomation has to initialize first.
 function advtrains.load()
 	advtrains.avt_load() --loading advtrains. includes ndb at advtrains.ndb.load_data()
-	if atlatc then
-		atlatc.load() --includes interrupts
-	end
+	--if atlatc then
+	--	atlatc.load() --includes interrupts
+	--end == No longer loading here. Now part of avt_save() legacy loading.
 	if advtrains_itm_init then
 		advtrains_itm_init()
 	end

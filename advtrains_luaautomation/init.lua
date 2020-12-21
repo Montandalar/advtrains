@@ -39,7 +39,21 @@ dofile(mp.."/chatcmds.lua")
 
 local filename=minetest.get_worldpath().."/advtrains_luaautomation"
 
-function atlatc.load()
+function atlatc.load(tbl)
+	if tbl.version==1 then
+		for envname, data in pairs(tbl.envs) do
+			atlatc.envs[envname]=atlatc.env_load(envname, data)
+		end
+		atlatc.active.load(tbl.active)
+		atlatc.interrupt.load(tbl.interrupt)
+		atlatc.pcnaming.load(tbl.pcnaming)
+	end
+	-- run init code of all environments
+	atlatc.run_initcode()
+end
+
+function atlatc.load_pre_v4()
+	minetest.log("action", "[atlatc] Loading pre-v4 save file")
 	local file, err = io.open(filename, "r")
 	if not file then
 		minetest.log("warning", " Failed to read advtrains_luaautomation save data from file "..filename..": "..(err or "Unknown Error"))
@@ -82,21 +96,10 @@ atlatc.save = function()
 		pcnaming = atlatc.pcnaming.save(),
 	}
 	
-	local datastr = minetest.serialize(save_tbl)
-	if not datastr then
-		minetest.log("error", " Failed to save advtrains_luaautomation save data to file "..filename..": Can't serialize!")
-		return
-	end
-	local file, err = io.open(filename, "w")
-	if err then
-		minetest.log("error", " Failed to save advtrains_luaautomation save data to file "..filename..": "..(err or "Unknown Error"))
-		return
-	end
-	file:write(datastr)
-	file:close()
+	return save_tbl
 end
 
-
+--[[
 -- globalstep for step code
 local timer, step_int=0, 2
 
@@ -107,3 +110,4 @@ function atlatc.mainloop_stepcode(dtime)
 		atlatc.run_stepcode()
 	end
 end
+]]
