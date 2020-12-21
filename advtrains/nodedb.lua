@@ -52,11 +52,14 @@ local function ndbset(x,y,z,v)
 	ndb_nodes[y][x][z]=v
 end
 
+-- load/save
 
-local path=minetest.get_worldpath()..DIR_DELIM.."advtrains_ndb2"
---load
+local path_pre_v4=minetest.get_worldpath()..DIR_DELIM.."advtrains_ndb2"
+--load pre_v4 format
 --nodeids get loaded by advtrains init.lua and passed here
-function ndb.load_data(data)
+function ndb.load_data_pre_v4(data)
+	atlog("nodedb: Loading pre v4 format")
+
 	ndb_nodeids = data and data.nodeids or {}
 	ndb_ver = data and data.ver or 0
 	if ndb_ver < 1 then
@@ -68,10 +71,11 @@ function ndb.load_data(data)
 			end
 		end
 	end
-	local file, err = io.open(path, "rb")
+	local file, err = io.open(path_pre_v4, "rb")
 	if not file then
 		atwarn("Couldn't load the node database: ", err or "Unknown Error")
 	else
+		-- Note: code duplication because of weird coordinate order in ndb2 format (z,y,x)
 		local cnt=0
 		local hst_z=file:read(2)
 		local hst_y=file:read(2)
@@ -88,57 +92,103 @@ function ndb.load_data(data)
 			hst_x=file:read(2)
 			cid=file:read(2)
 		end
-		atlog("nodedb: read", cnt, "nodes.")
+		atlog("nodedb (ndb2 format): read", cnt, "nodes.")
 		file:close()
 	end
 	ndb_ver = 1
 end
 
-local windows_compat = false
---save
-function ndb.save_data()
-	local tmppath = path.."~"
-	local file, err
-	if windows_compat then
-		-- open ndb file directly
-		file, err = io.open(path, "wb")
-	else
-		-- open another file next to it, then replace atomically
-		file, err = io.open(tmppath, "wb")
+-- the new ndb file format is backported from cellworld, and stores the cids also in the ndb file.
+-- These functions have the form of a serialize_lib atomic load/save callback and are called from avt_save/avt_load.
+function ndb.load_callback(file)
+	-- read version
+	local vers_byte = file:read(1)
+	local version = string.byte(vers_byte)
+	if version~=1 then
+		file:close()
+		error("Doesn't support v4 nodedb file of version "..version)
 	end
 	
-	if not file then
-		atwarn("Couldn't save the node database: ", err or "Unknown Error")
-	else
-		for y, ny in pairs(ndb_nodes) do
-			for x, nx in pairs(ny) do
-				for z, cid in pairs(nx) do
-					file:write(int_to_bytes(z))
-					file:write(int_to_bytes(y))
-					file:write(int_to_bytes(x))
-					file:write(int_to_bytes(cid))
-				end
+	-- read cid mappings
+	local nstr_byte = file:read(2)
+	local nstr = bytes_to_int(nstr_byte)
+	for i = 1,nstr do
+		local stid_byte = file:read(2)
+		local stid = bytes_to_int(stid_byte)
+		local stna = file:read("*l")
+		--atdebug("content id:", stid, "->", stna)
+		ndb_nodeids[stid] = stna
+	end
+	atlog("[nodedb] read", nstr, "node content ids.")
+
+	-- read nodes
+	local cnt=0
+	local hst_x=file:read(2)
+	local hst_y=file:read(2)
+	local hst_z=file:read(2)
+	local cid=file:read(2)
+	local cidi
+	while hst_z and hst_y and hst_x and cid and #hst_z==2 and #hst_y==2 and #hst_x==2 and #cid==2 do
+		cidi = bytes_to_int(cid)
+		-- prevent file corruption already here
+		if not ndb_nodeids[u14b(cidi)] then
+			-- clear the ndb data, to reinitialize it
+			-- in strict loading mode, doesn't matter as starting will be interrupted anyway
+			ndb_nodeids = {}
+			ndb_nodes = {}
+			error("NDB file is corrupted (found entry with invalid cid)")
+		end
+		ndbset(bytes_to_int(hst_x), bytes_to_int(hst_y), bytes_to_int(hst_z), cidi)
+		cnt=cnt+1
+		hst_x=file:read(2)
+		hst_y=file:read(2)
+		hst_z=file:read(2)
+		cid=file:read(2)
+	end
+	atlog("[nodedb] read", cnt, "nodes.")
+	file:close()
+end
+
+--save
+function ndb.save_callback(data, file)
+	--atdebug("storing ndb...")
+	-- write version
+	file:write(string.char(1))
+	
+	-- how many cid entries
+	local cnt = 0
+	for _,_ in pairs(ndb_nodeids) do
+		cnt = cnt + 1
+	end
+	-- write cids
+	local nstr = 0
+	file:write(int_to_bytes(cnt))
+	for stid,stna in pairs(ndb_nodeids) do
+		file:write(int_to_bytes(stid))
+		file:write(stna)
+		file:write("\n")
+		nstr = nstr+1
+	end
+	--atdebug("saved cids count ", nstr)
+	
+	-- write entries
+	local cnt = 0
+	for y, ny in pairs(ndb_nodes) do
+		for x, nx in pairs(ny) do
+			for z, cid in pairs(nx) do
+				file:write(int_to_bytes(x))
+				file:write(int_to_bytes(y))
+				file:write(int_to_bytes(z))
+				file:write(int_to_bytes(cid))
+				cnt=cnt+1
 			end
 		end
-		file:close()
 	end
-	
-	if not windows_compat then
-		local success, msg = os.rename(tmppath, path)
-		--local success, msg = nil, "test"
-		-- for windows, this fails if the file already exists. Enable windows compatibility and directly write to path.
-		if not success then
-			atlog("Replacing the nodedb file atomically failed:",msg)
-			atlog("Switching to Windows mode (will directly overwrite the nodedb file from now on)")
-			windows_compat = true
-			os.remove(tmppath)
-			-- try again
-			ndb.save_data()
-		end
-	end
-	
-	return {nodeids = ndb_nodeids, ver = ndb_ver}
+	--atdebug("saved nodes count ", cnt)
+	file:close()
 end
+
+
 
 --function to get node. track database is not helpful here.
 function ndb.get_node_or_nil(pos)

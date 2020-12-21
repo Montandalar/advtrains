@@ -307,7 +307,7 @@ function advtrains.avt_load()
 			end
 			advtrains.wagons = tbl.wagon_save
 			advtrains.player_to_train_mapping = tbl.ptmap or {}
-			advtrains.ndb.load_data(tbl.ndb)
+			advtrains.ndb.load_data_pre_v4(tbl.ndb)
 			advtrains.atc.load_data(tbl.atc)
 			if advtrains.interlocking then
 				advtrains.interlocking.db.load(tbl.interlocking)
@@ -382,7 +382,6 @@ function advtrains.load_version_4()
 		end
 		advtrains.wagons = at_save.wagons
 		advtrains.player_to_train_mapping = at_save.ptmap or {}
-		advtrains.ndb.load_data(at_save.ndb)
 		advtrains.atc.load_data(at_save.atc)
 
 		--remove wagon_save entries that are not part of a train
@@ -398,6 +397,9 @@ function advtrains.load_version_4()
 			advtrains.wagon_save[wid]=nil
 		end
 	end
+	--== load ndb
+	serialize_lib.load_atomic(advtrains.fpath.."_ndb4.ls", advtrains.ndb.load_callback)
+	
 	--== load interlocking ==
 	if advtrains.interlocking then
 		local il_save = serialize_lib.load_atomic(advtrains.fpath.."_interlocking.ls")
@@ -498,7 +500,6 @@ advtrains.avt_save = function(remove_players_from_wagons)
 		wagons = advtrains.wagons,
 		ptmap = advtrains.player_to_train_mapping,
 		atc = advtrains.atc.save_data(),
-		ndb = advtrains.ndb.save_data(),-- side effect: this saves advtrains_ndb file
 	}
 	
 	--save of interlocking
@@ -530,10 +531,14 @@ advtrains.avt_save = function(remove_players_from_wagons)
 		["interlocking.ls"] = il_save,
 		["lines.ls"] = ln_save,
 		["atlatc.ls"] = la_save,
+		["ndb4.ls"] = true, -- data not used
+	}
+	local callbacks_table = {
+		["ndb4.ls"] = advtrains.ndb.save_callback
 	}
 	
 	--THE MAGIC HAPPENS HERE
-	local succ, err = serialize_lib.save_atomic_multiple(parts_table, advtrains.fpath.."_")
+	local succ, err = serialize_lib.save_atomic_multiple(parts_table, advtrains.fpath.."_", callbacks_table)
 	
 	if not succ then
 		atwarn("Saving failed: "..err)
