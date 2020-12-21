@@ -30,63 +30,45 @@ Not all functions use all of the parameters, so you can simplify your config som
 
 
 function serialize_lib.log_error(text)
-	minetest.log("error", "[serialize_lib] "..text)
+	minetest.log("error", "[serialize_lib] ("..(minetest.get_current_modname() or "?").."): "..(text or "<nil>"))
 end
 function serialize_lib.log_warn(text)
-	minetest.log("warning", "[serialize_lib] "..text)
+	minetest.log("warning", "[serialize_lib] ("..(minetest.get_current_modname() or "?").."): "..(text or "<nil>"))
 end
 function serialize_lib.log_info(text)
-	minetest.log("action", "[serialize_lib] "..text)
+	minetest.log("action", "[serialize_lib] ("..(minetest.get_current_modname() or "?").."): "..(text or "<nil>"))
 end
 function serialize_lib.log_debug(text)
-	minetest.log("action", "[serialize_lib](debug) "..text)
+	minetest.log("action", "[serialize_lib] ("..(minetest.get_current_modname() or "?")..") DEBUG: "..(text or "<nil>"))
 end
 
 -- basic serialization/deserialization
 -- ===================================
 
-local ser = dofile("serialize.lua")
+local mp = minetest.get_modpath(minetest.get_current_modname())
+serialize_lib.serialize = dofile(mp.."/serialize.lua")
+dofile(mp.."/atomic.lua")
+
+local ser = serialize_lib.serialize
 
 -- Opens the passed filename, and returns deserialized table
 -- When an error occurs, logs an error and returns false
 function serialize_lib.read_table_from_file(filename)
-	local succ, err = pcall(ser.read_from_file, filename)
+	local succ, ret = pcall(ser.read_from_file, filename)
 	if not succ then
-		serialize_lib.log_error("Mod '"..minetest.get_current_modname().."': "..err)
+		serialize_lib.log_error(ret)
 	end
-	return succ
+	return ret
 end
 
 -- Writes table into file
 -- When an error occurs, logs an error and returns false
-function serialize_lib.write_table_to_file(filename)
-	local succ, err = pcall(ser.write_to_file, filename)
+function serialize_lib.write_table_to_file(root_table, filename)
+	local succ, ret = pcall(ser.write_to_file, root_table, filename)
 	if not succ then
-		serialize_lib.log_error("Mod '"..minetest.get_current_modname().."': "..err)
+		serialize_lib.log_error(ret)
 	end
-	return succ
+	return ret
 end
-
--- Managing files and backups
--- ==========================
-
---[[
-The plain scheme just overwrites the file in place. This however poses problems when we are interrupted right within
-the write, so we have incomplete data. So, the following scheme is applied:
-1. writes to <filename>.new (if .new already exists, try to complete the moving first)
-2. moves <filename> to <filename>.old, possibly overwriting an existing file (special windows behavior)
-3. moves <filename>.new to <filename>
-
-During loading, we apply the following order of precedence:
-1. <filename>.new
-2. <filename>
-3. <filename>.old
-
-Normal case: <filename> and <filename>.old exist, loading <filename>
-Interrupted during write: .new is damaged, loads last regular state
-Interrupted during the move operations: either <filename>.new or <filename> represents the latest state
-Other corruption: at least the .old state may still be present
-
-]]--
 
 

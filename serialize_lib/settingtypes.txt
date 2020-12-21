@@ -1,0 +1,12 @@
+# Enable strict file loading mode
+# If enabled, if any error occurs during loading of a file using the 'atomic' API,
+# an error is thrown. You probably need to disable this option for initial loading after
+# creating the world.
+serialize_lib_strict_loading (Strict loading) bool false
+
+# Do not automatically switch to "Windows mode" when saving atomically
+# Normally, when renaming <filename>.new to <filename> fails, serialize_lib automatically
+# switches to a mode where it deletes <filename> prior to moving. Enable this option to prevent
+# this behavior and abort saving instead.
+serialize_lib_no_auto_windows_mode (No automatic Windows Mode) bool false
+

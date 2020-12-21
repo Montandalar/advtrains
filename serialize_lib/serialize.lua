@@ -55,7 +55,7 @@ function write_table(t, file, config)
 		
 		if istable then
 			vs = "T"
-			if config.skip_empty_tables then
+			if config and config.skip_empty_tables then
 				writeit = not table_is_empty(value)
 			end
 		else
@@ -75,6 +75,7 @@ end
 
 function value_to_string(t)
 	if type(t)=="table" then
+		file:close()
 		error("Can not serialize a table in the key position!")
 	elseif type(t)=="boolean" then
 		if t then
@@ -87,6 +88,7 @@ function value_to_string(t)
 	elseif type(t)=="string" then
 		return "S"..escape_chars(t)
 	else
+		file:close()
 		error("Can not serialize '"..type(t).."' type!")
 	end
 	return str
@@ -108,6 +110,7 @@ function read_table(t, file)
 	while true do
 		line = file:read("*l")
 		if not line then
+			file:close()
 			error("Unexpected EOF or read error!")
 		end
 		
@@ -117,6 +120,7 @@ function read_table(t, file)
 		end
 		ks, vs = string.match(line, "^(.+[^&]):(.+)$")
 		if not ks or not vs then
+			file:close()
 			error("Unable to parse line: '"..line.."'!")
 		end
 		kv = string_to_value(ks)
@@ -137,6 +141,7 @@ function string_to_value(str, table_allow)
 		if table_allow then
 			return {}, true
 		else
+			file:close()
 			error("Table not allowed in key component!")
 		end
 	elseif first=="N" then
@@ -144,6 +149,7 @@ function string_to_value(str, table_allow)
 		if num then
 			return num
 		else
+			file:close()
 			error("Unable to parse number: '"..rest.."'!")
 		end
 	elseif first=="B" then
@@ -152,11 +158,13 @@ function string_to_value(str, table_allow)
 		elseif rest=="1" then
 			return true
 		else
+			file:close()
 			error("Unable to parse boolean: '"..rest.."'!")
 		end
 	elseif first=="S" then
 		return unescape_chars(rest)
 	else
+		file:close()
 		error("Unknown literal type '"..first.."' for literal '"..str.."'!")
 	end
 end
@@ -177,20 +185,20 @@ config = {
 }
 ]]
 
--- Writes the passed table into the passed file descriptor, and closes the file afterwards
+-- Writes the passed table into the passed file descriptor, and closes the file
 local function write_to_fd(root_table, file, config)
 	file:write("LUA_SER v=1\n")
 	write_table(root_table, file, config)
 	file:write("E\nEND_SER\n")
-	file:close()
 end
 
 -- Reads the file contents from the passed file descriptor and returns the table on success
--- Throws errors when something is wrong.
+-- Throws errors when something is wrong. Closes the file.
 -- config: see above
 local function read_from_fd(file)
 	local first_line = file:read("*l")
 	if first_line ~= "LUA_SER v=1" then
+		file:close()
 		error("Expected header, got '"..first_line.."' instead!")
 	end
 	local t = {}
@@ -209,7 +217,7 @@ function write_to_file(root_table, filename, config)
 	-- try opening the file
 	local file, err = io.open(filename, "w")
 	if not file then
-		error("Failed opening file '"..filename.."' for write: "..err)
+		error("Failed opening file '"..filename.."' for write:\n"..err)
 	end
 	
 	write_to_fd(root_table, file, config)
@@ -221,7 +229,7 @@ function read_from_file(filename)
 	-- try opening the file
 	local file, err = io.open(filename, "r")
 	if not file then
-		error("Failed opening file '"..filename.."' for read: "..err)
+		error("Failed opening file '"..filename.."' for read:\n"..err)
 	end
 	
 	return read_from_fd(file)
