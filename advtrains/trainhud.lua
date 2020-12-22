@@ -130,7 +130,7 @@ function advtrains.set_trainhud(name, text, driver)
 			hud.oldText=text
 		end
 		if hud.driver then
-			player:hud_change(hud.driver, "text", driver or "advtrains_hud_blank.png")
+			player:hud_change(hud.driver, "text", driver or "")
 		elseif driver then
 			hud.driver = player:hud_add(driverhud)
 		end
@@ -183,48 +183,93 @@ function advtrains.hud_train_format(train, flip)
 	local vel = advtrains.abs_ceil(train.velocity)
 	local vel_kmh=advtrains.abs_ceil(advtrains.ms_to_kmh(train.velocity))
 	
-	local levers = {
-		[0] = "advtrains_hud_red.png^advtrains_hud_emg.png",
-		"advtrains_hud_orange.png^advtrains_hud_b2.png",
-		"advtrains_hud_orange.png^advtrains_hud_b1.png",
-		"advtrains_hud_gray.png^advtrains_hud_n.png",
-		"advtrains_hud_blue.png^advtrains_hud_p.png"}
-	local tlev=train.lever
+	local levers = {[0] = "emg","b","r","n","p"}
+	local lvrcolor = {[0] = "red", "orange", "orange", "cyan", "cyan"}
+	local tlev=train.lever or 1
 	if train.velocity==0 and not train.active_control then tlev=1 end
 	
 	local st = {}
 	if train.debug then st = {train.debug} end
 	
-	local ht = ("[combine:100x110:0,0=(%s):50,0=(%s):0,22=(%s):50,22=(%s):0,44=(%s):50,44=(%s):0,66=advtrains_hud_speed_bg.png"
-		..":%d,77=(advtrains_hud_speed_ind.png%s)"):format(
-		("advtrains_hud_blue.png^advtrains_hud_%s.png"):format(flip and "r" or "f"),
-		levers[tlev or 32767] or "advtrains_hud_gray.png^advtrains_hud_na.png",
-		(train.tarvelocity or train.atc_command)
-			and "advtrains_hud_blue.png^advtrains_hud_atc.png"
-			or (train.ctrl.lzb and "advtrains_hud_red.png^advtrains_hud_lzb.png" or "advtrains_hud_gray.png^advtrains_hud_man.png"),
-		train.is_shunt and "advtrains_hud_orange.png^advtrains_hud_shunt.png" or "advtrains_hud_gray.png^advtrains_hud_shunt.png",
-		train.door_open == -1 and "advtrains_hud_blue.png^advtrains_hud_l_right.png" or "advtrains_hud_gray.png^advtrains_hud_l_right.png",
-		train.door_open == 1 and "advtrains_hud_blue.png^advtrains_hud_r.png" or "advtrains_hud_gray.png^advtrains_hud_r.png",
-		vel*4.85, (res and res>=0) and "" or "^[resize\\:3x22")
-	local si = {}
-	if max < 20 then
-		si[#si+1] = ("%d,77=(advtrains_hud_speed_max.png^[resize\\:%dx22)"):format(max*5,100-max*5)
+	local ht = {"[combine:300x130:0,0=(advtrains_hud_bg.png^[resize\\:300x130)"}
+	ht[#ht+1] = "100,0=(advtrains_hud_" .. (flip and "reverse" or "forward") .. ".png^[resize\\:100x20)"
+	ht[#ht+1] = "200,0=(advtrains_hud_" .. (levers[tlev] or "bg") .. ".png^[resize\\:100x20^[multiply\\:" .. (lvrcolor[tlev] or "#000000") .. ")"
+	if train.tarvelocity or train.atc_command then
+		ht[#ht+1] = "100,20=(advtrains_hud_atc.png^[resize\\:100x20)"
 	end
-	if res and res>=0 then
-		si[#si+1] = ("%d,88=advtrains_hud_speed_limit.png"):format(res*4.85)
+	if train.ctrl.lzb then
+		ht[#ht+1] = "200,20=(advtrains_hud_lzb.png^[resize\\:100x20^[multiply\\:red)"
 	end
-	if train.tarvelocity then
-		si[#si+1] = ("%d,66=advtrains_hud_speed_atc.png"):format(train.tarvelocity*4.85)
+	if train.is_shunt then
+		ht[#ht+1] = "100,40=(advtrains_hud_shunt.png^[resize\\:100x20)"
+	end
+	if train.door_open == -1 then
+		ht[#ht+1] = "100,60=(advtrains_hud_left_door.png^[resize\\:100x20)"
+	elseif train.door_open == 1 then
+		ht[#ht+1] = "200,60=(advtrains_hud_right_door.png^[resize\\:100x20)"
 	end
 	local lzb = train.lzb
 	if lzb and lzb.oncoming then
 		for i = 1, #lzb.oncoming do
 			local k = lzb.oncoming[i]
-			if k.spd and k.spd >= 0 then
-				si[#si+1] = ("%d,102=advtrains_hud_speed_next.png"):format(k.spd*4.85)
-				break
+			if not k.spd then
+				ht[#ht+1] = "203,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:lime\\:255)"
+			elseif k.spd == 0 then
+				ht[#ht+1] = "283,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:red\\:255)"
+			else
+				ht[#ht+1] = "243,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:orange\\:255)" 
+			end
+			break
+		end
+	end
+	-- speed indication(s)
+	local function sevenseg(digit, x, y, w, h, m)
+		--[[
+		 -1-
+		2   3
+		 -4-
+		5   6
+		 -7-
+		]]
+		local segs = {
+			{h, 0, w, h},
+			{0, h, h, w},
+			{w+h, h, h, w},
+			{h, w+h, w, h},
+			{0, w+2*h, h, w},
+			{w+h, w+2*h, h, w},
+			{h, 2*(w+h), w, h}}
+		local trans = {
+			[0] = {true, true, true, false, true, true, true},
+			[1] = {false, false, true, false, false, true, false},
+			[2] = {true, false, true, true, true, false, true},
+			[3] = {true, false, true, true, false, true, true},
+			[4] = {false, true, true, true, false, true, false},
+			[5] = {true, true, false, true, false, true, true},
+			[6] = {true, true, false, true, true, true, true},
+			[7] = {true, false, true, false, false, true, false},
+			[8] = {true, true, true, true, true, true, true},
+			[9] = {true, true, true, true, false, true, true}}
+		local ent = trans[digit or 10]
+		if not ent then return end
+		for i = 1, 7, 1 do
+			if ent[i] then
+				local s = segs[i]
+				ht[#ht+1] = ("%d,%d=(advtrains_hud_bg.png^[resize\\:%dx%d^%s)"):format(x+s[1], y+s[2], s[3], s[4], m)
 			end
 		end
+	end
+	sevenseg(math.floor(vel/10), 5, 5, 20, 10, "[colorize\\:red\\:255")
+	sevenseg(vel%10, 55, 5, 20, 10, "[colorize\\:red\\:255")
+	ht[#ht+1] = ("10,100=(advtrains_hud_bg.png^[resize\\:%dx10^[colorize\\:white\\:255)"):format(vel*14)
+	if max < 20 then
+		ht[#ht+1] = ("%d,100=(advtrains_hud_bg.png^[resize\\:%dx10^[colorize\\:gray\\:255)"):format(10+max*14, 280-max*14)
+	end
+	if res and res > 0 then
+		ht[#ht+1] = ("10,85=(advtrains_hud_bg.png^[resize\\:%dx10^[colorize\\:red\\:255)"):format(res*14)
+	end
+	if train.tarvelocity then
+		ht[#ht+1] = ("10,115=(advtrains_hud_bg.png^[resize\\:%dx10^[colorize\\:cyan\\:255)"):format(train.tarvelocity*14)
 	end
 	
 	if res and res == 0 then
@@ -235,5 +280,5 @@ function advtrains.hud_train_format(train, flip)
 		st[#st+1] = ("ATC: %s%s"):format(train.atc_delay and advtrains.abs_ceil(train.atc_delay).."s " or "", train.atc_command or "")
 	end
 	
-	return table.concat(st,"\n"), #si>0 and ht..":"..table.concat(si,":") or ht
+	return table.concat(st,"\n"), table.concat(ht,":")
 end
