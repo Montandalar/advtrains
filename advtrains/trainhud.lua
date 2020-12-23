@@ -191,7 +191,7 @@ function advtrains.hud_train_format(train, flip)
 	local st = {}
 	if train.debug then st = {train.debug} end
 	
-	local ht = {"[combine:300x130:0,0=(advtrains_hud_bg.png^[resize\\:300x130)"}
+	local ht = {"[combine:300x150:0,0=(advtrains_hud_bg.png^[resize\\:300x150)"}
 	ht[#ht+1] = "100,0=(advtrains_hud_" .. (flip and "reverse" or "forward") .. ".png^[resize\\:100x20)"
 	ht[#ht+1] = "200,0=(advtrains_hud_" .. (levers[tlev] or "bg") .. ".png^[resize\\:100x20^[multiply\\:" .. (lvrcolor[tlev] or "#000000") .. ")"
 	if train.tarvelocity or train.atc_command then
@@ -207,20 +207,6 @@ function advtrains.hud_train_format(train, flip)
 		ht[#ht+1] = "100,60=(advtrains_hud_left_door.png^[resize\\:100x20)"
 	elseif train.door_open == 1 then
 		ht[#ht+1] = "200,60=(advtrains_hud_right_door.png^[resize\\:100x24)"
-	end
-	local lzb = train.lzb
-	if lzb and lzb.oncoming then
-		for i = 1, #lzb.oncoming do
-			local k = lzb.oncoming[i]
-			if not k.spd then
-				ht[#ht+1] = "203,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:lime\\:255)"
-			elseif k.spd == 0 then
-				ht[#ht+1] = "283,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:red\\:255)"
-			else
-				ht[#ht+1] = "243,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:orange\\:255)" 
-			end
-			break
-		end
 	end
 	-- speed indication(s)
 	local function sevenseg(digit, x, y, w, h, m)
@@ -261,15 +247,30 @@ function advtrains.hud_train_format(train, flip)
 	end
 	sevenseg(math.floor(vel/10), 5, 5, 20, 10, "[colorize\\:red\\:255")
 	sevenseg(vel%10, 55, 5, 20, 10, "[colorize\\:red\\:255")
-	ht[#ht+1] = ("10,100=(advtrains_hud_bg.png^[resize\\:%dx10^[colorize\\:white\\:255)"):format(vel*14)
+	ht[#ht+1] = ("10,100=(advtrains_hud_bg.png^[resize\\:%dx30^[colorize\\:white\\:255)"):format(vel*14)
 	if max < 20 then
-		ht[#ht+1] = ("%d,100=(advtrains_hud_bg.png^[resize\\:%dx10^[colorize\\:gray\\:255)"):format(10+max*14, 280-max*14)
+		ht[#ht+1] = ("%d,100=(advtrains_hud_bg.png^[resize\\:%dx30^[colorize\\:gray\\:255)"):format(10+max*14, 280-max*14)
 	end
 	if res and res > 0 then
-		ht[#ht+1] = ("10,85=(advtrains_hud_bg.png^[resize\\:%dx10^[colorize\\:red\\:255)"):format(res*14)
+		ht[#ht+1] = ("%d,95=(advtrains_hud_bg.png^[resize\\:3x40^[colorize\\:red\\:255)"):format(9+res*14)
 	end
 	if train.tarvelocity then
-		ht[#ht+1] = ("10,115=(advtrains_hud_bg.png^[resize\\:%dx10^[colorize\\:cyan\\:255)"):format(train.tarvelocity*14)
+		ht[#ht+1] = ("%d,130=(advtrains_hud_arrow.png^[multiply\\:cyan^[transformFY)"):format(2+train.tarvelocity*14)
+	end
+	local lzb = train.lzb
+	if lzb and lzb.oncoming then
+		for i = 1, #lzb.oncoming do
+			local k = lzb.oncoming[i]
+			if not k.spd then
+				ht[#ht+1] = "203,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:lime\\:255)"
+			elseif k.spd == 0 then
+				ht[#ht+1] = "283,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:red\\:255)"
+			else
+				ht[#ht+1] = "243,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:orange\\:255)"
+				ht[#ht+1] = ("%d,85=(advtrains_hud_arrow.png^[multiply\\:red)"):format(2+k.spd*14) 
+			end
+			break
+		end
 	end
 	
 	if res and res == 0 then
