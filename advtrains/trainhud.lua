@@ -206,7 +206,7 @@ function advtrains.hud_train_format(train, flip)
 	if train.door_open == -1 then
 		ht[#ht+1] = "100,60=(advtrains_hud_left_door.png^[resize\\:100x20)"
 	elseif train.door_open == 1 then
-		ht[#ht+1] = "200,60=(advtrains_hud_right_door.png^[resize\\:100x20)"
+		ht[#ht+1] = "200,60=(advtrains_hud_right_door.png^[resize\\:100x24)"
 	end
 	local lzb = train.lzb
 	if lzb and lzb.oncoming then
