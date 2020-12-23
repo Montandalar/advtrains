@@ -252,10 +252,10 @@ function advtrains.hud_train_format(train, flip)
 		ht[#ht+1] = ("%d,100=(advtrains_hud_bg.png^[resize\\:%dx30^[colorize\\:gray\\:255)"):format(10+max*14, 280-max*14)
 	end
 	if res and res > 0 then
-		ht[#ht+1] = ("%d,95=(advtrains_hud_bg.png^[resize\\:2x40^[colorize\\:red\\:255)"):format(10+res*14)
+		ht[#ht+1] = ("%d,95=(advtrains_hud_bg.png^[resize\\:3x40^[colorize\\:red\\:255)"):format(8+res*14)
 	end
 	if train.tarvelocity then
-		ht[#ht+1] = ("%d,130=(advtrains_hud_arrow.png^[multiply\\:cyan^[transformFY)"):format(3+train.tarvelocity*14)
+		ht[#ht+1] = ("%d,130=(advtrains_hud_arrow.png^[multiply\\:cyan^[transformFY)"):format(2+train.tarvelocity*14)
 	end
 	local lzb = train.lzb
 	if lzb and lzb.oncoming then
@@ -267,7 +267,7 @@ function advtrains.hud_train_format(train, flip)
 				ht[#ht+1] = "283,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:red\\:255)"
 			else
 				ht[#ht+1] = "243,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:orange\\:255)"
-				ht[#ht+1] = ("%d,85=(advtrains_hud_arrow.png^[multiply\\:red)"):format(3+k.spd*14) 
+				ht[#ht+1] = ("%d,85=(advtrains_hud_arrow.png^[multiply\\:red)"):format(2+k.spd*14) 
 			end
 			break
 		end
