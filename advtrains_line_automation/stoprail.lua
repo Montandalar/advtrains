@@ -181,7 +181,7 @@ local adefunc = function(def, preset, suffix, rotation)
 								stdata.ars = {default=true}
 							end
 							if stdata.ars and (stdata.ars.default or advtrains.interlocking.ars_check_rule_match(stdata.ars, train) ) then
-								advtrains.lzb_add_checkpoint(train, index, 0, nil)
+								advtrains.lzb_add_checkpoint(train, index, 2, nil)
 								local stn = advtrains.lines.stations[stdata.stn]
 								local stnname = stn and stn.name or "Unknown Station"
 								train.text_inside = "Next Stop:\n"..stnname
