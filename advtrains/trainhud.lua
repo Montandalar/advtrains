@@ -283,3 +283,24 @@ function advtrains.hud_train_format(train, flip)
 	
 	return table.concat(st,"\n"), table.concat(ht,":")
 end
+
+local _, texture = advtrains.hud_train_format { -- dummy train object to demonstrate the train hud
+	max_speed = 15, speed_restriction = 12, velocity = 12, tarvelocity = 15,
+	active_control = true, lever = 3, ctrl = {lzb = true}, is_shunt = true,
+	door_open = 1, lzb = {oncoming = {{spd = 6}}}
+}
+
+minetest.register_node("advtrains:hud_demo",{
+	description = "Train HUD demonstration",
+	tiles = {texture},
+	groups = {cracky = 3, not_in_creative_inventory = 1}
+})
+
+minetest.register_craft {
+	output = "advtrains:hud_demo",
+	recipe = {
+		{"default:paper", "default:paper", "default:paper"},
+		{"default:paper", "advtrains:trackworker", "default:paper"},
+		{"default:paper", "default:paper", "default:paper"},
+	}
+}
