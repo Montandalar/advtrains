@@ -281,6 +281,8 @@ function advtrains.get_rail_info_at(pos, drives_on)
 	return true, conns, railheight
 end
 
+local IGNORE_WORLD = advtrains.IGNORE_WORLD
+
 ndb.run_lbm = function(pos, node)
 		local cid=ndbget(pos.x, pos.y, pos.z)
 		if cid then
@@ -335,7 +337,7 @@ ndb.restore_all = function()
 				if node then
 					local ori_ndef=minetest.registered_nodes[node.name]
 					local ndbnode=ndb.get_node_raw(pos)
-					if ori_ndef and ori_ndef.groups.save_in_at_nodedb then --check if this node has been worldedited, and don't replace then
+					if (ori_ndef and ori_ndef.groups.save_in_at_nodedb) or IGNORE_WORLD then --check if this node has been worldedited, and don't replace then
 						if (ndbnode.name~=node.name or ndbnode.param2~=node.param2) then
 							minetest.swap_node(pos, ndbnode)
 							--atlog("Replaced",node.name,"@",pos,"with",ndbnode.name)

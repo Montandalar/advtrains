@@ -469,7 +469,7 @@ function advtrains.register_tracks(tracktype, def, preset)
 					tiles = {def.shared_texture or (def.texture_prefix.."_"..img_suffix..".png"), def.second_texture},
 					
 					groups = {
-						attached_node=1,
+						attached_node = advtrains.IGNORE_WORLD and 0 or 1,
 						advtrains_track=1,
 						["advtrains_track_"..tracktype]=1,
 						save_in_at_nodedb=1,

@@ -26,16 +26,32 @@ minetest.log("action", "[advtrains] Loading...")
 attrans = minetest.get_translator ("advtrains")
 
 --advtrains
+advtrains = {trains={}, player_to_train_mapping={}}
 
+-- =======================Development/debugging settings=====================
+-- DO NOT USE FOR NORMAL OPERATION
 local DUMP_DEBUG_SAVE = false
+-- dump the save files in human-readable format into advtrains_DUMP
+
 local GENERATE_ATRICIFIAL_LAG = false
 local HOW_MANY_LAG = 1.0
+-- Simulate a higher server step interval, as it occurs when the server is on high load
+
+advtrains.IGNORE_WORLD = false
+-- Run advtrains without respecting the world map
+-- - No world collision checks occur
+-- - The NDB forcibly places all nodes stored in it into the world regardless of the world's content.
+-- - Rails do not set the 'attached_node' group
+-- This mode can be useful for debugging/testing a world without the map data available
+-- In this case, choose 'singlenode' as mapgen
+
+local NO_SAVE = false
+-- Do not save any data to advtrains save files
+-- ==========================================================================
 
 
 --Constant for maximum connection value/division of the circle
 AT_CMAX = 16
-
-advtrains = {trains={}, player_to_train_mapping={}}
 
 -- get wagon loading range
 advtrains.wagon_load_range = tonumber(minetest.settings:get("advtrains_wagon_load_range"))
@@ -622,6 +638,18 @@ function advtrains.save(remove_players_from_wagons)
 		atwarn("Instructed to save() but load() was never called!")
 		return
 	end
+	
+	-- Cleanup actions
+	--TODO very simple yet hacky workaround for the "green signals" bug
+	advtrains.invalidate_all_paths()
+	
+	if advtrains.IGNORE_WORLD then
+		advtrains.ndb.restore_all()
+	end
+	
+	if NO_SAVE then
+		return
+	end
 	if no_action then
 		atlog("[save] Saving requested externally, but Advtrains step is disabled. Not saving any data as state may be inconsistent.")
 		return
@@ -632,9 +660,6 @@ function advtrains.save(remove_players_from_wagons)
 		atlatc.save()
 	end
 	atprint("[save_all]Saved advtrains save files")
-	
-	--TODO very simple yet hacky workaround for the "green signals" bug
-	advtrains.invalidate_all_paths()
 end
 minetest.register_on_shutdown(advtrains.save)
 

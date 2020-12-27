@@ -10,6 +10,8 @@
 -- TP delay when getting off wagon
 local GETOFF_TP_DELAY = 0.5
 
+local IGNORE_WORLD = advtrains.IGNORE_WORLD
+
 advtrains.wagons = {}
 advtrains.wagon_prototypes = {}
 advtrains.wagon_objects = {}
@@ -446,7 +448,7 @@ function wagon:on_step(dtime)
 		end
 		
 		--checking for environment collisions(a 3x3 cube around the center)
-		if is_in_loaded_area and not train.recently_collided_with_env then
+		if not IGNORE_WORLD and is_in_loaded_area and not train.recently_collided_with_env then
 			local collides=false
 			local exh = self.extent_h or 1
 			local exv = self.extent_v or 2
