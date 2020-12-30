@@ -176,7 +176,8 @@ Value	Disp	Control	Meaning
 ]]
 
 function advtrains.hud_train_format(train, flip)
-	if not train then return "" end
+	if not train then return "","" end
+	local sformat = string.format -- this appears to be faster than (...):format
 	
 	local max = train.max_speed or 10
 	local res = train.speed_restriction
@@ -241,33 +242,34 @@ function advtrains.hud_train_format(train, flip)
 		for i = 1, 7, 1 do
 			if ent[i] then
 				local s = segs[i]
-				ht[#ht+1] = ("%d,%d=(advtrains_hud_bg.png^[resize\\:%dx%d^%s)"):format(x+s[1], y+s[2], s[3], s[4], m)
+				ht[#ht+1] = sformat("%d,%d=(advtrains_hud_bg.png^[resize\\:%dx%d^%s)",x+s[1], y+s[2], s[3], s[4], m)
 			end
 		end
 	end
 	sevenseg(math.floor(vel/10), 5, 5, 20, 10, "[colorize\\:red\\:255")
 	sevenseg(vel%10, 55, 5, 20, 10, "[colorize\\:red\\:255")
-	ht[#ht+1] = ("10,100=(advtrains_hud_bg.png^[resize\\:%dx30^[colorize\\:white\\:255)"):format(vel*14)
+	ht[#ht+1] = sformat("10,100=(advtrains_hud_bg.png^[resize\\:%dx30^[colorize\\:white\\:255)", vel*14)
 	if max < 20 then
-		ht[#ht+1] = ("%d,100=(advtrains_hud_bg.png^[resize\\:%dx30^[colorize\\:gray\\:255)"):format(10+max*14, 280-max*14)
+		ht[#ht+1] = sformat("%d,100=(advtrains_hud_bg.png^[resize\\:%dx30^[colorize\\:gray\\:255)", 10+max*14, 280-max*14)
 	end
 	if res and res > 0 then
-		ht[#ht+1] = ("%d,95=(advtrains_hud_bg.png^[resize\\:3x40^[colorize\\:red\\:255)"):format(8+res*14)
+		ht[#ht+1] = sformat("%d,95=(advtrains_hud_bg.png^[resize\\:3x40^[colorize\\:red\\:255)", 8+res*14)
 	end
 	if train.tarvelocity then
-		ht[#ht+1] = ("%d,130=(advtrains_hud_arrow.png^[multiply\\:cyan^[transformFY)"):format(2+train.tarvelocity*14)
+		ht[#ht+1] = sformat("%d,130=(advtrains_hud_arrow.png^[multiply\\:cyan^[transformFY)", 2+train.tarvelocity*14)
 	end
 	local lzb = train.lzb
 	if lzb and lzb.oncoming then
-		for i = 1, #lzb.oncoming do
-			local k = lzb.oncoming[i]
-			if not k.spd then
+		local oc = lzb.oncoming
+		for i = 1, #oc do
+			local k = oc[i].spd
+			if not spd then
 				ht[#ht+1] = "203,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:lime\\:255)"
-			elseif k.spd == 0 then
+			elseif spd == 0 then
 				ht[#ht+1] = "283,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:red\\:255)"
 			else
 				ht[#ht+1] = "243,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:orange\\:255)"
-				ht[#ht+1] = ("%d,85=(advtrains_hud_arrow.png^[multiply\\:red)"):format(2+k.spd*14) 
+				ht[#ht+1] = sformat("%d,85=(advtrains_hud_arrow.png^[multiply\\:red)", 2+spd*14) 
 			end
 			break
 		end
@@ -278,7 +280,7 @@ function advtrains.hud_train_format(train, flip)
 	end
 	
 	if train.atc_command then
-		st[#st+1] = ("ATC: %s%s"):format(train.atc_delay and advtrains.abs_ceil(train.atc_delay).."s " or "", train.atc_command or "")
+		st[#st+1] = sformat("ATC: %s%s", train.atc_delay and advtrains.abs_ceil(train.atc_delay).."s " or "", train.atc_command or "")
 	end
 	
 	return table.concat(st,"\n"), table.concat(ht,":")
