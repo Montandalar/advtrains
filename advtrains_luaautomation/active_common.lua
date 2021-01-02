@@ -150,6 +150,11 @@ function ac.run_in_env(pos, evtdata, customfct_p)
 		if meta then
 			meta:set_string("infotext", "LuaAutomation ATC interface rail, ERROR:"..dataout)
 		end
+		--TODO temporary
+		--if customfct.atc_id then
+		--	advtrains.drb_dump(customfct.atc_id)
+		--	error("Debug: LuaATC error hit!")
+		--end
 	end
 	if meta then
 		meta:set_string("formspec", ac.getform(pos, meta))

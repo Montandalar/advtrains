@@ -77,10 +77,15 @@ end
 local function look_ahead(id, train)
 	
 	local acc = advtrains.get_acceleration(train, 1)
-	local vel = train.velocity
+	-- worst-case: the starting point is maximum speed
+	local vel = train.max_speed or train.velocity
 	local brakedst = ( -(vel*vel) / (2*acc) ) * params.DST_FACTOR
 	
-	local brake_i = advtrains.path_get_index_by_offset(train, train.index, brakedst + params.BRAKE_SPACE)
+	--local brake_i = advtrains.path_get_index_by_offset(train, train.index, brakedst + params.BRAKE_SPACE)
+	-- worst case (don't use index_by_offset)
+	brake_i = atfloor(train.index + brakedst + params.BRAKE_SPACE)
+	atprint("LZB: looking ahead up to ", brake_i)
+	
 	--local aware_i = advtrains.path_get_index_by_offset(train, brake_i, AWARE_ZONE)
 	
 	local lzb = train.lzb
@@ -122,6 +127,7 @@ local function call_runover_callbacks(id, train)
 	local ckp = train.lzb.checkpoints
 	while ckp[i] do
 		if ckp[i].index <= idx then
+			atprint("LZB: checkpoint run over: i=",ckp[i].index,"s=",ckp[i].speed)
 			-- call callback
 			local it = ckp[i]
 			if it.callback then
@@ -140,6 +146,7 @@ local function apply_checkpoint_to_path(train, checkpoint)
 	if not checkpoint.speed then
 		return
 	end
+	atprint("LZB: applying checkpoint: i=",checkpoint.index,"s=",checkpoint.speed)
 	-- make sure path exists until checkpoint
 	local pos = advtrains.path_get(train, checkpoint.index)
 	

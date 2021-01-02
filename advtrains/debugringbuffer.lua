@@ -24,7 +24,10 @@ function advtrains.drb_dump(tid)
 		return
 	end
 	repeat
-		atdebug(ringbufs[tid][ringbufcnt[tid]])
+		local t = ringbufs[tid][ringbufcnt[tid]]
+		if t then
+			atdebug(t)
+		end
 		ringbufcnt[tid]=ringbufcnt[tid]+1
 		if ringbufcnt[tid] > ringbuflen then
 			ringbufcnt[tid]=0

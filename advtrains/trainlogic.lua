@@ -66,7 +66,7 @@ local LZB_ZERO_APPROACH_SPEED = 0.2
 
 tp_player_tmr = 0
 
-advtrains.mainloop_trainlogic=function(dtime)
+advtrains.mainloop_trainlogic=function(dtime, stepno)
 	--build a table of all players indexed by pts. used by damage and door system.
 	advtrains.playersbypts={}
 	for _, player in pairs(minetest.get_connected_players()) do
@@ -98,6 +98,7 @@ advtrains.mainloop_trainlogic=function(dtime)
 	
 	for k,v in pairs(advtrains.trains) do
 		advtrains.atprint_context_tid=k
+		atprint("=== Step",stepno,"===")
 		advtrains.train_ensure_init(k, v)
 	end
 	
@@ -257,7 +258,10 @@ function advtrains.train_ensure_init(id, train)
 	end
 	
 	train.dirty = true
-	if train.no_step then return nil end
+	if train.no_step then
+		atprint("in ensure_init: no_step set, train step ignored!")
+		return nil
+	end
 
 	assertdef(train, "velocity", 0)
 	--assertdef(train, "tarvelocity", 0)
@@ -266,11 +270,13 @@ function advtrains.train_ensure_init(id, train)
 	
 	
 	if not train.drives_on or not train.max_speed then
+		atprint("in ensure_init: missing properties, updating!")
 		advtrains.update_trainpart_properties(id)
 	end
 	
 	--restore path
 	if not train.path then
+		atprint("in ensure_init: Needs restoring path...")
 		if not train.last_pos then
 			atlog("Train",id,": Restoring path failed, no last_pos set! Train will be disabled. You can try to fix the issue in the save file.")
 			train.no_step = true
@@ -292,6 +298,8 @@ function advtrains.train_ensure_init(id, train)
 		end
 		
 		local result = advtrains.path_create(train, train.last_pos, train.last_connid or 1, train.last_frac or 0)
+		
+		atprint("in ensure_init: path_create result ",result)
 		
 		if result==false then
 			atlog("Train",id,": Restoring path failed, node at",train.last_pos,"is gone! Train will be disabled. You can try to place a rail at this position and restart the server.")
@@ -350,14 +358,17 @@ function advtrains.train_step_b(id, train, dtime)
 		if not train_moves then
 			train.recently_collided_with_env=nil--reset status when stopped
 		end
+		atprint("in train_step_b: applying collided_with_env")
 		v_target_apply(v_targets, VLEVER_EMERG, 0)
 	end
 	if train.locomotives_in_train==0 then
+		atprint("in train_step_b: applying no_locomotives")
 		v_target_apply(v_targets, VLEVER_ROLL, 0)
 	end
 	
 	-- interlocking speed restriction
 	if train.speed_restriction then
+		atprint("in train_step_b: applying interlocking speed restriction",train.speed_restriction)
 		v_target_apply(v_targets, VLEVER_BRAKE, train.speed_restriction)
 	end
 	
@@ -367,9 +378,11 @@ function advtrains.train_step_b(id, train, dtime)
 	train.off_track = front_off_track or back_off_track
 	
 	if back_off_track then
+		atprint("in train_step_b: applying back_off_track")
 		v_target_apply(v_targets, VLEVER_EMERG, 1)
 	else
 		if front_off_track then
+			atprint("in train_step_b: applying front_off_track")
 			v_target_apply(v_targets, VLEVER_EMERG, 0)
 		end
 	end
@@ -379,15 +392,28 @@ function advtrains.train_step_b(id, train, dtime)
 	local v0 = train.velocity
 	
 	if train.ctrl_user then
+		atprint("in train_step_b: ctrl_user active, resetting atc")
 		advtrains.atc.train_reset_command(train)
 	else
+		if train.atc_command then
+			if (not train.atc_delay or train.atc_delay<=0) and not train.atc_wait_finish then
+				advtrains.atc.execute_atc_command(id, train)
+			else
+				train.atc_delay=train.atc_delay-dtime
+			end
+		elseif train.atc_delay then
+			train.atc_delay = nil
+		end
+	
 		local braketar = train.atc_brake_target
 		local emerg = false -- atc_brake_target==-1 means emergency brake (BB command)
 		if braketar == -1 then
 			braketar = 0
 			emerg = true
 		end
+		atprint("in train_step_b: ATC: brake state braketar=",braketar,"emerg=",emerg)
 		if braketar and braketar>=v0 then
+			atprint("in train_step_b: ATC: brake target cleared")
 			train.atc_brake_target=nil
 			braketar = nil
 		end
@@ -399,27 +425,22 @@ function advtrains.train_step_b(id, train, dtime)
 				train.atc_wait_finish=nil
 			end
 		end
-		if train.atc_command then
-			if (not train.atc_delay or train.atc_delay<=0) and not train.atc_wait_finish then
-				advtrains.atc.execute_atc_command(id, train)
-			else
-				train.atc_delay=train.atc_delay-dtime
-			end
-		elseif train.atc_delay then
-			train.atc_delay = nil
-		end
 		
 		if train.tarvelocity and train.tarvelocity>v0 then
+			atprint("in train_step_b: applying ATC ACCEL", train.tarvelocity)
 			v_target_apply(v_targets, VLEVER_ACCEL, train.tarvelocity)
 		end
 		if train.tarvelocity and train.tarvelocity<v0 then
 			if (braketar and braketar<v0) then
 				if emerg then
+					atprint("in train_step_b: applying ATC EMERG", train.tarvelocity)
 					v_target_apply(v_targets, VLEVER_EMERG, 0)
 				else
+					atprint("in train_step_b: applying ATC BRAKE", train.tarvelocity)
 					v_target_apply(v_targets, VLEVER_BRAKE, braketar)
 				end
 			else
+				atprint("in train_step_b: applying ATC ROLL", train.tarvelocity)
 				v_target_apply(v_targets, VLEVER_ROLL, train.tarvelocity)
 			end
 		end
@@ -427,6 +448,7 @@ function advtrains.train_step_b(id, train, dtime)
 	
 	local userc = train.ctrl_user
 	if userc then
+		atprint("in train_step_b: applying user control", userc)
 		v_target_apply(v_targets, userc, userc==VLEVER_ACCEL and train.max_speed or 0)
 	end
 	
@@ -453,7 +475,7 @@ function advtrains.train_step_b(id, train, dtime)
 			end
 		end
 	end
-	
+	atprint("in train_step_b: Resulting control before LZB: lever", tv_lever, "target", tv_target)
 	--train.debug = dump({tv_target,tv_lever})
 	
 	--- 2c. If no tv_lever set, honor the user control ---
@@ -464,6 +486,8 @@ function advtrains.train_step_b(id, train, dtime)
 	end
 	
 	train.lever = a_lever
+	
+	atprint("in train_step_b: Current index",train.index,"end",train.end_index,"vel",train.velocity)
 	
 	--- 3a. calculate the acceleration required to reach the speed restriction in path_speed (LZB) ---
 	-- Iterates over the path nodes we WOULD pass if we were continuing with the speed assumed by actual_lever
@@ -487,6 +511,7 @@ function advtrains.train_step_b(id, train, dtime)
 			if psp then
 				lzb_target = lzb_target and math.min(lzb_target, psp) or psp
 				if psp == 0 and not lzb_next_zero_barrier then
+					atprint("in train_step_b: Found zero barrier: ",i)
 					lzb_next_zero_barrier = i - LZB_ZERO_APPROACH_DIST
 				end
 			end
@@ -496,7 +521,7 @@ function advtrains.train_step_b(id, train, dtime)
 			i = i + 1
 		end
 		
-		--train.debug = "newindex calc "..new_index_curr_tv.." basev="..new_index_v_base.." lzbtarget="..(lzb_target or "nil")
+		atprint("in train_step_b: LZB calculation yields newindex=",new_index_curr_tv," basev=",new_index_v_base," lzbtarget=",lzb_target,"zero_barr=",lzb_next_zero_barrier,"")
 		
 		if lzb_target and lzb_target <= v0 then
 			-- apply to tv_target after the actual calculation happened
@@ -506,28 +531,34 @@ function advtrains.train_step_b(id, train, dtime)
 					if train.index >= lzb_next_zero_barrier then
 						tv_target = 0
 						a_lever = VLEVER_BRAKE
+						atprint("in train_step_b: -!- Hit zero approach barrier -!- applying brake")
 						--atdebug("zeroappr cancelling train has passed idx=",train.index, "za_idx=",lzb_zeroappr_target_index)
 					else
 						-- if we are in front of a zero barrier, make sure we reach it by
 						-- keeping the velocity at a small value >0
+						atprint("in train_step_b: In zero approach, applying ZERO_APPROACH_SPEED")
 						tv_target = LZB_ZERO_APPROACH_SPEED
 					end
 				else
+					atprint("in train_step_b: applying LZB brake to",lzb_target)
 					tv_target = lzb_target
 				end
 			end
-			
-			
+		-- Case: v0 is below lzb_target, but a_lever is ACCEL and resulting v would be greater than lzb_target
+		-- limit tv_target to the lzb target.
+		elseif lzb_target and a_lever >= VLEVER_ACCEL then 
+			tv_target = lzb_target
 		end
 	end
 	
 	--- 3b. now that we know tv_target and a_lever, calculate effective new v and change it on train
+	atprint("in train_step_b: Final control: target",tv_target,"lever",a_lever)
 	
 	local dv = advtrains.get_acceleration(train, a_lever) * dtime
 	local v1
 	local tv_effective = false
 	if tv_target and (math.abs(dv) > math.abs(tv_target - v0)) then
-		--atdebug("hit tv_target ",tv_target,"with v=",v0, "dv=",dv)
+		atprint("in train_step_b: hit tv_target ",tv_target,"with v=",v0, "dv=",dv)
 		v1 = tv_target
 		tv_effective = true
 	else
@@ -544,6 +575,7 @@ function advtrains.train_step_b(id, train, dtime)
 	
 	train.acceleration = (v1 - v0) / dtime
 	train.velocity = v1
+	atprint("in train_step_b: New velocity",v1," (yields acceleration",train.acceleration,")")
 	
 	--- 4. move train ---
 	-- if we have calculated the new end index before, don't do that again
@@ -552,17 +584,20 @@ function advtrains.train_step_b(id, train, dtime)
 		local dst_curr_v = v1 * dtime
 		train.dist_moved_this_step = dst_curr_v
 		new_index_curr_tv = advtrains.path_get_index_by_offset(train, train.index, dst_curr_v)
+		atprint("in train_step_b: movement calculation (re)done, yields newindex=",new_index_curr_tv)
+	else
+		atprint("in train_step_b: movement calculation reusing from LZB newindex=",new_index_curr_tv)
 	end
 	
 	-- if the zeroappr mechanism has hit, go no further than zeroappr index
 	if lzb_next_zero_barrier and new_index_curr_tv > lzb_next_zero_barrier then
-		--atdebug("zeroappr hitcond newidx_tv=",new_index_curr_tv, "za_idx=",lzb_zeroappr_target_index)
+		atprint("in train_step_b: Zero barrier hit, clipping to newidx_tv=",new_index_curr_tv, "zb_idx=",lzb_next_zero_barrier)
 		new_index_curr_tv = lzb_next_zero_barrier
 	end
 	train.index = new_index_curr_tv
 	
 	recalc_end_index(train)
-
+	atprint("in train_step_b: New index",train.index,"end",train.end_index,"vel",train.velocity)
 end
 
 function advtrains.train_step_c(id, train, dtime)

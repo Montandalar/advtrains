@@ -21,6 +21,10 @@ local function get_over_function(speed, shunt)
 			-- Set train 1 index backward. Hope this does not lead to bugs...
 			--train.index = index - 0.5
 			train.speed_restriction = 0
+			
+			--TODO temporary
+			advtrains.drb_dump(id)
+			error("Debug: "..id.." triggered LZB-0")
 		else
 			train.speed_restriction = speed
 			train.is_shunt = shunt

@@ -37,7 +37,7 @@ local GENERATE_ATRICIFIAL_LAG = false
 local HOW_MANY_LAG = 1.0
 -- Simulate a higher server step interval, as it occurs when the server is on high load
 
-advtrains.IGNORE_WORLD = false
+advtrains.IGNORE_WORLD = true
 -- Run advtrains without respecting the world map
 -- - No world collision checks occur
 -- - The NDB forcibly places all nodes stored in it into the world regardless of the world's content.
@@ -45,7 +45,7 @@ advtrains.IGNORE_WORLD = false
 -- This mode can be useful for debugging/testing a world without the map data available
 -- In this case, choose 'singlenode' as mapgen
 
-local NO_SAVE = false
+local NO_SAVE = true
 -- Do not save any data to advtrains save files
 -- ==========================================================================
 
@@ -589,7 +589,7 @@ minetest.register_globalstep(function(dtime_mt)
 			t = os.clock()+HOW_MANY_LAG
 		end
 		
-		advtrains.mainloop_trainlogic(dtime)
+		advtrains.mainloop_trainlogic(dtime,advtrains.mainloop_runcnt)
 		if advtrains_itm_mainloop then
 			advtrains_itm_mainloop(dtime)
 		end
@@ -639,10 +639,6 @@ function advtrains.save(remove_players_from_wagons)
 		return
 	end
 	
-	-- Cleanup actions
-	--TODO very simple yet hacky workaround for the "green signals" bug
-	advtrains.invalidate_all_paths()
-	
 	if advtrains.IGNORE_WORLD then
 		advtrains.ndb.restore_all()
 	end
@@ -660,6 +656,10 @@ function advtrains.save(remove_players_from_wagons)
 		atlatc.save()
 	end
 	atprint("[save_all]Saved advtrains save files")
+	
+	-- Cleanup actions
+	--TODO very simple yet hacky workaround for the "green signals" bug
+	advtrains.invalidate_all_paths()
 end
 minetest.register_on_shutdown(advtrains.save)
 
