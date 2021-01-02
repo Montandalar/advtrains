@@ -28,6 +28,11 @@ function r.fire_event(pos, evtdata, appr_internal)
 	--prepare ingame API for ATC. Regenerate each time since pos needs to be known
 	--If no train, then return false.
 	local train_id=advtrains.get_train_at_pos(pos)
+	-- try to get the train from the event data
+	-- This workaround is required because the callback is one step delayed, and a fast train may have already left the node.
+	if not train_id then
+		train_id = evtdata._train_id
+	end
 	local train, atc_arrow, tvel
 	if train_id then train=advtrains.trains[train_id] end
 	
@@ -197,7 +202,7 @@ advtrains.register_tracks("default", {
 			advtrains = {
 				on_train_enter = function(pos, train_id)
 					--do async. Event is fired in train steps
-					atlatc.interrupt.add(0, pos, {type="train", train=true, id=train_id})
+					atlatc.interrupt.add(0, pos, {type="train", train=true, id=train_id, _train_id = train_id})
 				end,
 				on_train_approach = function(pos, train_id, train, index, has_entered, lzbdata)
 					-- Insert an event only if the rail indicated that it supports approach callbacks
