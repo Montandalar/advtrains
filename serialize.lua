@@ -118,7 +118,7 @@ function read_table(t, file)
 			-- done with this table
 			return
 		end
-		ks, vs = string.match(line, "^(.+[^&]):(.+)$")
+		ks, vs = string.match(line, "^(.*[^&]):(.+)$")
 		if not ks or not vs then
 			file:close()
 			error("Unable to parse line: '"..line.."'!")
