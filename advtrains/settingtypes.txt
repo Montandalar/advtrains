@@ -45,3 +45,10 @@ advtrains_overrun_mode (Overrun mode) enum drop none,drop,normal
 #    When a wagon leaves this range + 32 nodes, it is unloaded
 #    If unset, defaults to active_block_range*16
 advtrains_wagon_load_range (Wagon Entity Load/Unload Range) int 96 32 512
+
+#    Simulation DTime Limit after which slow-down becomes effective
+#    When the dtime value (time since last server step) is higher than this value,
+#    advtrains applies a global slow-down factor to the dtime and to the velocity and
+#    acceleration of wagons to decrease server load.
+#    A value of 0 (default) disables this behavior.
+advtrains_dtime_limit (DTime Limit for slow-down) float 0.2 0 5

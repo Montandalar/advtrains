@@ -48,10 +48,10 @@ advtrains.IGNORE_WORLD = false
 local NO_SAVE = false
 -- Do not save any data to advtrains save files
 
--- Use a global slowdown factor to slow down train movements.
-local USE_SLOWDOWN = false
-local DTIME_LIMIT = 0.3
 -- ==========================================================================
+
+-- Use a global slowdown factor to slow down train movements. Now a setting
+local DTIME_LIMIT = tonumber(minetest.settings:get("advtrains_dtime_limit")) or 0.2
 
 
 --Constant for maximum connection value/division of the circle
@@ -593,7 +593,7 @@ minetest.register_globalstep(function(dtime_mt)
 			t = os.clock()+HOW_MANY_LAG
 		end
 		-- if dtime is too high, decrease global slowdown
-		if USE_SLOWDOWN then
+		if DTIME_LIMIT~=0 then
 			if dtime > DTIME_LIMIT then
 				if advtrains.global_slowdown > 0.1 then
 					advtrains.global_slowdown = advtrains.global_slowdown - 0.05
@@ -602,9 +602,9 @@ minetest.register_globalstep(function(dtime_mt)
 				end
 				dtime = DTIME_LIMIT
 			end
+			-- recover global slowdown slowly over time
+			advtrains.global_slowdown = math.min(advtrains.global_slowdown*1.02, 1)
 		end
-		-- recover global slowdown slowly over time
-		advtrains.global_slowdown = math.min(advtrains.global_slowdown*1.02, 1)
 		
 		advtrains.mainloop_trainlogic(dtime,advtrains.mainloop_runcnt)
 		if advtrains_itm_mainloop then
