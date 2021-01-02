@@ -23,8 +23,8 @@ local function get_over_function(speed, shunt)
 			train.speed_restriction = 0
 			
 			--TODO temporary
-			advtrains.drb_dump(id)
-			error("Debug: "..id.." triggered LZB-0")
+			--advtrains.drb_dump(id)
+			--error("Debug: "..id.." triggered LZB-0")
 		else
 			train.speed_restriction = speed
 			train.is_shunt = shunt

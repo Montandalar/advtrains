@@ -37,7 +37,7 @@ local GENERATE_ATRICIFIAL_LAG = false
 local HOW_MANY_LAG = 1.0
 -- Simulate a higher server step interval, as it occurs when the server is on high load
 
-advtrains.IGNORE_WORLD = true
+advtrains.IGNORE_WORLD = false
 -- Run advtrains without respecting the world map
 -- - No world collision checks occur
 -- - The NDB forcibly places all nodes stored in it into the world regardless of the world's content.
@@ -45,7 +45,7 @@ advtrains.IGNORE_WORLD = true
 -- This mode can be useful for debugging/testing a world without the map data available
 -- In this case, choose 'singlenode' as mapgen
 
-local NO_SAVE = true
+local NO_SAVE = false
 -- Do not save any data to advtrains save files
 
 -- Use a global slowdown factor to slow down train movements.
