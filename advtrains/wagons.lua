@@ -495,8 +495,8 @@ function wagon:on_step(dtime)
 		end
 		
 		--FIX: use index of the wagon, not of the train.
-		local velocity = train.velocity
-		local acceleration = (train.acceleration or 0)
+		local velocity = train.velocity * advtrains.global_slowdown
+		local acceleration = (train.acceleration or 0) * (advtrains.global_slowdown*advtrains.global_slowdown)
 		local velocityvec = vector.multiply(vdir, velocity)
 		local accelerationvec = vector.multiply(vdir, acceleration)
 		

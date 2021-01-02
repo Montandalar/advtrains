@@ -47,6 +47,10 @@ advtrains.IGNORE_WORLD = true
 
 local NO_SAVE = true
 -- Do not save any data to advtrains save files
+
+-- Use a global slowdown factor to slow down train movements.
+local USE_SLOWDOWN = false
+local DTIME_LIMIT = 0.3
 -- ==========================================================================
 
 
@@ -563,7 +567,7 @@ local init_load=false
 local save_interval=60
 local save_timer=save_interval
 advtrains.mainloop_runcnt=0
-
+advtrains.global_slowdown = 1
 
 local t = 0
 minetest.register_globalstep(function(dtime_mt)
@@ -579,7 +583,7 @@ minetest.register_globalstep(function(dtime_mt)
 			advtrains.load()
 		end
 		
-		local dtime = dtime_mt
+		local dtime = dtime_mt * advtrains.global_slowdown
 		if GENERATE_ATRICIFIAL_LAG then
 			dtime = HOW_MANY_LAG
 			if os.clock()<t then
@@ -588,6 +592,19 @@ minetest.register_globalstep(function(dtime_mt)
 			
 			t = os.clock()+HOW_MANY_LAG
 		end
+		-- if dtime is too high, decrease global slowdown
+		if USE_SLOWDOWN then
+			if dtime > DTIME_LIMIT then
+				if advtrains.global_slowdown > 0.1 then
+					advtrains.global_slowdown = advtrains.global_slowdown - 0.05
+				else
+					advtrains.global_slowdown = advtrains.global_slowdown / 2
+				end
+				dtime = DTIME_LIMIT
+			end
+		end
+		-- recover global slowdown slowly over time
+		advtrains.global_slowdown = math.min(advtrains.global_slowdown*1.02, 1)
 		
 		advtrains.mainloop_trainlogic(dtime,advtrains.mainloop_runcnt)
 		if advtrains_itm_mainloop then
