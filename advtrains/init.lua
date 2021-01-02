@@ -668,11 +668,12 @@ function advtrains.save(remove_players_from_wagons)
 		return
 	end
 	
+	local t1 = os.clock()
 	advtrains.avt_save(remove_players_from_wagons) --saving advtrains. includes ndb at advtrains.ndb.save_data()
 	if atlatc then
 		atlatc.save()
 	end
-	atprint("[save_all]Saved advtrains save files")
+	atlog("Saved advtrains save files, took",math.floor((os.clock()-t1) * 1000),"ms")
 	
 	-- Cleanup actions
 	--TODO very simple yet hacky workaround for the "green signals" bug
