@@ -18,49 +18,34 @@ function r.fire_event(pos, evtdata, appr_internal)
 		return
 	end
 	
-	
-	local arrowconn = railtbl.arrowconn
-	if not arrowconn then
-		atwarn("LuaAutomation ATC interface rail at",ph,": Incomplete Data! Please visit position and click 'Save'!")
-		return
-	end
-	
 	--prepare ingame API for ATC. Regenerate each time since pos needs to be known
 	--If no train, then return false.
-	local train_id=advtrains.get_train_at_pos(pos)
+	
 	-- try to get the train from the event data
 	-- This workaround is required because the callback is one step delayed, and a fast train may have already left the node.
-	if not train_id then
-		train_id = evtdata._train_id
-	end
-	local train, atc_arrow, tvel
-	if train_id then train=advtrains.trains[train_id] end
+	-- Also used for approach callback
+	local train_id = evtdata._train_id
+	local atc_arrow = evtdata._train_arrow
+	local train, tvel
 	
-	if not train and appr_internal then
-		-- also use the train when called as an approach callback
-		train_id = appr_internal.train_id
-		train = appr_internal.train
-	end
-	
-	if train then 
-		if not train.path then
-			--we happened to get in between an invalidation step
-			--delay
-			atlatc.interrupt.add(0,pos,evtdata)
-			return
-		end
-		local index = advtrains.path_lookup(train, pos)
-				
-		local iconnid = 1
-		if index then
-			iconnid = train.path_cn[index]
-		else
-			atwarn("ATC rail at", pos, ": Rail not on train's path! Can't determine arrow direction. Assuming +!")
-		end
-		atc_arrow = iconnid == 1
-		
+	if train_id then
+		train=advtrains.trains[train_id]
+		-- speed
 		tvel=train.velocity
+	-- if still no train_id available, try to get the train at my position
+	else
+		train_id=advtrains.get_train_at_pos(pos)
+		if train_id then
+			train=advtrains.trains[train_id]
+			advtrains.train_ensure_init(train_id, train)
+			-- look up atc_arrow
+			local index = advtrains.path_lookup(train, pos)
+			atc_arrow = (train.path_cn[index] == 1)
+			-- speed
+			tvel=train.velocity
+		end
 	end
+	
 	local customfct={
 		atc_send = function(cmd)
 			if not train_id then return false end
@@ -200,9 +185,10 @@ advtrains.register_tracks("default", {
 			end,
 
 			advtrains = {
-				on_train_enter = function(pos, train_id)
+				on_train_enter = function(pos, train_id, train, index)
 					--do async. Event is fired in train steps
-					atlatc.interrupt.add(0, pos, {type="train", train=true, id=train_id, _train_id = train_id})
+					atlatc.interrupt.add(0, pos, {type="train", train=true, id=train_id,
+							_train_id = train_id, _train_arrow = (train.path_cn[index] == 1)})
 				end,
 				on_train_approach = function(pos, train_id, train, index, has_entered, lzbdata)
 					-- Insert an event only if the rail indicated that it supports approach callbacks
@@ -212,8 +198,10 @@ advtrains.register_tracks("default", {
 					-- This hack is necessary because code might not be prepared to get approach events...
 					if railtbl and railtbl.data and railtbl.data.__approach_callback_mode then
 						local acm = railtbl.data.__approach_callback_mode
-						if acm==2 or (acm==1 and train.path_cn[index] == 1) then
-							local evtdata = {type="approach", approach=true, id=train_id, has_entered = has_entered}
+						local in_arrow = (train.path_cn[index] == 1)
+						if acm==2 or (acm==1 and in_arrow) then
+							local evtdata = {type="approach", approach=true, id=train_id, has_entered = has_entered,
+									_train_id = train_id, _train_arrow = in_arrow} -- reuses code from train_enter
 							-- This event is *required* to run synchronously, because it might set the ars_disable flag on the train and add LZB checkpoints,
 							-- although this is generally discouraged because this happens right in a train step
 							-- At this moment, I am not aware whether this may cause side effects, and I must encourage users not to do expensive calculations here.
