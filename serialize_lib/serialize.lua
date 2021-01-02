@@ -88,8 +88,8 @@ function value_to_string(t)
 	elseif type(t)=="string" then
 		return "S"..escape_chars(t)
 	else
-		file:close()
-		error("Can not serialize '"..type(t).."' type!")
+		--error("Can not serialize '"..type(t).."' type!")
+		return "S<function>"
 	end
 	return str
 end

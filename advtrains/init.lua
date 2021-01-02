@@ -537,6 +537,15 @@ advtrains.avt_save = function(remove_players_from_wagons)
 		["ndb4.ls"] = advtrains.ndb.save_callback
 	}
 	
+	if DUMP_DEBUG_SAVE then
+		local file, err = io.open(advtrains.fpath.."_DUMP", "w")
+		if err then
+			return
+		end
+		file:write(dump(parts_table))
+		file:close()
+	end
+	
 	--THE MAGIC HAPPENS HERE
 	local succ, err = serialize_lib.save_atomic_multiple(parts_table, advtrains.fpath.."_", callbacks_table)
 	
@@ -546,21 +555,12 @@ advtrains.avt_save = function(remove_players_from_wagons)
 		-- store version
 		advtrains.save_component(4, "version")
 	end
-	
-	if DUMP_DEBUG_SAVE then
-		local file, err = io.open(advtrains.fpath.."_DUMP", "w")
-		if err then
-			return
-		end
-		file:write(dump(parts_table))
-		file:close()
-	end
 end
 
 --## MAIN LOOP ##--
 --Calls all subsequent main tasks of both advtrains and atlatc
 local init_load=false
-local save_interval=20
+local save_interval=60
 local save_timer=save_interval
 advtrains.mainloop_runcnt=0
 
