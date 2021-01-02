@@ -349,27 +349,35 @@ function advtrains.train_step_b(id, train, dtime)
 	]]--
 	
 	--- 3. handle velocity influences ---
-	-- Variables for "desired velocities" of various parts of the code
-	local v_targets = {} --Table keys: VLEVER_*
 	
-	local train_moves=(train.velocity~=0)
+	local v0 = train.velocity
+	local sit_v_cap = train.max_speed -- Maximum speed in current situation (multiple limit factors)
+	-- The desired speed change issued by the active control (user or atc)
+	local ctrl_v_tar -- desired speed which should not be crossed by braking or accelerating
+	local ctrl_accelerating = false -- whether the train should accelerate
+	local ctrl_braking = false -- whether the train should brake
+	local ctrl_lever -- the lever value to use to calculate the acceleration
+	-- the final speed change after applying LZB
+	local v_cap -- absolute maximum speed
+	local v_tar -- desired speed which should not be crossed by braking or accelerating
+	local accelerating = false-- whether the train should accelerate
+	local braking = false -- whether the train should brake
+	local lever -- the lever value to use to calculate the acceleration
+	local train_moves = (v0 > 0)
 	
 	if train.recently_collided_with_env then
 		if not train_moves then
 			train.recently_collided_with_env=nil--reset status when stopped
 		end
 		atprint("in train_step_b: applying collided_with_env")
-		v_target_apply(v_targets, VLEVER_EMERG, 0)
-	end
-	if train.locomotives_in_train==0 then
+		sit_v_cap = 0
+	elseif train.locomotives_in_train==0 then
 		atprint("in train_step_b: applying no_locomotives")
-		v_target_apply(v_targets, VLEVER_ROLL, 0)
-	end
-	
+		sit_v_cap = 0
 	-- interlocking speed restriction
-	if train.speed_restriction then
+	elseif train.speed_restriction then
 		atprint("in train_step_b: applying interlocking speed restriction",train.speed_restriction)
-		v_target_apply(v_targets, VLEVER_BRAKE, train.speed_restriction)
+		sit_v_cap = train.speed_restriction
 	end
 	
 	--apply off-track handling:
@@ -377,23 +385,27 @@ function advtrains.train_step_b(id, train, dtime)
 	local back_off_track=train.end_index<train.path_trk_b
 	train.off_track = front_off_track or back_off_track
 	
-	if back_off_track then
+	if back_off_track and (not v_cap or v_cap > 1) then
 		atprint("in train_step_b: applying back_off_track")
-		v_target_apply(v_targets, VLEVER_EMERG, 1)
-	else
-		if front_off_track then
-			atprint("in train_step_b: applying front_off_track")
-			v_target_apply(v_targets, VLEVER_EMERG, 0)
-		end
+		sit_v_cap = 1
+	elseif front_off_track then
+		atprint("in train_step_b: applying front_off_track")
+		sit_v_cap = 0
 	end
 	
 	
 	--interpret ATC command and apply auto-lever control when not actively controlled
-	local v0 = train.velocity
-	
-	if train.ctrl_user then
-		atprint("in train_step_b: ctrl_user active, resetting atc")
+	local userc = train.ctrl_user
+	if userc then
+		atprint("in train_step_b: ctrl_user active",userc)
 		advtrains.atc.train_reset_command(train)
+		
+		if userc >= VLEVER_ACCEL then
+			ctrl_accelerating = true
+		else
+			ctrl_braking = true
+		end
+		ctrl_lever = userc
 	else
 		if train.atc_command then
 			if (not train.atc_delay or train.atc_delay<=0) and not train.atc_wait_finish then
@@ -428,161 +440,125 @@ function advtrains.train_step_b(id, train, dtime)
 		
 		if train.tarvelocity and train.tarvelocity>v0 then
 			atprint("in train_step_b: applying ATC ACCEL", train.tarvelocity)
-			v_target_apply(v_targets, VLEVER_ACCEL, train.tarvelocity)
-		end
-		if train.tarvelocity and train.tarvelocity<v0 then
+			ctrl_accelerating = true
+			ctrl_lever = VLEVER_ACCEL
+		elseif train.tarvelocity and train.tarvelocity<v0 then
+			ctrl_braking = true
+			
 			if (braketar and braketar<v0) then
 				if emerg then
 					atprint("in train_step_b: applying ATC EMERG", train.tarvelocity)
-					v_target_apply(v_targets, VLEVER_EMERG, 0)
+					ctrl_lever = VLEVER_EMERG
 				else
 					atprint("in train_step_b: applying ATC BRAKE", train.tarvelocity)
-					v_target_apply(v_targets, VLEVER_BRAKE, braketar)
+					ctrl_v_tar = braketar
+					ctrl_lever = VLEVER_BRAKE
 				end
 			else
 				atprint("in train_step_b: applying ATC ROLL", train.tarvelocity)
-				v_target_apply(v_targets, VLEVER_ROLL, train.tarvelocity)
+				ctrl_v_tar = train.tarvelocity
+				ctrl_lever = VLEVER_ROLL
 			end
 		end
-	end
-	
-	local userc = train.ctrl_user
-	if userc then
-		atprint("in train_step_b: applying user control", userc)
-		v_target_apply(v_targets, userc, userc==VLEVER_ACCEL and train.max_speed or 0)
 	end
 	
 	--- 2b. look at v_target, determine the effective v_target and desired acceleration ---
-	local tv_target, tv_lever
-	
-	if v_targets[VLEVER_ACCEL] then
-		if v_targets[VLEVER_ACCEL] > v0 then
-			tv_target = v_targets[VLEVER_ACCEL]
-			tv_lever = VLEVER_ACCEL
-		end
-	end
-	for _,lever in ipairs({VLEVER_ROLL, VLEVER_BRAKE, VLEVER_EMERG}) do
-		if v_targets[lever] then
-			if v_targets[lever] <= v0 then
-				if not tv_target then
-					tv_target = v_targets[lever]
-				else
-					tv_target = math.min(v_targets[lever], tv_target)
-				end
-			end
-			if v_targets[lever] < v0 then
-				tv_lever = lever
-			end
-		end
-	end
-	atprint("in train_step_b: Resulting control before LZB: lever", tv_lever, "target", tv_target)
+	atprint("in train_step_b: Resulting control before LZB: accelerating",ctrl_accelerating,"braking",ctrl_braking,"lever", ctrl_lever, "target", ctrl_v_tar)
 	--train.debug = dump({tv_target,tv_lever})
 	
-	--- 2c. If no tv_lever set, honor the user control ---
-	local a_lever = tv_lever
-	if not tv_lever then
-		-- default to holding current speed
-		a_lever = VLEVER_HOLD
-	end
-	
-	train.lever = a_lever
-	
-	atprint("in train_step_b: Current index",train.index,"end",train.end_index,"vel",train.velocity)
-	
+	atprint("in train_step_b: Current index",train.index,"end",train.end_index,"vel",v0)
 	--- 3a. calculate the acceleration required to reach the speed restriction in path_speed (LZB) ---
-	-- Iterates over the path nodes we WOULD pass if we were continuing with the speed assumed by actual_lever
+	-- Iterates over the path nodes we WOULD pass if we were continuing with the current speed
 	-- and determines the MINIMUM of path_speed in this range.
 	-- Then, determines acceleration so that we can reach this 'overridden' target speed in this step (but short-circuited)
 	local lzb_next_zero_barrier -- if defined, train should not pass this point as it's a 0-LZB
-	local new_index_v_base -- which v was assumed when curr_tv was calculated
 	local new_index_curr_tv -- pre-calculated new train index in lzb check
+	local lzb_v_cap -- the maximum speed that LZB dictates
 	
-	if not a_lever or a_lever > VLEVER_BRAKE then
-		-- only needs to run if we're not yet braking anyway
-		new_index_v_base = v0 + (advtrains.get_acceleration(train, tv_lever) * dtime)
-		local dst_curr_v = new_index_v_base * dtime
-		train.dist_moved_this_step = dst_curr_v
-		new_index_curr_tv = advtrains.path_get_index_by_offset(train, train.index, dst_curr_v)
-		local i = atfloor(train.index)
-		local lzb_target
-		local psp
-		while true do
-			psp = train.path_speed[i]
-			if psp then
-				lzb_target = lzb_target and math.min(lzb_target, psp) or psp
-				if psp == 0 and not lzb_next_zero_barrier then
-					atprint("in train_step_b: Found zero barrier: ",i)
-					lzb_next_zero_barrier = i - LZB_ZERO_APPROACH_DIST
-				end
+	local dst_curr_v = v0 * dtime
+	new_index_curr_tv = advtrains.path_get_index_by_offset(train, train.index, dst_curr_v)
+	local i = atfloor(train.index)
+	local psp
+	while true do
+		psp = train.path_speed[i]
+		if psp then
+			lzb_v_cap = lzb_v_cap and math.min(lzb_v_cap, psp) or psp
+			if psp == 0 and not lzb_next_zero_barrier then
+				atprint("in train_step_b: Found zero barrier: ",i)
+				lzb_next_zero_barrier = i - LZB_ZERO_APPROACH_DIST
 			end
-			if i > new_index_curr_tv then
-				break
-			end
-			i = i + 1
+		end
+		if i > new_index_curr_tv then
+			break
+		end
+		i = i + 1
+	end
+	
+	if lzb_next_zero_barrier and train.index < lzb_next_zero_barrier then
+		lzb_v_cap = LZB_ZERO_APPROACH_SPEED
+	end
+	
+	atprint("in train_step_b: LZB calculation yields newindex=",new_index_curr_tv,"lzbtarget=",lzb_v_cap,"zero_barr=",lzb_next_zero_barrier,"")
+	
+	-- We now need to bring ctrl_*, sit_v_cap and lzb_v_cap together to determine the final controls.
+	local v_cap = sit_v_cap -- always defined, by default train.max_speed
+	if lzb_v_cap and lzb_v_cap < v_cap then
+		v_cap = lzb_v_cap
+		lever = VLEVER_BRAKE -- actually irrelevant, acceleration is not considered anyway unless v_tar is also set.
+	end
+	
+	v_tar = ctrl_v_tar
+	-- if v_cap is smaller than the current speed, we need to brake in all cases.
+	if v_cap < v0 then
+		braking = true
+		lever = VLEVER_BRAKE
+		-- set v_tar to v_cap to not slow down any further than required.
+		-- unless control wants us to brake too, then we use control's v_tar.
+		if not ctrl_v_tar or ctrl_v_tar > v_cap then
+			v_tar = v_cap
+		end
+	else -- else, use what the ctrl says
+		braking = ctrl_braking
+		accelerating = ctrl_accelerating and not braking
+		lever = ctrl_lever
+	end
+	train.lever = lever
+	
+	atprint("in train_step_b: final control: accelerating",accelerating,"braking",braking,"lever", lever, "target", v_tar)
+	
+	-- reset train acceleration when holding speed
+	if not braking and not accelerating then
+		train.acceleration = 0
+	end
+	
+	--- 3b. if braking, modify the velocity BEFORE the movement
+	if braking then
+		local dv = advtrains.get_acceleration(train, lever) * dtime
+		local v1 = v0 + dv
+		if v_tar and v1 < v_tar then
+			atprint("in train_step_b: Braking: Hit v_tar!")
+			v1 = v_tar
+		end
+		if v1 > v_cap then
+			atprint("in train_step_b: Braking: Hit v_cap!")
+			v1 = v_cap
+		end
+		if v1 < 0 then
+			atprint("in train_step_b: Braking: Hit 0!")
+			v1 = 0
 		end
 		
-		atprint("in train_step_b: LZB calculation yields newindex=",new_index_curr_tv," basev=",new_index_v_base," lzbtarget=",lzb_target,"zero_barr=",lzb_next_zero_barrier,"")
-		
-		if lzb_target and lzb_target <= v0 then
-			-- apply to tv_target after the actual calculation happened
-			a_lever = VLEVER_BRAKE
-			if tv_target and tv_target > lzb_target then
-				if lzb_target < LZB_ZERO_APPROACH_SPEED and lzb_next_zero_barrier then
-					if train.index >= lzb_next_zero_barrier then
-						tv_target = 0
-						a_lever = VLEVER_BRAKE
-						atprint("in train_step_b: -!- Hit zero approach barrier -!- applying brake")
-						--atdebug("zeroappr cancelling train has passed idx=",train.index, "za_idx=",lzb_zeroappr_target_index)
-					else
-						-- if we are in front of a zero barrier, make sure we reach it by
-						-- keeping the velocity at a small value >0
-						atprint("in train_step_b: In zero approach, applying ZERO_APPROACH_SPEED")
-						tv_target = LZB_ZERO_APPROACH_SPEED
-					end
-				else
-					atprint("in train_step_b: applying LZB brake to",lzb_target)
-					tv_target = lzb_target
-				end
-			end
-		-- Case: v0 is below lzb_target, but a_lever is ACCEL and resulting v would be greater than lzb_target
-		-- limit tv_target to the lzb target.
-		elseif lzb_target and a_lever >= VLEVER_ACCEL then 
-			tv_target = lzb_target
-		end
+		train.acceleration = (v1 - v0) / dtime
+		train.velocity = v1
+		atprint("in train_step_b: Braking: New velocity",v1," (yields acceleration",train.acceleration,")")
+		-- make saved new_index_curr_tv invalid because speed has changed
+		new_index_curr_tv = nil
 	end
-	
-	--- 3b. now that we know tv_target and a_lever, calculate effective new v and change it on train
-	atprint("in train_step_b: Final control: target",tv_target,"lever",a_lever)
-	
-	local dv = advtrains.get_acceleration(train, a_lever) * dtime
-	local v1
-	local tv_effective = false
-	if tv_target and (math.abs(dv) > math.abs(tv_target - v0)) then
-		atprint("in train_step_b: hit tv_target ",tv_target,"with v=",v0, "dv=",dv)
-		v1 = tv_target
-		tv_effective = true
-	else
-		v1 = v0 +dv
-	end
-	--train.debug = "tv_target="..(tv_target or "nil").." v0="..v0.." v1="..v1
-	
-	if v1 > train.max_speed then
-		v1 = train.max_speed
-	end
-	if v1 < 0 then
-		v1 = 0
-	end
-	
-	train.acceleration = (v1 - v0) / dtime
-	train.velocity = v1
-	atprint("in train_step_b: New velocity",v1," (yields acceleration",train.acceleration,")")
 	
 	--- 4. move train ---
 	-- if we have calculated the new end index before, don't do that again
-	if not new_index_v_base or new_index_v_base ~= v1 then
-		local tv_vdiff = advtrains.get_acceleration(train, tv_lever) * dtime
-		local dst_curr_v = v1 * dtime
-		train.dist_moved_this_step = dst_curr_v
+	if not new_index_curr_tv then
+		local dst_curr_v = train.velocity * dtime
 		new_index_curr_tv = advtrains.path_get_index_by_offset(train, train.index, dst_curr_v)
 		atprint("in train_step_b: movement calculation (re)done, yields newindex=",new_index_curr_tv)
 	else
@@ -598,6 +574,24 @@ function advtrains.train_step_b(id, train, dtime)
 	
 	recalc_end_index(train)
 	atprint("in train_step_b: New index",train.index,"end",train.end_index,"vel",train.velocity)
+	
+	--- 4a. if accelerating, modify the velocity AFTER the movement
+	if accelerating then
+		local dv = advtrains.get_acceleration(train, lever) * dtime
+		local v1 = v0 + dv
+		if v_tar and v1 > v_tar then
+			atprint("in train_step_b: Accelerating: Hit v_tar!")
+			v1 = v_tar
+		end
+		if v1 > v_cap then
+			atprint("in train_step_b: Accelerating: Hit v_cap!")
+			v1 = v_cap
+		end
+		
+		train.acceleration = (v1 - v0) / dtime
+		train.velocity = v1
+		atprint("in train_step_b: Accelerating: New velocity",v1," (yields acceleration",train.acceleration,")")
+	end
 end
 
 function advtrains.train_step_c(id, train, dtime)
