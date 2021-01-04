@@ -192,7 +192,7 @@ function advtrains.hud_train_format(train, flip)
 	local st = {}
 	if train.debug then st = {train.debug} end
 	
-	local ht = {"[combine:300x150:0,0=(advtrains_hud_bg.png^[resize\\:300x150^[colorize\\:gray)"}
+	local ht = {"[combine:300x150:0,0=(advtrains_hud_bg.png^[resize\\:300x150)"}
 	ht[#ht+1] = "100,0=(advtrains_hud_" .. (flip and "reverse" or "forward") .. ".png^[resize\\:100x20^[makealpha\\:#000000)"
 	ht[#ht+1] = "200,0=(advtrains_hud_" .. (levers[tlev] or "bg") .. ".png^[resize\\:100x20^[multiply\\:" .. (lvrcolor[tlev] or "#000000") .. "^[makealpha\\:#000000)"
 	if train.tarvelocity or train.atc_command then
@@ -248,12 +248,11 @@ function advtrains.hud_train_format(train, flip)
 	end
 	sevenseg(math.floor(vel/10), 5, 5, 20, 10, "[colorize\\:red\\:255")
 	sevenseg(vel%10, 55, 5, 20, 10, "[colorize\\:red\\:255")
-	ht[#ht+1] = sformat("10,100=(advtrains_hud_bg.png^[resize\\:%dx30^[colorize\\:white\\:255)", vel*14)
-	if max < 20 then
-		ht[#ht+1] = sformat("%d,100=(advtrains_hud_bg.png^[resize\\:%dx30^[colorize\\:lightgray\\:255)", 10+max*14, 280-max*14)
+	for i = 1, vel, 1 do
+		ht[#ht+1] = sformat("%d,100=(advtrains_hud_bg.png^[resize\\:11x30^[colorize\\:white)", i*14-3)
 	end
-	for i = 1, max-1, 1 do
-		ht[#ht+1] = sformat("%d,100=(advtrains_hud_bg.png^[resize\\:3x30^[colorize\\:gray)", 8+i*14)
+	for i = max+1, 20, 1 do
+		ht[#ht+1] = sformat("%d,100=(advtrains_hud_bg.png^[resize\\:11x30^[colorize\\:lightgray)", i*14-3)
 	end
 	if res and res > 0 then
 		ht[#ht+1] = sformat("%d,95=(advtrains_hud_bg.png^[resize\\:3x40^[colorize\\:red\\:255)", 8+res*14)
