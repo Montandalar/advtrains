@@ -106,7 +106,7 @@ function advtrains.set_trainhud(name, text, driver)
 		name = "ADVTRAINS_DRIVER",
 		position = {x=0.5, y=0.7},
 		offset = {x=0,y=5},
-		text = driver or "advtrains_hud_blank.png",
+		text = driver or "",
 		alignment = {x=0,y=1},
 		scale = {x=1,y=1},}
 	if not hud then
