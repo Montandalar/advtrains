@@ -230,6 +230,32 @@ local matchptn={
 		train.door_open = tt[match]*arr
 		return 2
 	end,
+	["K"] = function(id, train)
+		if train.door_open == 0 then
+			atwarn(sid(id), attrans("ATC Kick command warning: Doors closed"))
+			return 1
+		end
+		if train.velocity > 0 then
+			atwarn(sid(id), attrans("ATC Kick command warning: Train moving"))
+			return 1
+		end
+		local tp = train.trainparts
+		for i=1,#tp do
+			local data = advtrains.wagons[tp[i]]
+			local obj = advtrains.wagon_objects[tp[i]]
+			if data and obj then
+				local ent = obj:get_luaentity()
+				if ent then
+					for seatno,seat in pairs(ent.seats) do
+						if data.seatp[seatno] and not ent:is_driver_stand(seat) then
+							ent:get_off(seatno)
+						end
+					end
+				end
+			end
+		end
+		return 1
+	end,
 }
 
 eval_conditional = function(command, arrow, speed)

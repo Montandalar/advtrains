@@ -46,6 +46,11 @@ Example:
 B0 W OL D10 OC D1 SM
 Subway train: stop in station and open doors, depart after 10 seconds.
 
+K
+Kick all passengers out of the trains
+This command kicks all passengers (non-driving players) off the train. This command works only
+if the train is stopped and its doors are open.
+
 # conditional statements:
 
 I<condition><code>;

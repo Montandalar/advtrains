@@ -269,6 +269,15 @@ function wagon:destroy()
 	return true
 end
 
+function wagon:is_driver_stand(seat)
+	if self.seat_groups then
+		return (seat.driving_ctrl_access or self.seat_groups[seat.group].driving_ctrl_access)
+	else
+		return seat.driving_ctrl_access
+	end
+	
+end
+
 function wagon:on_step(dtime)
 	return advtrains.pcall(function()
 		if not self:ensure_init() then return end
@@ -301,11 +310,7 @@ function wagon:on_step(dtime)
 			local pname=data.seatp[seatno]
 			local driver=pname and minetest.get_player_by_name(pname)
 			local has_driverstand = pname and advtrains.check_driving_couple_protection(pname, data.owner, data.whitelist)
-			if self.seat_groups then
-				has_driverstand = has_driverstand and (seat.driving_ctrl_access or self.seat_groups[seat.group].driving_ctrl_access)
-			else
-				has_driverstand = has_driverstand and (seat.driving_ctrl_access)
-			end
+			has_driverstand = has_driverstand and self:is_driver_stand(seat)
 			if has_driverstand and driver then
 				advtrains.update_driver_hud(driver:get_player_name(), self:train(), data.wagon_flipped)
 			elseif driver then
