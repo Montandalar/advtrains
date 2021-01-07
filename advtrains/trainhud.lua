@@ -252,7 +252,7 @@ function advtrains.hud_train_format(train, flip)
 		ht[#ht+1] = sformat("%d,100=(advtrains_hud_bg.png^[resize\\:11x30^[colorize\\:white)", i*14-3)
 	end
 	for i = max+1, 20, 1 do
-		ht[#ht+1] = sformat("%d,100=(advtrains_hud_bg.png^[resize\\:11x30^[colorize\\:lightgray)", i*14-3)
+		ht[#ht+1] = sformat("%d,100=(advtrains_hud_bg.png^[resize\\:11x30^[colorize\\:darkslategray)", i*14-3)
 	end
 	if res and res > 0 then
 		ht[#ht+1] = sformat("%d,95=(advtrains_hud_bg.png^[resize\\:3x40^[colorize\\:red\\:255)", 8+res*14)
@@ -289,7 +289,7 @@ function advtrains.hud_train_format(train, flip)
 end
 
 local _, texture = advtrains.hud_train_format { -- dummy train object to demonstrate the train hud
-	max_speed = 15, speed_restriction = 12, velocity = 12, tarvelocity = 15,
+	max_speed = 15, speed_restriction = 15, velocity = 15, tarvelocity = 12,
 	active_control = true, lever = 3, ctrl = {lzb = true}, is_shunt = true,
 	door_open = 1, lzb = {oncoming = {{spd=6}}}
 }
