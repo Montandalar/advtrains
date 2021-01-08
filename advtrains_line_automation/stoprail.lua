@@ -52,12 +52,12 @@ local function show_stoprailform(pos, player)
 	local form = "size[8,7]"
 	form = form.."field[0.5,0.5;7,1;stn;"..attrans("Station Code")..";"..minetest.formspec_escape(stdata.stn).."]"
 	form = form.."field[0.5,1.5;7,1;stnname;"..attrans("Station Name")..";"..minetest.formspec_escape(stnname).."]"
-	form = form.."field[0.5,2.5;2,1;ddelay;"..attrans("Door Delay")..";"..minetest.formspec_escape(stdata.ddelay).."]"
-	form = form.."field[3,2.5;3,1;speed;"..attrans("Departure Speed")..";"..minetest.formspec_escape(stdata.speed).."]"	
+	form = form.."field[0.5,2.5;1.5,1;ddelay;"..attrans("Door Delay")..";"..minetest.formspec_escape(stdata.ddelay).."]"
+	form = form.."field[2,2.5;2,1;speed;"..attrans("Departure Speed")..";"..minetest.formspec_escape(stdata.speed).."]"
+	form = form.."checkbox[5,1.75;reverse;"..attrans("Reverse train")..";"..(stdata.reverse and "true" or "false").."]"
+	form = form.."checkbox[5,2.0;kick;"..attrans("Kick out passengers")..";"..(stdata.kick and "true" or "false").."]"
 	form = form.."label[0.5,3;Door side:]"
-	form = form.."dropdown[0.5,3;2;doors;Left,Right,Closed;"..door_dropdown[stdata.doors].."]"
-	form = form.."dropdown[3,3;1.5;reverse;---,Reverse;"..(stdata.reverse and 2 or 1).."]"
-	
+	form = form.."dropdown[0.5,3;2;doors;Left,Right,Closed;"..door_dropdown[stdata.doors].."]"	
 	form = form.."field[5,3.5;2,1;track;"..attrans("Track")..";"..minetest.formspec_escape(stdata.track).."]"
 	form = form.."field[5,4.5;2,1;wait;"..attrans("Stop Time")..";"..stdata.wait.."]"
 	
@@ -67,7 +67,7 @@ local function show_stoprailform(pos, player)
 	
 	minetest.show_formspec(pname, "at_lines_stop_"..pe, form)
 end
-
+local tmp_checkboxes = {}
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local pname = player:get_player_name()
 	local pe = string.match(formname, "^at_lines_stop_(............)$")
@@ -79,6 +79,15 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		
 		local stdata = advtrains.lines.stops[pe]
+		if not tmp_checkboxes[pe] then
+			tmp_checkboxes[pe] = {}
+		end
+		if fields.kick then			-- handle checkboxes due to MT's weird handling
+			tmp_checkboxes[pe].kick = (fields.kick == "true")
+		end
+		if fields.reverse then
+			tmp_checkboxes[pe].reverse = (fields.reverse == "true")
+		end
 		if fields.save then
 			if fields.stn and stdata.stn ~= fields.stn then
 				if fields.stn ~= "" then
@@ -111,10 +120,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			if fields.doors then
 				stdata.doors = door_dropdown_rev[fields.doors] or "C"
 			end
-			if fields.reverse then
-				stdata.reverse = fields.reverse == "Reverse"
-			end
-			
 			
 			if fields.track then
 				stdata.track = fields.track
@@ -133,7 +138,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			if fields.speed then
 				stdata.speed = to_int(fields.speed) or "M"
 			end
-			
+
+			for k,v in pairs(tmp_checkboxes[pe]) do --handle checkboxes
+				stdata[k] = v or nil
+			end
+			tmp_checkboxes[pe] = nil
 			--TODO: signal
 			updatemeta(pos)
 			show_stoprailform(pos, player)
@@ -192,7 +201,7 @@ local adefunc = function(def, preset, suffix, rotation)
 							local stnname = stn and stn.name or "Unknown Station"
 							
 							-- Send ATC command and set text
-							advtrains.atc.train_set_command(train, "B0 W O"..stdata.doors.." D"..stdata.wait.." OC "..(stdata.reverse and "R" or "").."D"..(stdata.ddelay or 1) .. "S" ..(stdata.speed or "M"), true)
+							advtrains.atc.train_set_command(train, "B0 W O"..stdata.doors..(stdata.kick and "K" or "").." D"..stdata.wait.." OC "..(stdata.reverse and "R" or "").."D"..(stdata.ddelay or 1) .. "S" ..(stdata.speed or "M"), true)
 							train.text_inside = stnname
 							if tonumber(stdata.wait) then
 								minetest.after(tonumber(stdata.wait), function() train.text_inside = "" end)
