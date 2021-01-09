@@ -104,10 +104,10 @@ function advtrains.set_trainhud(name, text, driver)
 	local driverhud = {
 		hud_elem_type = "image",
 		name = "ADVTRAINS_DRIVER",
-		position = {x=0.5, y=0.7},
-		offset = {x=0,y=5},
+		position = {x=0.5, y=1},
+		offset = {x=0,y=-170},
 		text = driver or "",
-		alignment = {x=0,y=1},
+		alignment = {x=0,y=-1},
 		scale = {x=1,y=1},}
 	if not hud then
 		hud = {["driver"]={}}
@@ -116,8 +116,8 @@ function advtrains.set_trainhud(name, text, driver)
 			hud_elem_type = "text",
 			name = "ADVTRAINS",
 			number = 0xFFFFFF,
-			position = {x=0.5, y=0.7},
-			offset = {x=0, y=-5},
+			position = {x=0.5, y=1},
+			offset = {x=0, y=-300},
 			text = text,
 			scale = {x=200, y=60},
 			alignment = {x=0, y=-1},
