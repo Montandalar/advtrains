@@ -184,32 +184,14 @@ function advtrains.hud_train_format(train, flip)
 	local vel = advtrains.abs_ceil(train.velocity)
 	local vel_kmh=advtrains.abs_ceil(advtrains.ms_to_kmh(train.velocity))
 	
-	local levers = {[0] = "emg","b","r","n","p"}
-	local lvrcolor = {[0] = "red", "orange", "orange", "cyan", "cyan"}
 	local tlev=train.lever or 1
 	if train.velocity==0 and not train.active_control then tlev=1 end
 	
+	local ht = {"[combine:440x110:0,0=(advtrains_hud_bg.png^[resize\\:440x110)"}
 	local st = {}
 	if train.debug then st = {train.debug} end
 	
-	local ht = {"[combine:300x150:0,0=(advtrains_hud_bg.png^[resize\\:300x150)"}
-	ht[#ht+1] = "100,0=(advtrains_hud_" .. (flip and "reverse" or "forward") .. ".png^[resize\\:100x20^[makealpha\\:#000000)"
-	ht[#ht+1] = "200,0=(advtrains_hud_" .. (levers[tlev] or "bg") .. ".png^[resize\\:100x20^[multiply\\:" .. (lvrcolor[tlev] or "#000000") .. "^[makealpha\\:#000000)"
-	if train.tarvelocity or train.atc_command then
-		ht[#ht+1] = "100,20=(advtrains_hud_atc.png^[resize\\:100x20^[makealpha\\:#000000)"
-	end
-	if train.ctrl.lzb then
-		ht[#ht+1] = "200,20=(advtrains_hud_lzb.png^[resize\\:100x20^[multiply\\:red^[makealpha\\:#000000)"
-	end
-	if train.is_shunt then
-		ht[#ht+1] = "100,40=(advtrains_hud_shunt.png^[resize\\:100x20^[makealpha\\:#000000)"
-	end
-	if train.door_open == -1 then
-		ht[#ht+1] = "100,60=(advtrains_hud_left_door.png^[resize\\:100x20^[makealpha\\:#000000)"
-	elseif train.door_open == 1 then
-		ht[#ht+1] = "200,60=(advtrains_hud_right_door.png^[resize\\:100x24^[makealpha\\:#000000)"
-	end
-	-- speed indication(s)
+	-- seven-segment display
 	local function sevenseg(digit, x, y, w, h, m)
 		--[[
 		 -1-
@@ -246,34 +228,71 @@ function advtrains.hud_train_format(train, flip)
 			end
 		end
 	end
-	sevenseg(math.floor(vel/10), 5, 5, 20, 10, "[colorize\\:red\\:255")
-	sevenseg(vel%10, 55, 5, 20, 10, "[colorize\\:red\\:255")
+	
+	-- lever
+	ht[#ht+1] = "275,10=(advtrains_hud_bg.png^[colorize\\:cyan^[resize\\:5x18)"
+	ht[#ht+1] = "275,28=(advtrains_hud_bg.png^[colorize\\:white^[resize\\:5x18)"
+	ht[#ht+1] = "275,46=(advtrains_hud_bg.png^[colorize\\:orange^[resize\\:5x36)"
+	ht[#ht+1] = "275,82=(advtrains_hud_bg.png^[colorize\\:red^[resize\\:5x18)"
+	ht[#ht+1] = "292,16=(advtrains_hud_bg.png^[colorize\\:darkslategray^[resize\\:6x78)"
+	ht[#ht+1] = sformat("280,%s=(advtrains_hud_bg.png^[colorize\\:gray^[resize\\:30x18)",18*(4-tlev)+10)
+	-- reverser
+	ht[#ht+1] = sformat("245,10=(advtrains_hud_arrow.png^[transformFY%s)", flip and "" or "^[multiply\\:cyan")
+	ht[#ht+1] = sformat("245,85=(advtrains_hud_arrow.png%s)", flip and "^[multiply\\:orange" or "")
+	ht[#ht+1] = "250,35=(advtrains_hud_bg.png^[colorize\\:darkslategray^[resize\\:5x40)"
+	ht[#ht+1] = sformat("240,%s=(advtrains_hud_bg.png^[resize\\:25x15^[colorize\\:gray)", flip and 65 or 30)
+	-- train control/safety indication
+	if train.tarvelocity or train.atc_command then
+		ht[#ht+1] = "10,10=(advtrains_hud_atc.png^[resize\\:30x30^[multiply\\:cyan)"
+	end
+	if train.ctrl.lzb then
+		ht[#ht+1] = "50,10=(advtrains_hud_lzb.png^[resize\\:30x30^[multiply\\:red)"
+	end
+	if train.is_shunt then
+		ht[#ht+1] = "90,10=(advtrains_hud_shunt.png^[resize\\:30x30^[multiply\\:orange)"
+	end
+	-- door
+	ht[#ht+1] = "187,10=(advtrains_hud_bg.png^[resize\\:26x30^[colorize\\:white)"
+	ht[#ht+1] = "189,12=(advtrains_hud_bg.png^[resize\\:22x11)"
+	ht[#ht+1] = sformat("170,10=(advtrains_hud_bg.png^[resize\\:15x30^[colorize\\:%s)", train.door_open==-1 and "white" or "darkslategray")
+	ht[#ht+1] = "172,12=(advtrains_hud_bg.png^[resize\\:11x11)"
+	ht[#ht+1] = sformat("215,10=(advtrains_hud_bg.png^[resize\\:15x30^[colorize\\:%s)", train.door_open==1 and "white" or "darkslategray")
+	ht[#ht+1] = "217,12=(advtrains_hud_bg.png^[resize\\:11x11)"
+	-- speed indication(s)
+	sevenseg(math.floor(vel/10), 320, 10, 30, 10, "[colorize\\:red\\:255")
+	sevenseg(vel%10, 380, 10, 30, 10, "[colorize\\:red\\:255")
 	for i = 1, vel, 1 do
-		ht[#ht+1] = sformat("%d,100=(advtrains_hud_bg.png^[resize\\:11x30^[colorize\\:white)", i*14-3)
+		ht[#ht+1] = sformat("%d,65=(advtrains_hud_bg.png^[resize\\:8x20^[colorize\\:white)", i*11-1)
 	end
 	for i = max+1, 20, 1 do
-		ht[#ht+1] = sformat("%d,100=(advtrains_hud_bg.png^[resize\\:11x30^[colorize\\:darkslategray)", i*14-3)
+		ht[#ht+1] = sformat("%d,65=(advtrains_hud_bg.png^[resize\\:8x20^[colorize\\:darkslategray)", i*11-1)
 	end
 	if res and res > 0 then
-		ht[#ht+1] = sformat("%d,95=(advtrains_hud_bg.png^[resize\\:3x40^[colorize\\:red\\:255)", 8+res*14)
+		ht[#ht+1] = sformat("%d,60=(advtrains_hud_bg.png^[resize\\:3x30^[colorize\\:red\\:255)", 7+res*11)
 	end
 	if train.tarvelocity then
-		ht[#ht+1] = sformat("%d,130=(advtrains_hud_arrow.png^[multiply\\:cyan^[transformFY^[makealpha\\:#000000)", 2+train.tarvelocity*14)
+		ht[#ht+1] = sformat("%d,85=(advtrains_hud_arrow.png^[multiply\\:cyan^[transformFY^[makealpha\\:#000000)", 1+train.tarvelocity*11)
 	end
 	local lzb = train.lzb
 	if lzb and lzb.oncoming then
 		local oc = lzb.oncoming
 		for i = 1, #oc do
 			local spd = oc[i].spd
-			if not spd then
-				ht[#ht+1] = "203,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:lime\\:255)"
-			elseif spd == 0 then
-				ht[#ht+1] = "283,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:red\\:255)"
-			elseif tonumber(spd) then
-				ht[#ht+1] = "243,43=(advtrains_hud_bg.png^[resize\\:14x14^[colorize\\:orange\\:255)"
-				ht[#ht+1] = sformat("%d,85=(advtrains_hud_arrow.png^[multiply\\:red^[makealpha\\:#000000)", 2+spd*14) 
+			local c = not spd and "lime" or (type(spd) == "number" and (spd == 0) and "red" or "orange") or nil
+			if c then
+				ht[#ht+1] = sformat("130,10=(advtrains_hud_bg.png^[resize\\:30x5^[colorize\\:%s)",c)
+				ht[#ht+1] = sformat("130,35=(advtrains_hud_bg.png^[resize\\:30x5^[colorize\\:%s)",c)
+				if spd and spd~=0 then
+					ht[#ht+1] = sformat("%d,50=(advtrains_hud_arrow.png^[multiply\\:red^[makealpha\\:#000000)", 1+spd*11) 
+				end
+				local floor = math.floor
+				local dist = floor(((oc[i].idx or train.index)-train.index))
+				dist = math.max(0, math.min(999, dist))
+				for j = 1, 3, 1 do
+					sevenseg(floor((dist/10^(3-j))%10), 119+j*11, 18, 4, 2, "[colorize\\:"..c)
+				end
+				break
 			end
-			break
 		end
 	end
 	
@@ -291,7 +310,7 @@ end
 local _, texture = advtrains.hud_train_format { -- dummy train object to demonstrate the train hud
 	max_speed = 15, speed_restriction = 15, velocity = 15, tarvelocity = 12,
 	active_control = true, lever = 3, ctrl = {lzb = true}, is_shunt = true,
-	door_open = 1, lzb = {oncoming = {{spd=6}}}
+	door_open = 1, lzb = {oncoming = {{spd=6, idx=125.7}}}, index = 0,
 }
 
 minetest.register_node("advtrains:hud_demo",{
