@@ -431,7 +431,9 @@ end
 
 function ildb.remove_tcb(pos)
 	local pts = advtrains.roundfloorpts(pos)
-	if not track_circuit_breaks[pts] then return end
+	if not track_circuit_breaks[pts] then
+		return true --FIX: not an error, because tcb is already removed
+	end
 	for connid=1,2 do
 		if not ildb.remove_from_interlocking({p=pos, s=connid}) then
 			return false
