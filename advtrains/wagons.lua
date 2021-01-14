@@ -156,7 +156,7 @@ function wagon:ensure_init()
 		atwarn("wagon",self.id,"uninitialized, removing")
 		self:destroy()
 	else
-		self.object:setvelocity({x=0,y=0,z=0})
+		self.object:set_velocity({x=0,y=0,z=0})
 	end
 	return false
 end
@@ -276,7 +276,7 @@ function wagon:on_step(dtime)
 		end
 		
 		local t=os.clock()
-		local pos = self.object:getpos()
+		local pos = self.object:get_pos()
 		local data = advtrains.wagons[self.id]
 		
 		if not pos then
@@ -404,8 +404,8 @@ function wagon:on_step(dtime)
 		
 		--for path to be available. if not, skip step
 		if not train.path or train.no_step then
-			self.object:setvelocity({x=0, y=0, z=0})
-			self.object:setacceleration({x=0, y=0, z=0})
+			self.object:set_velocity({x=0, y=0, z=0})
+			self.object:set_acceleration({x=0, y=0, z=0})
 			return
 		end
 		if not data.pos_in_train then
@@ -474,7 +474,7 @@ function wagon:on_step(dtime)
 		-- FIX: Need to do this after the yaw calculation
 		if is_in_loaded_area and data.pos_in_trainparts and data.pos_in_trainparts>1 then
 			if train.velocity==0 then
-				if not self.discouple or not self.discouple.object:getyaw() then
+				if not self.discouple or not self.discouple.object:get_yaw() then
 					atprint(self.id,"trying to spawn discouple")
 					local dcpl_pos = vector.add(pos, {y=0, x=-math.sin(yaw)*self.wagon_span, z=math.cos(yaw)*self.wagon_span})
 					local object=minetest.add_entity(dcpl_pos, "advtrains:discouple")
@@ -487,7 +487,7 @@ function wagon:on_step(dtime)
 					end
 				end
 			else
-				if self.discouple and self.discouple.object:getyaw() then
+				if self.discouple and self.discouple.object:get_yaw() then
 					self.discouple.object:remove()
 					atprint(self.id," removing discouple")
 				end
@@ -543,9 +543,9 @@ function wagon:on_step(dtime)
 				or self.old_yaw~=yaw
 				or updatepct_timer_elapsed then--only send update packet if something changed
 			
-			self.object:setpos(pos)
-			self.object:setvelocity(velocityvec)
-			self.object:setacceleration(accelerationvec)
+			self.object:set_pos(pos)
+			self.object:set_velocity(velocityvec)
+			self.object:set_acceleration(accelerationvec)
 			
 			if #self.seats > 0 and self.old_yaw ~= yaw then
 				if not self.player_yaw then
@@ -578,7 +578,7 @@ function wagon:on_step(dtime)
                 end
                 self.object:set_rotation({x=pitch, y=yaw, z=0})
             else
-                self.object:setyaw(yaw)
+                self.object:set_yaw(yaw)
             end
 			
 			if self.update_animation then
@@ -771,7 +771,7 @@ function wagon:get_off(seatno)
 				
 				--atdebug("platpos:", platpos, "offpos:", offpos)
 				if minetest.get_item_group(minetest.get_node(platpos).name, "platform")>0 then
-					minetest.after(GETOFF_TP_DELAY, function() clicker:setpos(offpos) end)
+					minetest.after(GETOFF_TP_DELAY, function() clicker:set_pos(offpos) end)
 					--atdebug("tp",offpos)
 					return
 				end
@@ -791,7 +791,7 @@ function wagon:get_off(seatno)
 			offp=vector.add({x=isx and r*2 or 0, y=1, z=not isx and r*2 or 0}, objpos)
 			--atdebug("platpos:", p, "offpos:", offp)
 			if minetest.get_item_group(minetest.get_node(p).name, "platform")>0 then
-				minetest.after(GETOFF_TP_DELAY, function() clicker:setpos(offp) end)
+				minetest.after(GETOFF_TP_DELAY, function() clicker:set_pos(offp) end)
 				--atdebug("tp",offp)
 				return
 			end

@@ -72,7 +72,7 @@ advtrains.mainloop_trainlogic=function(dtime, stepno)
 	for _, player in pairs(minetest.get_connected_players()) do
 		if not advtrains.player_to_train_mapping[player:get_player_name()] then
 			--players in train are not subject to damage
-			local ptspos=minetest.pos_to_string(vector.round(player:getpos()))
+			local ptspos=minetest.pos_to_string(vector.round(player:get_pos()))
 			advtrains.playersbypts[ptspos]=player
 		end
 	end
@@ -131,7 +131,7 @@ function advtrains.tp_player_to_train(player)
 		--set the player to the train position.
 		--minetest will emerge the area and load the objects, which then will call reattach_all().
 		--because player is in mapping, it will not be subject to dying.
-		player:setpos(train.last_pos)
+		player:set_pos(train.last_pos)
 	end
 end
 minetest.register_on_joinplayer(function(player)
@@ -976,7 +976,7 @@ function advtrains.spawn_wagons(train_id)
 				atwarn("Train",train_id,"Wagon #",i,": Saved train ID",data.train_id,"did not match!")
 				data.train_id = train_id
 			end
-			if not advtrains.wagon_objects[w_id] or not advtrains.wagon_objects[w_id]:getyaw() then
+			if not advtrains.wagon_objects[w_id] or not advtrains.wagon_objects[w_id]:get_yaw() then
 				-- eventually need to spawn new object. check if position is loaded.
 				local index = advtrains.path_get_index_by_offset(train, train.index, -data.pos_in_train)
 				local pos   = advtrains.path_get(train, atfloor(index))
@@ -1128,7 +1128,7 @@ end
 function advtrains.train_check_couples(train)
 	--atdebug("rechecking couples")
 	if train.cpl_front then
-		if not train.cpl_front:getyaw() then
+		if not train.cpl_front:get_yaw() then
 			-- objectref is no longer valid. reset.
 			train.cpl_front = nil
 		end
@@ -1158,7 +1158,7 @@ function advtrains.train_check_couples(train)
 		end
 	end
 	if train.cpl_back then
-		if not train.cpl_back:getyaw() then
+		if not train.cpl_back:get_yaw() then
 			-- objectref is no longer valid. reset.
 			train.cpl_back = nil
 		end

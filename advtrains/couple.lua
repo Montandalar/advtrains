@@ -47,7 +47,7 @@ minetest.register_entity("advtrains:discouple", {
 				return
 			end
 			--getyaw seems to be a reliable method to check if an object is loaded...if it returns nil, it is not.
-			if not self.wagon.object:getyaw() then
+			if not self.wagon.object:get_yaw() then
 				self.object:remove()
 				return
 			end
@@ -145,7 +145,7 @@ minetest.register_entity("advtrains:couple", {
 				end
 				local pos_median=advtrains.pos_median(tp1, tp2)
 				if not vector.equals(pos_median, self.object:getpos()) then
-					self.object:setpos(pos_median)
+					self.object:set_pos(pos_median)
 				end
 				self.position_set=true
 			end
