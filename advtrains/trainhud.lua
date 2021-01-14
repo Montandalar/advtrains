@@ -245,7 +245,7 @@ function advtrains.hud_train_format(train, flip)
 	if train.tarvelocity or train.atc_command then
 		ht[#ht+1] = "10,10=(advtrains_hud_atc.png^[resize\\:30x30^[multiply\\:cyan)"
 	end
-	if train.ctrl.lzb then
+	if train.hud_lzb_effect_tmr then
 		ht[#ht+1] = "50,10=(advtrains_hud_lzb.png^[resize\\:30x30^[multiply\\:red)"
 	end
 	if train.is_shunt then

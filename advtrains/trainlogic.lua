@@ -500,11 +500,25 @@ function advtrains.train_step_b(id, train, dtime)
 	
 	--atprint("in train_step_b: LZB calculation yields newindex=",new_index_curr_tv,"lzbtarget=",lzb_v_cap,"zero_barr=",lzb_next_zero_barrier,"")
 	
+	-- LZB HUD: decrement timer and delete when 0
+	if train.hud_lzb_effect_tmr then
+		if train.hud_lzb_effect_tmr <=0 then
+			train.hud_lzb_effect_tmr = nil
+		else
+			train.hud_lzb_effect_tmr = train.hud_lzb_effect_tmr - 1
+		end
+	end
+	
 	-- We now need to bring ctrl_*, sit_v_cap and lzb_v_cap together to determine the final controls.
 	local v_cap = sit_v_cap -- always defined, by default train.max_speed
 	if lzb_v_cap and lzb_v_cap < v_cap then
 		v_cap = lzb_v_cap
 		lever = VLEVER_BRAKE -- actually irrelevant, acceleration is not considered anyway unless v_tar is also set.
+		-- display LZB control override in the HUD
+		if lzb_v_cap <= v0 then
+			train.hud_lzb_effect_tmr = 1
+			-- This is to signal the HUD that LZB is active. This works as a timer to avoid HUD blinking
+		end
 	end
 	
 	v_tar = ctrl_v_tar
