@@ -52,3 +52,7 @@ advtrains_wagon_load_range (Wagon Entity Load/Unload Range) int 96 32 512
 #    acceleration of wagons to decrease server load.
 #    A value of 0 (default) disables this behavior.
 advtrains_dtime_limit (DTime Limit for slow-down) float 0.2 0 5
+
+#    Time interval in seconds in which advtrains stores its save data to disk
+#    Nevertheless, advtrains saves all data when shutting down the server.
+advtrains_save_interval (Save Interval) int 60 20 3600

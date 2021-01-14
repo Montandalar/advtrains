@@ -52,7 +52,7 @@ local NO_SAVE = false
 
 -- Use a global slowdown factor to slow down train movements. Now a setting
 local DTIME_LIMIT = tonumber(minetest.settings:get("advtrains_dtime_limit")) or 0.2
-
+local SAVE_INTERVAL = tonumber(minetest.settings:get("advtrains_save_interval")) or 60
 
 --Constant for maximum connection value/division of the circle
 AT_CMAX = 16
@@ -564,8 +564,7 @@ end
 --## MAIN LOOP ##--
 --Calls all subsequent main tasks of both advtrains and atlatc
 local init_load=false
-local save_interval=60
-local save_timer=save_interval
+local save_timer = SAVE_INTERVAL
 advtrains.mainloop_runcnt=0
 advtrains.global_slowdown = 1
 
@@ -624,7 +623,7 @@ minetest.register_globalstep(function(dtime_mt)
 			local t=os.clock()
 			--save
 			advtrains.save()
-			save_timer=save_interval
+			save_timer = SAVE_INTERVAL
 			atprintbm("saving", t)
 		end
 end)

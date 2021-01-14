@@ -327,6 +327,7 @@ minetest.register_lbm({
 --used when restoring stuff after a crash
 ndb.restore_all = function()
 	--atlog("Updating the map from the nodedb, this may take a while")
+	local t1 = os.clock()
 	local cnt=0
 	local dcnt=0
 	for y, ny in pairs(ndb_nodes) do
@@ -352,7 +353,7 @@ ndb.restore_all = function()
 			end
 		end
 	end
-	local text="Restore node database: Replaced "..cnt.." nodes, removed "..dcnt.." ghost nodes."
+	local text="Restore node database: Replaced "..cnt.." nodes, removed "..dcnt.." ghost nodes. (took "..math.floor((os.clock()-t1) * 1000).."ms)"
 	atlog(text)
 	return text
 end
@@ -379,7 +380,7 @@ minetest.register_chatcommand("at_sync_ndb",
         description = "Write node db back to map and find ghost nodes", -- Full description
         privs = {train_operator=true}, 
         func = function(name, param)
-				if os.time() < ptime+30 then
+				if os.time() < ptime+30 and not minetest.get_player_privs(name, "server") then
 					return false, "Please wait at least 30s from the previous execution of /at_restore_ndb!"
 				end
 				local text = ndb.restore_all()

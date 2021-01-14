@@ -83,7 +83,7 @@ local function look_ahead(id, train)
 	
 	--local brake_i = advtrains.path_get_index_by_offset(train, train.index, brakedst + params.BRAKE_SPACE)
 	-- worst case (don't use index_by_offset)
-	brake_i = atfloor(train.index + brakedst + params.BRAKE_SPACE)
+	local brake_i = atfloor(train.index + brakedst + params.BRAKE_SPACE)
 	atprint("LZB: looking ahead up to ", brake_i)
 	
 	--local aware_i = advtrains.path_get_index_by_offset(train, brake_i, AWARE_ZONE)
