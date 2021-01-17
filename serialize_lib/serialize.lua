@@ -190,6 +190,7 @@ local function write_to_fd(root_table, file, config)
 	file:write("LUA_SER v=1\n")
 	write_table(root_table, file, config)
 	file:write("E\nEND_SER\n")
+	file:close()
 end
 
 -- Reads the file contents from the passed file descriptor and returns the table on success
