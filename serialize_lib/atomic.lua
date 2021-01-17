@@ -38,9 +38,9 @@ local function save_atomic_move_file(filename)
 	if windows_mode then
 		local delsucc, err = os.remove(filename)
 		if not delsucc then
-			serialize_lib.log_warn("Unable to delete old savefile '"..filename.."':")
-			serialize_lib.log_warn(err)
-			serialize_lib.log_info("Trying to replace the save file anyway now...")
+			serialize_lib.log_error("Unable to delete old savefile '"..filename.."':")
+			serialize_lib.log_error(err)
+			return nil, err
 		end
 	end
 	
@@ -48,13 +48,11 @@ local function save_atomic_move_file(filename)
 	local mvsucc, err = os.rename(filename..".new", filename)
 	if not mvsucc then
 		if minetest.settings:get_bool("serialize_lib_no_auto_windows_mode") or windows_mode then
-			serialize_lib.log_error("Unable to replace save file '"..filename.."':")
+			serialize_lib.log_error("Unable to move '"..filename.."':")
 			serialize_lib.log_error(err)
 			return nil, err
 		else
 			-- enable windows mode and try again
-			serialize_lib.log_info("Unable to replace save file '"..filename.."' by direct renaming:")
-			serialize_lib.log_info(err)
 			serialize_lib.log_info("Enabling Windows mode for atomic saving...")
 			windows_mode = true
 			return save_atomic_move_file(filename)
