@@ -175,7 +175,6 @@ advtrains.register_wagon("subway_wagon", {
 		local lintex = subway_get_line_texture(line)
 		if (lintex ~= nil) then
 			local newtex = (data.livery or "advtrains_subway_wagon.png") .. "^" .. lintex
-			minetest.chat_send_all(string.format("New texture is: %s", newtex))
 			self.object:set_properties({textures = {newtex}})
 		end
 	end,--[[ --]]
