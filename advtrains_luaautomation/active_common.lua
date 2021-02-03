@@ -101,7 +101,7 @@ function ac.run_in_env(pos, evtdata, customfct_p)
 	end
 	
 	local meta
-	if minetest.get_node_or_nil(pos) then
+	if advtrains.is_node_loaded(pos) then
 		meta=minetest.get_meta(pos)
 	end
 	

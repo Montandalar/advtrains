@@ -15,19 +15,8 @@ advtrains.wagon_prototypes = {}
 advtrains.wagon_objects = {}
 
 local unload_wgn_range = advtrains.wagon_load_range + 32
-function advtrains.outside_range(pos) -- returns true if the object is outside of unload_wgn_range of any player
-	-- this is part of a workaround until mintest core devs decide to fix a bug with static_save=false.
-	local outofrange = true
-	if not pos then
-		return true
-	end
-	for _,p in pairs(minetest.get_connected_players()) do
-		if vector.distance(p:get_pos(),pos)<=unload_wgn_range then
-			outofrange = false
-			break
-		end
-	end
-	return outofrange
+function advtrains.wagon_outside_range(pos) -- returns true if the object is outside of unload_wgn_range of any player
+	return not advtrains.position_in_range(pos, unload_wgn_range)
 end
 
 local setting_show_ids = minetest.settings:get_bool("advtrains_show_ids")
@@ -299,6 +288,8 @@ function wagon:on_step(dtime)
 		end
 		
 		local train=self:train()
+		
+		local is_in_loaded_area = advtrains.is_node_loaded(pos)
 
 		--custom on_step function
 		if self.custom_on_step then
@@ -453,7 +444,7 @@ function wagon:on_step(dtime)
 		end
 		
 		--checking for environment collisions(a 3x3 cube around the center)
-		if not train.recently_collided_with_env then
+		if is_in_loaded_area and not train.recently_collided_with_env then
 			local collides=false
 			local exh = self.extent_h or 1
 			local exv = self.extent_v or 2
@@ -477,7 +468,7 @@ function wagon:on_step(dtime)
 		
 		--DisCouple
 		-- FIX: Need to do this after the yaw calculation
-		if data.pos_in_trainparts and data.pos_in_trainparts>1 then
+		if is_in_loaded_area and data.pos_in_trainparts and data.pos_in_trainparts>1 then
 			if train.velocity==0 then
 				if not self.discouple or not self.discouple.object:getyaw() then
 					atprint(self.id,"trying to spawn discouple")
@@ -530,7 +521,7 @@ function wagon:on_step(dtime)
 				end
 			end
 			if not players_in then
-				if advtrains.outside_range(pos) then
+				if advtrains.wagon_outside_range(pos) then
 					--atdebug("wagon",self.id,"unloading (too far away)")
                     -- Workaround until minetest engine deletes attached sounds
                     if self.sound_loop_handle then

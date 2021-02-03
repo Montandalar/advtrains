@@ -527,7 +527,7 @@ function advtrains.train_step_c(id, train, dtime)
 		local collpos = advtrains.path_get(train, atround(collindex))
 		if collpos then
 			local rcollpos=advtrains.round_vector_floor_y(collpos)
-			local is_loaded_area = minetest.get_node_or_nil(rcollpos) ~= nil
+			local is_loaded_area = advtrains.is_node_loaded(rcollpos)
 			for x=-train.extent_h,train.extent_h do
 				for z=-train.extent_h,train.extent_h do
 					local testpos=vector.add(rcollpos, {x=x, y=0, z=z})
@@ -870,14 +870,7 @@ function advtrains.spawn_wagons(train_id)
 				local index = advtrains.path_get_index_by_offset(train, train.index, -data.pos_in_train)
 				local pos   = advtrains.path_get(train, atfloor(index))
 				
-				local spawn = false
-				for _,p in pairs(minetest.get_connected_players()) do
-					if vector.distance(p:get_pos(),pos)<=ablkrng then
-						spawn = true
-					end
-				end
-				
-				if spawn then
+				if advtrains.position_in_range(pos, ablkrng) then
 					--atdebug("wagon",w_id,"spawning")
 					local wt = advtrains.get_wagon_prototype(data)
 					local wagon = minetest.add_entity(pos, wt):get_luaentity()
@@ -1032,7 +1025,7 @@ function advtrains.train_check_couples(train)
 	if not train.cpl_front then
 		-- recheck front couple
 		local front_trains, pos = advtrains.occ.get_occupations(train, atround(train.index) + CPL_CHK_DST)
-		if minetest.get_node_or_nil(pos) then -- if the position is loaded...
+		if advtrains.is_node_loaded(pos) then -- if the position is loaded...
 			for tid, idx in pairs(front_trains) do
 				local other_train = advtrains.trains[tid]
 				if not advtrains.train_ensure_init(tid, other_train) then
@@ -1062,7 +1055,7 @@ function advtrains.train_check_couples(train)
 	if not train.cpl_back then
 		-- recheck back couple
 		local back_trains, pos = advtrains.occ.get_occupations(train, atround(train.end_index) - CPL_CHK_DST)
-		if minetest.get_node_or_nil(pos) then -- if the position is loaded...
+		if advtrains.is_node_loaded(pos) then -- if the position is loaded...
 			for tid, idx in pairs(back_trains) do
 				local other_train = advtrains.trains[tid]
 				if not advtrains.train_ensure_init(tid, other_train) then

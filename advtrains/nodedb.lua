@@ -223,7 +223,7 @@ end
 
 
 function ndb.swap_node(pos, node, no_inval)
-	if minetest.get_node_or_nil(pos) then
+	if advtrains.is_node_loaded(pos) then
 		minetest.swap_node(pos, node)
 	end
 	ndb.update(pos, node)

@@ -106,7 +106,7 @@ minetest.register_entity("advtrains:couple", {
 	end,
 	on_step=function(self, dtime)
 		return advtrains.pcall(function()
-			if advtrains.outside_range(self.object:getpos()) then
+			if advtrains.wagon_outside_range(self.object:getpos()) then
 				self.object:remove()
 				return
 			end

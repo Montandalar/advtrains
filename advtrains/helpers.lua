@@ -445,3 +445,28 @@ atdebug("pts",os.clock()-t1,"s")
 ]]
 
 
+-- Function to check whether a position is near (within range of) any player
+function advtrains.position_in_range(pos, range)
+	if not pos then
+		return true
+	end
+	for _,p in pairs(minetest.get_connected_players()) do
+		if vector.distance(p:get_pos(),pos)<=range then
+			return true
+		end
+	end
+	return false
+end
+
+local active_node_range = tonumber(minetest.settings:get("active_block_range"))*16 + 16
+-- Function to check whether node at position(pos) is "loaded"/"active"
+-- That is, whether it is within the active_block_range to a player
+if minetest.is_block_active then -- define function differently whether minetest.is_block_active is available or not
+	advtrains.is_node_loaded = minetest.is_block_active
+else
+	function advtrains.is_node_loaded(pos)
+		if advtrains.position_in_range(pos, active_node_range) then
+			return true
+		end
+	end
+end
