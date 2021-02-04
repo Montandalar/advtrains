@@ -125,7 +125,9 @@ function ac.run_in_env(pos, evtdata, customfct_p)
 	if minetest.global_exists("digiline") then
 		customfct.digiline_send=function(channel, msg)
 			assertt(channel, "string")
-			digiline:receptor_send(pos, digiline.rules.default, channel, msg)
+			if advtrains.is_node_loaded(pos) then
+				digiline:receptor_send(pos, digiline.rules.default, channel, msg)
+			end
 		end
 	end
 	-- add lines scheduler if enabled

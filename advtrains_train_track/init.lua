@@ -318,9 +318,14 @@ if mesecon then
 					}
 				},
 				advtrains = {
+					on_updated_from_nodedb = function(pos, node)
+						mesecon.receptor_off(pos, advtrains.meseconrules)
+					end,
 					on_train_enter=function(pos, train_id)
 						advtrains.ndb.swap_node(pos, {name="advtrains:dtrack_detector_on".."_"..suffix..rotation, param2=advtrains.ndb.get_node(pos).param2})
-						mesecon.receptor_on(pos, advtrains.meseconrules)
+						if advtrains.is_node_loaded(pos) then
+							mesecon.receptor_on(pos, advtrains.meseconrules)
+						end
 					end
 				}
 			}
@@ -343,9 +348,14 @@ if mesecon then
 					}
 				},
 				advtrains = {
+					on_updated_from_nodedb = function(pos, node)
+						mesecon.receptor_on(pos, advtrains.meseconrules)
+					end,
 					on_train_leave=function(pos, train_id)
 						advtrains.ndb.swap_node(pos, {name="advtrains:dtrack_detector_off".."_"..suffix..rotation, param2=advtrains.ndb.get_node(pos).param2})
-						mesecon.receptor_off(pos, advtrains.meseconrules)
+						if advtrains.is_node_loaded(pos) then
+							mesecon.receptor_off(pos, advtrains.meseconrules)
+						end
 					end
 				}
 			}

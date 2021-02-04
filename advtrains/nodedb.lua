@@ -294,11 +294,12 @@ ndb.run_lbm = function(pos, node)
 				ndb.update(pos, node)
 			else
 				if (nodeid~=node.name or param2~=node.param2) then
-					atprint("nodedb: lbm replaced", pos, "with nodeid", nodeid, "param2", param2, "cid is", cid)
-					minetest.swap_node(pos, {name=nodeid, param2 = param2})
+					--atprint("nodedb: lbm replaced", pos, "with nodeid", nodeid, "param2", param2, "cid is", cid)
+					local newnode = {name=nodeid, param2 = param2}
+					minetest.swap_node(pos, newnode)
 					local ndef=minetest.registered_nodes[nodeid]
-					if ndef and ndef.on_updated_from_nodedb then
-						ndef.on_updated_from_nodedb(pos, node)
+					if ndef and ndef.advtrains and ndef.advtrains.on_updated_from_nodedb then
+						ndef.advtrains.on_updated_from_nodedb(pos, newnode)
 					end
 					return true
 				end
