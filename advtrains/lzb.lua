@@ -75,6 +75,12 @@ local function resolve_latest_lzbdata(ckp, index)
 end
 
 local function look_ahead(id, train)
+	local lzb = train.lzb
+	if lzb.zero_checkpoint then
+		-- if the checkpoints list contains a zero checkpoint, don't look ahead
+		-- in order to not trigger approach callbacks on the wrong path
+		return
+	end
 	
 	local acc = advtrains.get_acceleration(train, 1)
 	-- worst-case: the starting point is maximum speed
@@ -88,7 +94,6 @@ local function look_ahead(id, train)
 	
 	--local aware_i = advtrains.path_get_index_by_offset(train, brake_i, AWARE_ZONE)
 	
-	local lzb = train.lzb
 	local trav = lzb.trav_index
 	-- retrieve latest lzbdata
 	if not lzb.trav_lzbdata then
@@ -99,7 +104,7 @@ local function look_ahead(id, train)
 		--previous position was off track, do not scan any further
 	end
 	
-	while trav <= brake_i do
+	while trav <= brake_i and not lzb.zero_checkpoint do
 		local pos = advtrains.path_get(train, trav)
 		-- check offtrack
 		if trav - 1 == train.path_trk_f then
@@ -147,6 +152,11 @@ local function apply_checkpoint_to_path(train, checkpoint)
 		return
 	end
 	atprint("LZB: applying checkpoint: i=",checkpoint.index,"s=",checkpoint.speed)
+	
+	if checkpoint.speed == 0 then
+		train.lzb.zero_checkpoint = true
+	end
+	
 	-- make sure path exists until checkpoint
 	local pos = advtrains.path_get(train, checkpoint.index)
 	
@@ -172,7 +182,6 @@ local function apply_checkpoint_to_path(train, checkpoint)
 		c_speed = math.sqrt( (c_speed * c_speed) - (2 * brake_accel * eldist) )
 		index = index - 1
 	end
-	
 end
 
 --[[
@@ -209,6 +218,7 @@ function advtrains.lzb_invalidate_ahead(train, start_idx)
 		train.lzb.trav_lzbdata = nil
 		-- re-apply all checkpoints to path_speed
 		train.path_speed = {}
+		train.lzb.zero_checkpoint = false
 		for _,ckp in ipairs(train.lzb.checkpoints) do
 			apply_checkpoint_to_path(train, ckp)
 		end
