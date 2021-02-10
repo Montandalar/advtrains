@@ -186,7 +186,7 @@ local function convert_aspect_if_necessary(asp)
 		else
 			newasp.main = 0
 		end
-		if asp.dst.free then
+		if asp.dst and asp.dst.free then
 			newasp.dst = asp.dst.speed
 		else
 			newasp.dst = 0
