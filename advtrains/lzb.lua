@@ -259,7 +259,6 @@ end)
 
 advtrains.te_register_on_invalidate_ahead(function(id, train, start_idx)
 	advtrains.lzb_invalidate_ahead(train, start_idx)
-	look_ahead(id, train)
 end)
 
 advtrains.te_register_on_update(function(id, train)
