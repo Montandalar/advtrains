@@ -186,6 +186,9 @@ function advtrains.hud_train_format(train, flip)
 	
 	local tlev=train.lever or 1
 	if train.velocity==0 and not train.active_control then tlev=1 end
+	if train.hud_lzb_effect_tmr then
+		tlev=1
+	end
 	
 	local ht = {"[combine:440x110:0,0=(advtrains_hud_bg.png^[resize\\:440x110)"}
 	local st = {}
@@ -286,7 +289,7 @@ function advtrains.hud_train_format(train, flip)
 					ht[#ht+1] = sformat("%d,50=(advtrains_hud_arrow.png^[multiply\\:red^[makealpha\\:#000000)", 1+spd*11) 
 				end
 				local floor = math.floor
-				local dist = floor(((oc[i].idx or train.index)-train.index))
+				local dist = floor(((oc[i].index or train.index)-train.index))
 				dist = math.max(0, math.min(999, dist))
 				for j = 1, 3, 1 do
 					sevenseg(floor((dist/10^(3-j))%10), 119+j*11, 18, 4, 2, "[colorize\\:"..c)
