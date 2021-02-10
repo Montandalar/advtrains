@@ -43,7 +43,7 @@ function advtrains.on_control_change(pc, train, flip)
 	else
 		local act=false
 		if pc.jump then
-			train.ctrl.user = 1
+			train.ctrl_user = 1
 			act=true
 		end
 		-- If atc command set, only "Jump" key can clear command. To prevent accidental control.
@@ -51,15 +51,15 @@ function advtrains.on_control_change(pc, train, flip)
 			return
 		end
 		if pc.up then
-		   train.ctrl.user=4
+		   train.ctrl_user=4
 		   act=true
 		end
 		if pc.down then
 			if train.velocity>0 then
 				if pc.jump then
-					train.ctrl.user = 0
+					train.ctrl_user = 0
 				else
-					train.ctrl.user = 2
+					train.ctrl_user = 2
 				end
 				act=true
 			else
@@ -82,7 +82,7 @@ function advtrains.on_control_change(pc, train, flip)
 			end
 		end
 		if not act then
-			train.ctrl.user = nil
+			train.ctrl_user = nil
 		end
 	end
 end
