@@ -142,6 +142,10 @@ end
 -- Keeps the path intact, but invalidates all path nodes from the specified index (inclusive)
 -- onwards. This has the advantage that we don't need to recalculate the whole path, and we can do it synchronously.
 function advtrains.path_invalidate_ahead(train, start_idx, ignore_when_passed)
+	if not train.path then
+		-- the path wasn't even initialized. Nothing to do
+		return
+	end
 
 	local idx = atfloor(start_idx)
 	--atdebug("Invalidate_ahead:",train.id,"start_index",start_idx,"cur_idx",train.index)
