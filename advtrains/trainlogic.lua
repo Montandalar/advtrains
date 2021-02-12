@@ -339,6 +339,10 @@ function advtrains.train_step_b(id, train, dtime)
 	advtrains.path_get(train, atfloor(train.index + 2))
 	advtrains.path_get(train, atfloor(train.end_index - 1))
 	
+	-- run pre-move hooks
+	-- TODO: if more pre-move hooks are added, make a separate callback hook
+	advtrains.lzb_look_ahead(id, train)
+	
 	--[[ again, new velocity control:
 	There are two heterogenous means of control:
 	-> set a fixed acceleration and ignore speed (user)

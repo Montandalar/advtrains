@@ -123,6 +123,8 @@ local function look_ahead(id, train)
 	lzb.trav_index = trav
 	
 end
+advtrains.lzb_look_ahead = look_ahead
+
 
 local function call_runover_callbacks(id, train)
 	if not train.lzb then return end
@@ -254,7 +256,8 @@ end
 
 advtrains.te_register_on_new_path(function(id, train)
 	advtrains.lzb_invalidate(train)
-	look_ahead(id, train)
+	-- Taken care of in pre-move hook (see train_step_b)
+	--look_ahead(id, train)
 end)
 
 advtrains.te_register_on_invalidate_ahead(function(id, train, start_idx)
@@ -266,6 +269,8 @@ advtrains.te_register_on_update(function(id, train)
 		atprint("LZB run: no path on train, skip step")
 		return
 	end
-	look_ahead(id, train)
+	-- Note: look_ahead called from train_step_b before applying movement
+	-- TODO: if more pre-move hooks are added, make a separate callback hook
+	--look_ahead(id, train)
 	call_runover_callbacks(id, train)
 end, true)
