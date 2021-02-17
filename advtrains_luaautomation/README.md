@@ -1,7 +1,9 @@
 
 # Advtrains - Lua Automation features
 
-This mod offers components that run LUA code and interface with each other through a global environment. It makes complex automated railway systems possible. The mod is sometimes abbreviated as 'atlatc'. This stands for AdvTrainsLuaATC. This short name has been chosen for user convenience, since the name of this mod ('advtrains_luaautomation') is very long.
+This mod offers components that run LUA code and interface with each other through a global environment. It makes complex automated railway systems possible. The mod is sometimes abbreviated as 'LuaATC' or 'atlatc'. This stands for AdvTrainsLuaATC. This short name has been chosen for user convenience, since the name of this mod ('advtrains_luaautomation') is very long.
+
+A probably more complete documentation of LuaATC is found on the [Advtrains Wiki](http://advtrains.de/wiki/doku.php?id=usage:atlatc:start)
 
 ## Privileges
 To perform any operations using this mod (except executing operation panels), players need the "atlatc" privilege.
@@ -39,41 +41,6 @@ The following standard Lua functions are available:
  - `unpack`
 
 Any attempt to overwrite the predefined values results in an error.
-
-## Components and Events
-
-### Components
-Atlac components introduce automation-capable components that fall within two categories:
- - Active Components are components that are able to run Lua code, triggered by specific events.
- - Passive Components can't perform actions themselves. Their state can be read and set by active components or manually by the player.
- 
-
-
-## Functions and Variables
-
-### Events
-The event table is a variable created locally by the component being triggered. It is a table with the following format:
-```lua
-event = {
-	type = "<event type>",
-	<event type> = true,
-	--additional event-specific content
-}
-```
-You can check the event type by using the following:
-```lua 
-if event.type == "wanted" then
-	--do stuff
-end
-```
-or
-```lua
-if event.wanted then
-	--do stuff
-end
-````
-where `wanted` is the event type to check for.  
-See the "Active Components" section below for details on the various event types as not all of them are applicable to all components.
 
 ### LuaAutomation Global Variables
  - `S`
@@ -169,72 +136,64 @@ asp = {
 ```
 As of January 2020, the 'dst', 'call_on' and 'dead_end' fields are not used.
 
-# Lines
+#### Lines
 
 The advtrains_line_automation component adds a few contraptions that should make creating timeable systems easier.
 Part of its functionality is also available in LuaATC:
 
-- rwt.* - all Railway Time functions are included as documented in https://advtrains.de/wiki/doku.php?id=dev:lines:rwt
+- `rwt.*` - all Railway Time functions are included as documented in [the wiki](https://advtrains.de/wiki/doku.php?id=dev:lines:rwt)
 
-- schedule(rw_time, msg)
-- schedule_in(rw_dtime, msg)
-Schedules an event of type {type="schedule", schedule=true, msg=msg} at (resp. after) the specified railway time.
-(which can be in any format). You can only schedule one event this way. (uses the new lines-internal scheduler)
+ - `schedule(rw_time, msg)`, `schedule_in(rw_dtime, msg)`
+Schedules an event of type {type="schedule", schedule=true, msg=msg} at (resp. after) the specified railway time (which can be in any format). You can only schedule one event this way. (uses the new lines-internal scheduler)
 
-## Components and events
+Note: Using the lines scheduler is preferred over using `interrupt()`, as it's more performant and safer to use.
 
-The event table is a table of the following format:
-{
-	type = "<type>",
-	<type> = true,
-	... additional content ...
+## Events
+The event table is a variable created locally by the component being triggered. It is a table with the following format:
+```lua
+event = {
+	type = "<event type>",
+	<event type> = true,
+	--additional event-specific content
 }
-You can check for the event type by either using
-if event.type == "wanted" then ...do stuff... end
-or
-if event.wanted then ...do stuff... end
-(if 'wanted' is the event type to check for)
-
-# Init code
-The initialization code is not a component as such, but rather a part of the whole environment. It can (and should) be used to make definitions that other components can refer to.
-Examples:
-A function to define behavior for trains in subway stations:
-function F.station()
-	if event.train then atc_send("B0WOL") end
-	if event.int and event.message="depart" then atc_send("OCD1SM") end
-end
-
-The init code is run whenever the F table needs to be refilled with data. This is the case on server startup and whenever the init code is changed and you choose to run it.
-Functions are run in the environment of the currently active node, regardless of where they were defined. So, the 'event' table always reflects the state of the calling node.
-
-The 'event' table of the init code is always {type="init", init=true}.
-
-### Active Component
-#### Lua ATC Rails
-Lua ATC rails are the only components that can actually interface with trains. The following event types are available to the Lua ATC rails:
- - ```lua
-{type="train", train=true, id="<train_id>"}
 ```
+You can check the event type by using the following:
+```lua 
+if event.type == "wanted" then
+	--do stuff
+end
+```
+or
+```lua
+if event.wanted then
+	--do stuff
+end
+```
+where `wanted` is the event type to check for.  
+See the "Active Components" section below for details on the various event types as not all of them are applicable to all components.
+
+## Components
+Atlac components introduce automation-capable components that fall within two categories:
+ - Active Components are components that are able to run Lua code, triggered by specific events.
+ - Passive Components can't perform actions themselves. Their state can be read and set by active components or manually by the player.
+
+### Lua ATC Rails
+Lua ATC rails are the only components that can actually interface with trains. The following event types are available to the Lua ATC rails:
+ - `{type="train", train=true, id="<train_id>"}`
 	* This event is fired when a train enters the rail. The field `id` is the unique train ID, which is 6-digit random numerical string.
 	* If the world contains trains from an older advtrains version, this string may be longer and contain a dot `.`
 
- - ```lua
-{type="int", int=true, msg=<message>}
-```
+ - `{type="int", int=true, msg=<message>}`
 	* Fired when an interrupt set by the `interrupt` function runs out. `<message>` is the message passed to the interrupt function.
 	* For backwards compatiblity reasons, `<message>` is also contained in an `event.message` variable.
 
- - ```lua
-{type="ext_int", ext_int=true, message=<message>}
-```
+ - `{type="ext_int", ext_int=true, message=<message>}`
 	* Fired when another node called `interrupt_pos` on this position. `message` is the message passed to the interrupt_pos function.
 
- - ```lua
-{type="digiline", digiline=true, channel=<channel>, msg=<message>}
-```
+ - `{type="digiline", digiline=true, channel=<channel>, msg=<message>}`
 	* Fired when the controller receives a digiline message.
 
-##### Basic Lua Rail Functions and Variables
+#### Basic Lua Rail Functions and Variables
 In addition to the above environment functions, the following functions are available to whilst the train is in contact with the LuaATC rail:
 
  - `atc_send(<atc_command>)`
@@ -276,7 +235,7 @@ In addition to the above environment functions, the following functions are avai
 	Sets the "Routingcode" property of the train (a string).
 	The interlocking system uses this property for Automatic Routesetting.
 
-##### Shunting Functions and Variables
+#### Shunting Functions and Variables
 There are several functions available especially for shunting operations. Some of these functions make use of Freight Codes (FC) set in the Wagon Properties of each wagon and/or locomotive:
 
  - `split_at_index(index, atc_command)`
@@ -301,8 +260,6 @@ There are several functions available especially for shunting operations. Some o
 	Command: `split_at_fc(<atc_command>,3)`  
 	Result: `"foo" "foo" "foo"` and `"foo" "bar" "bar"`  
 	The function returns `"foo"` in this case.
-
-	
 
  - `split_off_locomotive(command, len)`
 	Splits off the locomotives at the front of the train, which are
@@ -330,46 +287,56 @@ There are several functions available especially for shunting operations. Some o
 	Unsets autocouple mode
 
 Deprecated:
+
  - `set_shunt()`, `unset_shunt()`
 	deprecated aliases for set_autocouple() and unset_autocouple(), will be removed from a later release.
 
--- This additional function is available when advtrains_interlocking is enabled: --
 
-atc_set_disable_ars(boolean)
+#### Interlocking
+This additional function is available when advtrains_interlocking is enabled:
+
+ - `atc_set_disable_ars(boolean)`
 	Disables (true) or enables (false) the use of ARS for this train. The train will not trigger ARS (automatic route setting) on signals then.
-	Note: If you want to disable ARS from an approach callback, the call to atc_set_disable_ars(true) must happen during the approach callback,
-	and may not be deferred to an interrupt(). Else the train might trigger an ARS before the interrupt fires.
+	
+	Note: If you want to disable ARS from an approach callback, the call to `atc_set_disable_ars(true)` *must* happen during the approach callback, and may not be deferred to an interrupt(). Else the train might trigger an ARS before the interrupt fires.
 
-# Approach callbacks
+#### Approach callbacks
 The LuaATC interface provides a way to hook into the approach callback system, which is for example used in the TSR rails (provided by advtrains_interlocking) or the station tracks (provided by advtrains_lines). However, for compatibility reasons, this behavior needs to be explicitly enabled.
 
 Enabling the receiving of approach events works by setting a variable in the local environment of the ATC rail, by inserting the following code:
 
+```lua
 __approach_callback_mode = 1
 -- to receive approach callbacks only in arrow direction
 -- or alternatively
 __approach_callback_mode = 2
 -- to receive approach callbacks in both directions
+```
 
 The following event will be emitted when a train approaches:
+```lua
 {type="approach", approach=true, id="<train_id>"}
+```
 
 Please note these important considerations when using approach callbacks:
-- Approach events might be generated multiple times for the same approaching train. If you are using atc_set_lzb_tsr(), you need to call this function on every run of the approach callback, even if you issued it before for the same train.
-- A reference to the train is available while executing this event, so that functions such as atc_send() or atc_set_text_outside() can be called. On any consecutive interrupts, that reference will no longer be available until the train enters the track ("train" event)
-- Unlike all other callbacks, approach callbacks are executed synchronous during the train step. This may cause unexpected side effects when performing certain actions (such as switching turnouts, setting signals/routes) from inside such a callback. I strongly encourage you to only run things that are absolutely necessary at this point in time, and defer anything else to an interrupt(). Be aware that certain things might trigger unexpected behavior.
+
+ - Approach events might be generated multiple times for the same approaching train. If you are using atc_set_lzb_tsr(), you need to call this function on every run of the approach callback, even if you issued it before for the same train.
+ - A reference to the train is available while executing this event, so that functions such as atc_send() or atc_set_text_outside() can be called. On any consecutive interrupts, that reference will no longer be available until the train enters the track ("train" event)
+ - Unlike all other callbacks, approach callbacks are executed synchronous during the train step. This may cause unexpected side effects when performing certain actions (such as switching turnouts, setting signals/routes) from inside such a callback. I strongly encourage you to only run things that are absolutely necessary at this point in time, and defer anything else to an interrupt(). Be aware that certain things might trigger unexpected behavior.
 
 Operations that are safe to execute in approach callbacks:
-- anything related only to the global environment (setting things in S)
-- digiline_send()
-- atc_set_text_*()
-- atc_set_lzb_tsr() (see below)
+
+ - anything related only to the global environment (setting things in S)
+ - digiline_send()
+ - atc_set_text_*()
+ - atc_set_lzb_tsr() (see below)
 
 In the context of approach callbacks, one more function is available:
-atc_set_lzb_tsr(speed)
-	Impose a Temporary Speed Restriction at the location of this rail, making the train pass this rail at the specified speed. (Causes the same behavior as the TSR rail)
 
-##### Timetable Automation
+ - `atc_set_lzb_tsr(speed)`
+Impose a Temporary Speed Restriction at the location of this rail, making the train pass this rail at the specified speed. (Causes the same behavior as the TSR rail)
+
+#### Timetable Automation
 
 The advtrains_line_automation component adds a few contraptions that should make creating timeable systems easier.
 Part of its functionality is also available in LuaATC:
@@ -381,12 +348,12 @@ All Railway Time functions are included as documented in https://advtrains.de/wi
 - `schedule_in(rw_dtime, msg)`
 Schedules the following event `{type="schedule", schedule=true, msg=msg}` at (resp. after) the specified railway time (which can be in any format). You can only schedule one event this way. Uses the new lines-internal scheduler.
 
-#### Operator panel
+### Operator panel
 This simple node executes its actions when punched. It can be used to change a switch and update the corresponding signals or similar applications. It can also be connected to by the`digilines` mod.
 
 The event fired is `{type="punch", punch=true}` by default. In case of an interrupt or a digiline message, the events are similar to the ones of the ATC rail.
 
-#### Init code
+### Init code
 The initialization code is not a component as such, but rather a part of the whole environment. It can (and should) be used to make definitions that other components can refer to.  
 A basic example function to define behavior for trains in stations:
 ```lua
@@ -401,12 +368,12 @@ function F.station(station_name)
 		atc_send("OCD1SM")
 	end
 end
-````
+```
 
 The corresponding Lua ATC Rail(s) would then contain the following or similar:  
-````lua
+```lua
 F.station("Main Station")
-````
+```
 
 The init code is run whenever the F table needs to be refilled with data. This is the case on server startup and whenever the init code is changed and you choose to run it.
 The event table of the init code is always `{type="init", init=true}` and can not be anything else.  
@@ -419,15 +386,18 @@ Each node below has been mapped to specific "states":
 
 #### Signals
 The red/green light signals `advtrains:signal_on/off` are interfaceable. Others such as `advtrains:retrosignal_on/off` are not. If advtrains_interlocking is enabled, trains will obey the signal if the influence point is set.
+
  - "green" - Signal shows green light
  - "red" - Signal shows red light
 
 #### Switches/Turnouts
-All default rail switches are interfaceable, independent of orientation.  
+All default rail switches are interfaceable, independent of orientation.
+
  - "cr" The switch is set in the direction that is not straight.
  - "st" The switch is set in the direction that is straight.
 
 The "Y" and "3-Way" switches have custom states. Looking from the convergence point:
+
  - "l" The switch is set towards the left.
  - "c" The switch is set towards the center (3-way only).
  - "r" The switch is set towards the right.
@@ -435,10 +405,12 @@ The "Y" and "3-Way" switches have custom states. Looking from the convergence po
 
 #### Mesecon Switch
 The Mesecon switch can be switched using LuaAutomation. Note that this is not possible on levers or protected mesecon switches, only the unprotected full-node 'Switch' block `mesecons_switch:mesecon_switch_on/off`.
+
  - "on" - the switch is switched on.
  - "off" - the switch is switched off.
 
 #### Andrew's Cross
+
  - "on" - it blinks.
  - "off" - it does not blink.
 
@@ -453,4 +425,3 @@ Use `setstate("Stn_P1_out", "green")` instead of `setstate(POS(1,2,3), "green")`
 If `advtrains_interlocking` is enabled, PC-Naming can also be used to name interlocking signals for route setting via the `set_route()` functions.  
 **Important**: The "Signal Name" field in the signalling formspec is completely independent from PC-Naming and can't be used to look up the position. You need to explicitly use the PC-Naming tool.
 
---TODO: Ein paar mehr Codebeispiele wären schön, insbesondere mit os.date und so...
