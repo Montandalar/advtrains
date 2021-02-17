@@ -43,12 +43,78 @@ core.register_chatcommand("env_create", {
 	privs = {atlatc=true},
 	func = function(name, param)
 		if not param or param=="" then return false, "Name required!" end
+		if string.find(param, "[^a-zA-Z0-9-_]") then return false, "Invalid name (only common characters)" end
 		if atlatc.envs[param] then return false, "Environment already exists!" end
 		atlatc.envs[param] = atlatc.env_new(param)
+		atlatc.envs[param].subscribers = {name}
 		return true, "Created environment '"..param.."'. Use '/env_setup "..param.."' to define global initialization code, or start building LuaATC components!"
 	end,
 })
-
+core.register_chatcommand("env_subscribe", {
+	params = "<environment name>",
+	description = "Subscribe to the log of an Advtrains LuaATC environment",
+	privs = {atlatc=true},
+	func = function(name, param)
+		local env=atlatc.envs[param]
+		if not env then return false,"Invalid environment name!" end
+		for _,pname in ipairs(env.subscribers) do
+			if pname==name then
+				return false, "Already subscribed!"
+			end
+		end
+		table.insert(env.subscribers, name)
+		return true, "Subscribed to environment '"..param.."'."
+	end,
+})
+core.register_chatcommand("env_unsubscribe", {
+	params = "<environment name>",
+	description = "Unubscribe to the log of an Advtrains LuaATC environment",
+	privs = {atlatc=true},
+	func = function(name, param)
+		local env=atlatc.envs[param]
+		if not env then return false,"Invalid environment name!" end
+		for index,pname in ipairs(env.subscribers) do
+			if pname==name then
+				table.remove(env.subscribers, index)
+				return true, "Successfully unsubscribed!"
+			end
+		end
+		return false, "Not subscribed to environment '"..param.."'."
+	end,	
+})
+core.register_chatcommand("env_subscriptions", {
+	params = "[environment name]",
+	description = "List Advtrains LuaATC environments you are subscribed to (no parameters) or subscribers of an environment (giving an env name).",
+	privs = {atlatc=true},
+	func = function(name, param)
+		if not param or param=="" then
+			local none=true
+			for envname, env in pairs(atlatc.envs) do
+				for _,pname in ipairs(env.subscribers) do
+					if pname==name then
+						none=false
+						minetest.chat_send_player(name, envname)
+					end
+				end
+			end
+			if none then
+				return false, "Not subscribed to any!"
+			end
+			return true
+		end
+		local env=atlatc.envs[param]
+		if not env then return false,"Invalid environment name!" end
+		local none=true
+		for index,pname in ipairs(env.subscribers) do
+			none=false
+			minetest.chat_send_player(name, pname)
+		end
+		if none then
+			return false, "No subscribers!"
+		end
+		return true
+	end,
+})
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	

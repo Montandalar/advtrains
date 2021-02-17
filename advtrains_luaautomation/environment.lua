@@ -33,12 +33,12 @@ local env_proto={
 		self.sdata=data.sdata and atlatc.remove_invalid_data(data.sdata) or {}
 		self.fdata={}
 		self.init_code=data.init_code or ""
-		self.step_code=data.step_code or ""
+		self.subscribers=data.subscribers or {}
 	end,
 	save = function(self)
 		-- throw any function values out of the sdata table
 		self.sdata = atlatc.remove_invalid_data(self.sdata)
-		return {sdata = self.sdata, init_code=self.init_code, step_code=self.step_code}
+		return {sdata = self.sdata, init_code=self.init_code, subscribers=self.subscribers}
 	end,
 }
 
@@ -49,14 +49,6 @@ local safe_globals = {
 	"assert", "error", "ipairs", "next", "pairs", "select",
 	"tonumber", "tostring", "type", "unpack", "_VERSION"
 }
-
---print is actually minetest.chat_send_all()
---using advtrains.print_concat_table because it's cool
-local function safe_print(t, ...)
-	local str=advtrains.print_concat_table({t, ...})
-	minetest.log("action", "[atlatc] "..str)
-	minetest.chat_send_all(str)
-end
 
 local function safe_date(f, t)
 	if not f then
@@ -95,7 +87,6 @@ local mp=minetest.get_modpath("advtrains_luaautomation")
 
 local static_env = {
 	--core LUA functions
-	print = safe_print,
 	string = {
 		byte = string.byte,
 		char = string.char,
@@ -252,7 +243,6 @@ for _, name in pairs(safe_globals) do
 	static_env[name] = _G[name]
 end
 
-
 --The environment all code calls get is a table that has set static_env as metatable.
 --In general, every variable is local to a single code chunk, but kept persistent over code re-runs. Data is also saved, but functions and userdata and circular references are removed
 --Init code and step code's environments are not saved
@@ -265,6 +255,14 @@ local proxy_env={}
 
 -- returns: true, fenv if successful; nil, error if error 
 function env_proto:execute_code(localenv, code, evtdata, customfct)
+	-- create us a print function specific for this environment
+	if not self.safe_print_func then
+		local myenv = self
+		self.safe_print_func = function(...)
+			myenv:log("info", ...)
+		end
+	end
+	
 	local metatbl ={
 		__index = function(t, i)
 			if i=="S" then
@@ -277,6 +275,8 @@ function env_proto:execute_code(localenv, code, evtdata, customfct)
 				return customfct[i]
 			elseif localenv and localenv[i] then
 				return localenv[i]
+			elseif i=="print" then
+				return self.safe_print_func
 			end
 			return static_env[i]
 		end,
@@ -306,26 +306,30 @@ function env_proto:run_initcode()
 	if self.init_code and self.init_code~="" then
 		local old_fdata=self.fdata
 		self.fdata = {}
-		atprint("[atlatc]Running initialization code for environment '"..self.name.."'")
+		--atprint("[atlatc]Running initialization code for environment '"..self.name.."'")
 		local succ, err = self:execute_code({}, self.init_code, {type="init", init=true})
 		if not succ then
-			atwarn("[atlatc]Executing InitCode for '"..self.name.."' failed:"..err)
+			self:log("error", "Executing InitCode for '"..self.name.."' failed:"..err)
 			self.init_err=err
 			if old_fdata then
 				self.fdata=old_fdata
-				atwarn("[atlatc]The 'F' table has been restored to the previous state.")
+				self:log("warning", "The 'F' table has been restored to the previous state.")
 			end
 		end
 	end
 end
-function env_proto:run_stepcode()
-	if self.step_code and self.step_code~="" then
-		local succ, err = self:execute_code({}, self.step_code, nil, {})
-		if not succ then
-			--TODO
-		end
+
+-- log to environment subscribers. severity can be "error", "warning" or "info" (used by internal print)
+function env_proto:log(severity, ...)
+	local text=advtrains.print_concat_table({"[atlatc "..self.name.." "..severity.."]", ...})
+	minetest.log("action", text)
+	for _, pname in ipairs(self.subscribers) do
+		minetest.chat_send_player(pname, text)
 	end
 end
+
+-- env.subscribers table may be directly altered by callers.
+
 
 --- class interface
 
@@ -333,8 +337,8 @@ function atlatc.env_new(name)
 	local newenv={
 		name=name,
 		init_code="",
-		step_code="",
-		sdata={}
+		sdata={},
+		subscribers={},
 	}
 	setmetatable(newenv, {__index=env_proto})
 	return newenv
@@ -349,11 +353,6 @@ end
 function atlatc.run_initcode()
 	for envname, env in pairs(atlatc.envs) do
 		env:run_initcode()
-	end
-end
-function atlatc.run_stepcode()
-	for envname, env in pairs(atlatc.envs) do
-		env:run_stepcode()
 	end
 end
 

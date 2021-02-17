@@ -109,8 +109,9 @@ function ac.run_in_env(pos, evtdata, customfct_p)
 		atwarn("LuaAutomation component at",ph,": Not an existing environment: "..(nodetbl.env or "<nil>"))
 		return false
 	end
+	local env = atlatc.envs[nodetbl.env]
 	if not nodetbl.code or nodetbl.code=="" then
-		atwarn("LuaAutomation component at",ph,": No code to run! (insert -- to suppress warning)")
+		env:log("warning", "LuaAutomation component at",ph,": No code to run! (insert -- to suppress warning)")
 		return false
 	end
 	
@@ -141,14 +142,14 @@ function ac.run_in_env(pos, evtdata, customfct_p)
 	end
 	
 	local datain=nodetbl.data or {}
-	local succ, dataout = atlatc.envs[nodetbl.env]:execute_code(datain, nodetbl.code, evtdata, customfct)
+	local succ, dataout = env:execute_code(datain, nodetbl.code, evtdata, customfct)
 	if succ then
 		atlatc.active.nodes[ph].data=atlatc.remove_invalid_data(dataout)
 	else
 		atlatc.active.nodes[ph].err=dataout
-		atwarn("LuaAutomation ATC interface rail at",ph,": LUA Error:",dataout)
+		env:log("error", "LuaATC component at",ph,": LUA Error:",dataout)
 		if meta then
-			meta:set_string("infotext", "LuaAutomation ATC interface rail, ERROR:"..dataout)
+			meta:set_string("infotext", "LuaATC component, ERROR:"..dataout)
 		end
 		--TODO temporary
 		--if customfct.atc_id then
