@@ -122,6 +122,18 @@ function ac.run_in_env(pos, evtdata, customfct_p)
 		assert(t >= 0)
 		atlatc.interrupt.add(t, pos, {type="int", int=true, message=imesg, msg=imesg}) --Compatiblity "message" field.
 	end
+	customfct.interrupt_safe=function(t, imesg)
+		assertt(t, "number")
+		assert(t >= 0)
+		if atlatc.interrupt.has_at_pos(pos) then
+			return false
+		end
+		atlatc.interrupt.add(t, pos, {type="int", int=true, message=imesg, msg=imesg}) --Compatiblity "message" field.
+		return true
+	end
+	customfct.clear_interrupts=function()
+		atlatc.interrupt.clear_ints_at_pos(pos)
+	end
 	-- add digiline_send function, if digiline is loaded
 	if minetest.global_exists("digiline") then
 		customfct.digiline_send=function(channel, msg)

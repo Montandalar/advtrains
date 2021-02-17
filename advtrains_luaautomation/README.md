@@ -20,6 +20,13 @@ Create environment with the given name. To be able to do anything, you first nee
  - `/env_setup <env_name>`:
 Invoke the form to edit the environment's initialization code. For more information, see the section on active components. You can also delete an environment from here.
 
+ - `/env_subscribe <env_name>`, `/env_unsubscribe <env_name>`:
+Subscribe or unsubscribe from log/error messages originating from this environment
+
+ - `/env_subscriptions [env_name]`:
+List your subscriptions or players subscribed to an environment.
+
+
 ## Functions and variables
 ### General Functions and Variables
 The following standard Lua libraries are available:
@@ -71,10 +78,16 @@ Set the state of the passive component at position `pos`.
 Checks whether there is a passive component at the position pos (and/or whether a passive component with this name exists)
 
  - `interrupt(time, message)`
-Cause LuaAutomation to trigger an `int` event on this component after the given time in seconds with the specified `message` field. `message` can be of any Lua data type. *Not available in init code.*
+Cause LuaAutomation to trigger an `int` event on this component after the given time in seconds with the specified `message` field. `message` can be of any Lua data type. Returns true. *Not available in init code.*
+
+ - `interrupt_safe(time, message)`
+Like `interrupt()`, but does not add an interrupt and returns false when an interrupt (of any type) is already present for this component. Returns true when interrupt was successfully added.
 
  - `interrupt_pos(pos, message)`
 Immediately trigger an `ext_int` event on the active component at position pos. `message` is like in interrupt(). Use with care, or better **_don't use_**! Incorrect use can result in **_expotential growth of interrupts_**.
+
+ - `clear_interrupts()`
+Removes any pending interrupts of this node.
 
  - `digiline_send(channel, message)`
 Make this active component send a digiline message on the specified channel.
