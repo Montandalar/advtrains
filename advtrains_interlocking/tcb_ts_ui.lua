@@ -118,6 +118,16 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 	end,
 })
 
+
+-- Crafting
+minetest.register_craft({
+	output = 'advtrains_interlocking:tcb_node 4',
+	recipe = {
+		{'mesecons:wire_00000000_off', 'basic_materials:ic', 'mesecons:wire_00000000_off'},
+	},
+})
+
+
 minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 	local pname = player:get_player_name()
 	if not minetest.check_player_privs(pname, "interlocking") then

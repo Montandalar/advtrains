@@ -298,6 +298,29 @@ advtrains.register_tracks("default", {
 	end
 				     }, advtrains.trackpresets.t_30deg_straightonly)
 
+minetest.register_craft({
+	type="shapeless",
+	output = 'advtrains:dtrack_load_placer',
+	recipe = {
+		"advtrains:dtrack_placer",
+		"basic_materials:ic",
+		"default:chest"
+	},
+})
+minetest.register_craft({
+	type="shapeless",
+	output = 'advtrains:dtrack_unload_placer',
+	recipe = {
+		"advtrains:dtrack_load_placer",
+	},
+})
+minetest.register_craft({
+	type="shapeless",
+	output = 'advtrains:dtrack_load_placer',
+	recipe = {
+		"advtrains:dtrack_unload_placer",
+	},
+})
 
 
 if mesecon then
@@ -361,7 +384,7 @@ if mesecon then
 			}
 		end
 	}, advtrains.ap.t_30deg_straightonly_noplacer)
-	minetest.register_craft({
+minetest.register_craft({
 	type="shapeless",
 	output = 'advtrains:dtrack_detector_off_placer',
 	recipe = {

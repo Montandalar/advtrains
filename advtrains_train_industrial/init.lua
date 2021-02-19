@@ -105,3 +105,45 @@ advtrains.register_wagon("wagon_wood", {
 		box=8*3,
 	},
 }, S("Industrial wood wagon"), "advtrains_wagon_wood_inv.png")
+
+-- Craftings
+
+minetest.register_craft({
+	output = 'advtrains:engine_industrial',
+	recipe = {
+		{'default:steelblock', 'default:steelblock', 'default:steelblock'},
+		{'advtrains:driver_cab', 'default:steelblock', 'default:steelblock'},
+		{'advtrains:wheel', '', 'advtrains:wheel'},
+	},
+})
+
+--Engine Industrial Big
+minetest.register_craft({
+	output = 'advtrains:engine_industrial_big',
+	recipe = {
+		{'default:glass', 'default:steelblock', 'default:steelblock'},
+		{'advtrains:driver_cab', 'default:steelblock', 'default:steelblock'},
+		{'advtrains:wheel', 'advtrains:wheel', 'advtrains:wheel'},
+	},
+})
+
+
+--Industrial tank wagon
+minetest.register_craft({
+	output = 'advtrains:wagon_tank',
+	recipe = {
+		{'default:steelblock', 'default:steel_ingot', 'default:steelblock'},
+		{'advtrains:steelblock', '', 'default:steelblock'},
+		{'advtrains:wheel', 'default:steelblock', 'advtrains:wheel'},
+	},
+})
+
+--Industrial wood wagon
+minetest.register_craft({
+	output = 'advtrains:wagon_wood',
+	recipe = {
+		{'default:steel_ingot', '', 'default:steel_ingot'},
+		{'advtrains:steelblock', 'default:steelblock', 'default:steelblock'},
+		{'advtrains:wheel', '', 'advtrains:wheel'},
+	},
+})

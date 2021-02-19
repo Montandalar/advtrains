@@ -199,7 +199,7 @@ for _, rtab in ipairs({
 				save_in_at_nodedb = 1,
 				not_in_creative_inventory = (rtab.ici and prts.ici) and 0 or 1,
 			},
-			drop = "advtrains_signals_ks:sign_e_0",
+			drop = "advtrains_signals_ks:sign_8_0",
 			inventory_image = "advtrains_signals_ks_sign_8.png",
 			sounds = default.node_sound_stone_defaults(),
 			advtrains = {
@@ -241,3 +241,40 @@ for _, rtab in ipairs({
 	advtrains.trackplacer.add_worked("advtrains_signals_ks:mast","mast", "_"..rot)
 end
 
+-- Crafting
+
+minetest.register_craft({
+	output = "advtrains_signals_ks:hs_danger_0 2",
+	recipe = {
+		{'default:steel_ingot', 'dye:red', 'default:steel_ingot'},
+		{'dye:yellow', 'default:steel_ingot', 'dye:dark_green'},
+		{'default:steel_ingot', 'advtrains_signals_ks:mast_mast_0', 'default:steel_ingot'},
+	},
+})
+
+minetest.register_craft({
+	output = "advtrains_signals_ks:mast_mast_0 10",
+	recipe = {
+		{'default:steel_ingot'},
+		{'dye:cyan'},
+		{'default:steel_ingot'},
+	},
+})
+
+minetest.register_craft({
+	output = "advtrains_signals_ks:ra_danger_0 2",
+	recipe = {
+		{'dye:red', 'dye:white', 'dye:red'},
+		{'dye:white', 'default:steel_ingot', 'default:steel_ingot'},
+		{'default:steel_ingot', 'advtrains_signals_ks:mast_mast_0', 'default:steel_ingot'},
+	},
+})
+
+minetest.register_craft({
+	output = "advtrains_signals_ks:sign_8_0 2",
+	recipe = {
+		{'basic_materials:plastic_sheet', 'dye:black'},
+		{'default:stick', ''},
+		{'default:stick', ''},
+	},
+})

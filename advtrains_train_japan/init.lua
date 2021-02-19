@@ -138,3 +138,25 @@ advtrains.register_wagon("wagon_japan", {
 	drops={"default:steelblock 4"},
 }, S("Japanese Train Wagon"), "advtrains_wagon_japan_inv.png")
 
+-- Crafting
+
+minetest.register_craft({
+	output = 'advtrains:engine_japan',
+	recipe = {
+		{'default:steelblock', 'default:steelblock', ''},
+		{'xpanes:pane_flat', 'default:steelblock', 'xpanes:pane_flat'},
+		{'advtrains:wheel', 'advtrains:wheel', 'advtrains:wheel'},
+	},
+})
+
+minetest.register_craft({
+output = 'advtrains:wagon_japan',
+	recipe = {
+		{'default:steelblock', 'default:steelblock', 'default:steelblock'},
+		{'xpanes:pane_flat', 'default:steelblock', 'xpanes:pane_flat'},
+		{'advtrains:wheel', '', 'advtrains:wheel'},
+	},
+})
+
+
+
