@@ -23,6 +23,16 @@ local adefunc = function(def, preset, suffix, rotation)
 				advtrains.interlocking.npr_rails[pe] = nil
 			end,
 			on_receive_fields = function(pos, formname, fields, player)
+				local pname = player:get_player_name()
+				if not minetest.check_player_privs(pname, {interlocking=true}) then
+					minetest.chat_send_player(pname, "Interlocking privilege required!")
+					return
+				end
+				if minetest.is_protected(pos, pname) then
+					minetest.chat_send_player(pname, "This rail is protected!")
+					minetest.record_protection_violation(pos, pname)
+					return
+				end
 				if fields.npr then
 					local pe = advtrains.encode_pos(pos)
 					advtrains.interlocking.npr_rails[pe] = tonumber(fields.npr)
