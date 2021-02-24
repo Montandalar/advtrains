@@ -120,13 +120,41 @@ minetest.register_node("advtrains_interlocking:tcb_node", {
 
 
 -- Crafting
+
+-- set some fallbacks
+local tcb_core = "default:mese_crystal"
+local tcb_secondary = "default:mese_crystal_fragment"
+
+--alternative recipe items
+--core
+if minetest.get_modpath("basic_materials") then
+	tcb_core = "basic_materials:ic"
+elseif minetest.get_modpath("technic") then
+	tcb_core = "technic:control_logic_unit"
+end
+--print("TCB Core: "..tcb_core)
+--secondary
+if minetest.get_modpath("mesecons") then
+	tcb_secondary = 'mesecons:wire_00000000_off'
+end
+--print("TCB Secondary: "..tcb_secondary)
+
 minetest.register_craft({
 	output = 'advtrains_interlocking:tcb_node 4',
 	recipe = {
-		{'mesecons:wire_00000000_off', 'basic_materials:ic', 'mesecons:wire_00000000_off'},
+		{tcb_secondary,tcb_core,tcb_secondary},
+		{'advtrains:dtrack_placer','','advtrains:dtrack_placer'}
 	},
+	--actually use track in the tcb recipe
+	replacements = {
+		{"advtrains:dtrack_placer","advtrains:dtrack_placer"},
+		{"advtrains:dtrack_placer","advtrains:dtrack_placer"},
+	}
 })
 
+--nil the temp crafting variables
+tcb_core= nil
+tcb_secondary = nil
 
 minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
 	local pname = player:get_player_name()

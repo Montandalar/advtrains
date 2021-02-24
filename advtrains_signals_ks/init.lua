@@ -270,11 +270,18 @@ minetest.register_craft({
 	},
 })
 
+local sign_material = "default:sign_wall_steel" --fallback
+if minetest.get_modpath("basic_materials") then
+	sign_material = "basic_materials:plastic_sheet"
+end
+--print("Sign Material: "..sign_material)
+
 minetest.register_craft({
 	output = "advtrains_signals_ks:sign_8_0 2",
 	recipe = {
-		{'basic_materials:plastic_sheet', 'dye:black'},
+		{sign_material, 'dye:black'},
 		{'default:stick', ''},
 		{'default:stick', ''},
 	},
 })
+sign_material = nil

@@ -298,15 +298,27 @@ advtrains.register_tracks("default", {
 	end
 				     }, advtrains.trackpresets.t_30deg_straightonly)
 
+-- mod-dependent crafts
+local loader_core = "default:mese_crystal"  --fallback
+if minetest.get_modpath("basic_materials") then
+	loader_core = "basic_materials:ic"
+elseif minetest.get_modpath("technic") then
+	loader_core = "technic:control_logic_unit"
+end
+--print("Loader Core: "..loader_core)
+
 minetest.register_craft({
 	type="shapeless",
 	output = 'advtrains:dtrack_load_placer',
 	recipe = {
 		"advtrains:dtrack_placer",
-		"basic_materials:ic",
+		loader_core,
 		"default:chest"
 	},
 })
+loader_core = nil --nil the crafting variable
+
+--craft between load/unload tracks
 minetest.register_craft({
 	type="shapeless",
 	output = 'advtrains:dtrack_unload_placer',
