@@ -153,6 +153,17 @@ local static_env = {
 		local pos=atlatc.pcnaming.resolve_pos(parpos)
 		atlatc.interrupt.add(0, pos, {type="ext_int", ext_int=true, message=imesg})
 	end,
+	-- sends an atc command to train regardless of where it is in the world
+	atc_send_to_train = function(train_id, command)
+		assertt(command, "string")
+		local train = advtrains.trains[train_id]
+		if train then
+			advtrains.atc.train_set_command(train, command, true)
+			return true
+		else
+			return false
+		end
+	end,
 }
 
 -- If interlocking is present, enable route setting functions

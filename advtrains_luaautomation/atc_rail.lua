@@ -151,6 +151,14 @@ function r.fire_event(pos, evtdata, appr_internal)
 			advtrains.trains[train_id].text_inside=text
 			return true
 		end,
+		atc_get_text_outside = function()
+			if not train_id then return false end
+			return advtrains.trains[train_id].text_outside
+		end,
+		atc_get_text_inside = function(text)
+			if not train_id then return false end
+			return advtrains.trains[train_id].text_inside
+		end,
 		atc_set_lzb_tsr = function(speed)
 			if not appr_internal then
 				error("atc_set_lzb_tsr() can only be used during 'approach' events!")

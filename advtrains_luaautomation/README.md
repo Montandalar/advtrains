@@ -93,6 +93,9 @@ Removes any pending interrupts of this node.
 Make this active component send a digiline message on the specified channel.
 Not available in init code.
 
+ - `atc_send_to_train(<train_id>, <atc_command>)`
+	Sends the specified ATC command to the train specified by its train id. This happens regardless of where the train is in the world, and can be used to remote-control trains. Returns true on success. If the train ID does not exist, returns false and does nothing. See [atc_command.txt](../atc_command.txt) for the ATC command syntax.
+
 #### Interlocking Route Management Functions
 If `advtrains_interlocking` is enabled, the following aditional functions can be used:
 
@@ -229,6 +232,9 @@ In addition to the above environment functions, the following functions are avai
 
  - `atc_set_text_inside(text)`
 	Set text shown to train passengers. Pass nil to show no text. `text` must be a string.
+
+ - `atc_set_text_inside(text) / atc_set_text_outside(text)`
+	Getters for inside/outside text, return nil when no train is there.
 
  - `get_line()`
 	Returns the "Line" property of the train (a string).
