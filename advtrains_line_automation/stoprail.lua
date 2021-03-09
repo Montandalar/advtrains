@@ -50,19 +50,18 @@ local function show_stoprailform(pos, player)
 	end
 	
 	local form = "size[8,7]"
-	form = form.."field[0.5,0.5;7,1;stn;"..attrans("Station Code")..";"..minetest.formspec_escape(stdata.stn).."]"
-	form = form.."field[0.5,1.5;7,1;stnname;"..attrans("Station Name")..";"..minetest.formspec_escape(stnname).."]"
-	form = form.."field[0.5,2.5;1.5,1;ddelay;"..attrans("Door Delay")..";"..minetest.formspec_escape(stdata.ddelay).."]"
-	form = form.."field[2,2.5;2,1;speed;"..attrans("Departure Speed")..";"..minetest.formspec_escape(stdata.speed).."]"
-	form = form.."checkbox[5,1.75;reverse;"..attrans("Reverse train")..";"..(stdata.reverse and "true" or "false").."]"
-	form = form.."checkbox[5,2.0;kick;"..attrans("Kick out passengers")..";"..(stdata.kick and "true" or "false").."]"
-	form = form.."label[0.5,3;Door side:]"
-	form = form.."dropdown[0.5,3;2;doors;Left,Right,Closed;"..door_dropdown[stdata.doors].."]"	
-	form = form.."field[5,3.5;2,1;track;"..attrans("Track")..";"..minetest.formspec_escape(stdata.track).."]"
-	form = form.."field[5,4.5;2,1;wait;"..attrans("Stop Time")..";"..stdata.wait.."]"
-	
-	form = form.."textarea[0.5,4;4,2;ars;Trains stopping here (ARS rules);"..advtrains.interlocking.ars_to_text(stdata.ars).."]"
-	
+	form = form.."style[stn,ars;font=mono]"
+	form = form.."field[0.8,0.8;2,1;stn;"..attrans("Station Code")..";"..minetest.formspec_escape(stdata.stn).."]"
+	form = form.."field[2.8,0.8;5,1;stnname;"..attrans("Station Name")..";"..minetest.formspec_escape(stnname).."]"
+	form = form.."field[0.80,2.0;1.75,1;ddelay;"..attrans("Door Delay")..";"..minetest.formspec_escape(stdata.ddelay).."]"
+	form = form.."field[2.55,2.0;1.75,1;speed;"..attrans("Dep. Speed")..";"..minetest.formspec_escape(stdata.speed).."]"
+	form = form.."field[4.30,2.0;1.75,1;track;"..attrans("Track")..";"..minetest.formspec_escape(stdata.track).."]"
+	form = form.."field[6.05,2.0;1.75,1;wait;"..attrans("Stop Time")..";"..stdata.wait.."]"
+	form = form.."label[0.5,2.6;"..attrans("Door Side").."]"
+	form = form.."dropdown[0.51,3.0;2;doors;Left,Right,Closed;"..door_dropdown[stdata.doors].."]"
+	form = form.."checkbox[3.00,2.7;reverse;"..attrans("Reverse train")..";"..(stdata.reverse and "true" or "false").."]"
+	form = form.."checkbox[3.00,3.1;kick;"..attrans("Kick out passengers")..";"..(stdata.kick and "true" or "false").."]"
+	form = form.."textarea[0.8,4.2;7,2;ars;Trains stopping here (ARS rules);"..advtrains.interlocking.ars_to_text(stdata.ars).."]"
 	form = form.."button[0.5,6;7,1;save;"..attrans("Save").."]"
 	
 	minetest.show_formspec(pname, "at_lines_stop_"..pe, form)
