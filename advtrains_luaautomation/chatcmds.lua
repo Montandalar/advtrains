@@ -1,30 +1,16 @@
 --chatcmds.lua
 --Registers commands to modify the init and step code for LuaAutomation
 
---position helper.
---punching a node will result in that position being saved and inserted into a text field on the top of init form.
-local punchpos={}
-
-minetest.register_on_punchnode(function(pos, node, player, pointed_thing)
-	local pname=player:get_player_name()
-	punchpos[pname]=pos
-end)
-
 local function get_init_form(env, pname)
 	local err = env.init_err or ""
 	local code = env.init_code or ""
-	local ppos=punchpos[pname]
-	local pp=""
-	if ppos then
-		pp="POS"..minetest.pos_to_string(ppos)
-	end
+
 	local form = "size[10,10]"
 		.."style[code;font=mono]"
-		.."button[0.0,0.2;2,1;run;Run InitCode]"
-		.."button[2.0,0.2;2,1;cls;Clear S]"
-		.."button[4.0,0.2;2,1;save;Save]"
-		.."button[6.0,0.2;2,1;del;Delete Env.]"
-		.."field[8.3,0.5;2,1;punchpos;Last punched position;"..pp.."]"
+		.."button[0.0,0.2;2.5,1;run;Run Init Code]"
+		.."button[2.5,0.2;2.5,1;cls;Clear S]"
+		.."button[5.0,0.2;2.5,1;save;Save]"
+		.."button[7.5,0.2;2.5,1;del;Delete Env.]"
 		.."textarea[0.3,1.5;10,9.5;code;Environment initialization code;"..minetest.formspec_escape(code).."]"
 		.."label[0.0,9.7;"..err.."]"
 	return form
