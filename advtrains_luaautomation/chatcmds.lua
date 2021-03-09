@@ -18,10 +18,15 @@ local function get_init_form(env, pname)
 	if ppos then
 		pp="POS"..minetest.pos_to_string(ppos)
 	end
-	local form = "size[10,10]button[0,0;2,1;run;Run InitCode]button[2,0;2,1;cls;Clear S]"
-		.."button[4,0;2,1;save;Save] button[6,0;2,1;del;Delete Env.] field[8.1,0.5;2,1;punchpos;Last punched position;"..pp.."]"
-		.."textarea[0.2,1;10,10;code;Environment initialization code;"..minetest.formspec_escape(code).."]"
-		.."label[0,9.8;"..err.."]"
+	local form = "size[10,10]"
+		.."style[code;font=mono]"
+		.."button[0.0,0.2;2,1;run;Run InitCode]"
+		.."button[2.0,0.2;2,1;cls;Clear S]"
+		.."button[4.0,0.2;2,1;save;Save]"
+		.."button[6.0,0.2;2,1;del;Delete Env.]"
+		.."field[8.3,0.5;2,1;punchpos;Last punched position;"..pp.."]"
+		.."textarea[0.3,1.5;10,9.5;code;Environment initialization code;"..minetest.formspec_escape(code).."]"
+		.."label[0.0,9.7;"..err.."]"
 	return form
 end
 
