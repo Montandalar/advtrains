@@ -41,9 +41,14 @@ function ac.getform(pos, meta_p)
 			sel=#envs_asvalues
 		end
 	end
-	local form = "size[10,10]dropdown[0,0;3;env;"..table.concat(envs_asvalues, ",")..";"..sel.."]"
-		.."button[4,0;2,1;save;Save]button[7,0;2,1;cle;Clear local env] textarea[0.2,1;10,10;code;Code;"..minetest.formspec_escape(code).."]"
-		.."label[0,9.8;"..err.."]"
+	local form = "size[10,10]"
+		.."style[code;font=mono]"
+		.."label[0,-0.1;Environment]"
+		.."dropdown[0,0.3;3;env;"..table.concat(envs_asvalues, ",")..";"..sel.."]"
+		.."button[5,0.2;2,1;save;Save]"
+		.."button[7,0.2;3,1;cle;Clear Local Env.]"
+		.."textarea[0.3,1.5;10,9.5;code;Code;"..minetest.formspec_escape(code).."]"
+		.."label[0,9.7;"..err.."]"
 	return form
 end
 
