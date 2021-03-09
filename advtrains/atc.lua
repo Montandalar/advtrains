@@ -174,12 +174,16 @@ function atc.get_atc_controller_formspec(pos, meta)
 	local formspec="size[8,6]"
 	--	"dropdown[0,0;3;mode;static,mesecon,digiline;"..mode.."]"
 	if mode<3 then
-		formspec=formspec.."field[0.5,1.5;7,1;command;"..attrans("Command")..";"..minetest.formspec_escape(command).."]"
+		formspec=formspec
+			.."style[command;font=mono]"
+			.."field[0.8,1.5;7,1;command;"..attrans("Command")..";"..minetest.formspec_escape(command).."]"
 		if tonumber(mode)==2 then
-			formspec=formspec.."field[0.5,3;7,1;command_on;"..attrans("Command (on)")..";"..minetest.formspec_escape(command_on).."]"
+			formspec=formspec
+				.."style[command_on;font=mono]"
+				.."field[0.8,3;7,1;command_on;"..attrans("Command (on)")..";"..minetest.formspec_escape(command_on).."]"
 		end
 	else
-		formspec=formspec.."field[0.5,1.5;7,1;channel;"..attrans("Digiline channel")..";"..minetest.formspec_escape(channel).."]"
+		formspec=formspec.."field[0.8,1.5;7,1;channel;"..attrans("Digiline channel")..";"..minetest.formspec_escape(channel).."]"
 	end
 	return formspec.."button_exit[0.5,4.5;7,1;save;"..attrans("Save").."]"
 end
