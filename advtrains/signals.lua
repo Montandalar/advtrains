@@ -9,6 +9,12 @@ local function can_dig_func(pos)
 	end
 	return true
 end
+local function after_dig_func(pos)
+	if advtrains.interlocking then
+		return advtrains.interlocking.signal_after_dig(pos)
+	end
+	return true
+end
 
 local function aspect(b)
 return {
@@ -97,6 +103,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				supported_aspects = suppasp,
 			},
 			can_dig = can_dig_func,
+			after_dig_node = after_dig_func,
 		})
 		advtrains.trackplacer.add_worked("advtrains:retrosignal", r, rotation, nil)
 		
@@ -163,6 +170,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				end,
 			},
 			can_dig = can_dig_func,
+			after_dig_node = after_dig_func,
 		})
 		advtrains.trackplacer.add_worked("advtrains:signal", r, rotation, nil)
 	end
@@ -232,6 +240,7 @@ for r,f in pairs({on={as="off", ls="green", als="red"}, off={as="on", ls="red", 
 				end,
 			},
 			can_dig = can_dig_func,
+			after_dig_node = after_dig_func,
 		})
 	end
 end

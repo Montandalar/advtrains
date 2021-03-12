@@ -562,9 +562,23 @@ function ildb.set_sigd_for_signal(pos, sigd)
 end
 
 -- checks if there's any influence point set to this position
-function ildb.is_ip_at(pos)
+-- if purge is true, checks whether the associated signal still exists
+-- and deletes the ip if not.
+function ildb.is_ip_at(pos, purge)
 	local pts = advtrains.roundfloorpts(pos)
 	if influence_points[pts] then
+		if purge then
+			-- is there still a signal assigned to it?
+			for connid, sigpos in pairs(influence_points[pts]) do
+				local asp = advtrains.interlocking.signal_get_aspect(sigpos)
+				if not asp then
+					atlog("Clearing orphaned signal influence point", pts, "/", connid)
+					ildb.clear_ip_signal(pts, connid)
+				end
+			end
+			-- if there's no side left after purging, return false
+			if not influence_points[pts] then return false end
+		end
 		return true
 	end
 	return false

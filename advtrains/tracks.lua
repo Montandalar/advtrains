@@ -622,7 +622,7 @@ function advtrains.can_dig_or_modify_track(pos)
 			return false, attrans("There's a Track Circuit Break here.")
 		end
 		-- signal ip?
-		if advtrains.interlocking.db.is_ip_at(pos) then
+		if advtrains.interlocking.db.is_ip_at(pos, true) then -- is_ip_at with purge parameter
 			return false, attrans("There's a Signal Influence Point here.")
 		end
 	end

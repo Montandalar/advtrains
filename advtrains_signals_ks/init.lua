@@ -115,6 +115,7 @@ for _, rtab in ipairs({
 			},
 			on_rightclick = advtrains.interlocking.signal_rc_handler,
 			can_dig = advtrains.interlocking.signal_can_dig,
+			after_dig_node = advtrains.interlocking.signal_after_dig,
 		})
 		-- rotatable by trackworker
 		advtrains.trackplacer.add_worked("advtrains_signals_ks:hs", typ, "_"..rot, prts.n)
@@ -160,6 +161,7 @@ for _, rtab in ipairs({
 			},
 			on_rightclick = advtrains.interlocking.signal_rc_handler,
 			can_dig = advtrains.interlocking.signal_can_dig,
+			after_dig_node = advtrains.interlocking.signal_after_dig,
 		})
 		-- rotatable by trackworker
 		advtrains.trackplacer.add_worked("advtrains_signals_ks:ra", typ, "_"..rot, prts.n)
@@ -210,6 +212,7 @@ for _, rtab in ipairs({
 			},
 			on_rightclick = advtrains.interlocking.signal_rc_handler,
 			can_dig = advtrains.interlocking.signal_can_dig,
+			after_dig_node = advtrains.interlocking.signal_after_dig,
 		})
 		-- rotatable by trackworker
 		advtrains.trackplacer.add_worked("advtrains_signals_ks:sign", typ, "_"..rot, prts.n)
