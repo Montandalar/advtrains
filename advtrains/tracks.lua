@@ -442,6 +442,15 @@ Depending on the number of connections:
 	- conn3 <> conn4
 ]]
 
+-- Notify the user if digging the rail is not allowed
+local function can_dig_callback(pos, player)
+	local ok, reason = advtrains.can_dig_or_modify_track(pos)
+	if not ok and player then
+		minetest.chat_send_player(player:get_player_name(), attrans("This track can not be removed!") .. " " .. reason)
+	end
+	return ok
+end
+
 function advtrains.register_tracks(tracktype, def, preset)
 	advtrains.trackplacer.register_tracktype(def.nodename_prefix, preset.tpdefault)
 	if preset.regtp then
@@ -478,7 +487,7 @@ function advtrains.register_tracks(tracktype, def, preset)
 						not_blocking_trains=1,
 					},
 						
-					can_dig = advtrains.can_dig_or_modify_track,
+					can_dig = can_dig_callback,
 					after_dig_node=function(pos)
 						advtrains.ndb.update(pos)
 					end,
