@@ -16,6 +16,9 @@ atlatc = { envs = {}}
 
 minetest.register_privilege("atlatc", { description = "Player can place and modify LUA ATC components. Grant with care! Allows to execute bad LUA code.", give_to_singleplayer = false, default= false })
 
+--Size of code input forms in X,Y notation. Must be at least 10x10
+atlatc.CODE_FORM_SIZE = "15,12"
+
 --assertt helper. error if a variable is not of a type
 function assertt(var, typ)
 	if type(var)~=typ then

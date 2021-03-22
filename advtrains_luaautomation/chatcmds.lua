@@ -5,13 +5,13 @@ local function get_init_form(env, pname)
 	local err = env.init_err or ""
 	local code = env.init_code or ""
 
-	local form = "size[10,10]"
+	local form = "size["..atlatc.CODE_FORM_SIZE.."]"
 		.."style[code;font=mono]"
 		.."button[0.0,0.2;2.5,1;run;Run Init Code]"
 		.."button[2.5,0.2;2.5,1;cls;Clear S]"
 		.."button[5.0,0.2;2.5,1;save;Save]"
 		.."button[7.5,0.2;2.5,1;del;Delete Env.]"
-		.."textarea[0.3,1.5;10,9.5;code;Environment initialization code;"..minetest.formspec_escape(code).."]"
+		.."textarea[0.3,1.5;"..atlatc.CODE_FORM_SIZE..";code;Environment initialization code;"..minetest.formspec_escape(code).."]"
 		.."label[0.0,9.7;"..err.."]"
 	return form
 end
