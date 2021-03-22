@@ -89,23 +89,20 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			tmp_checkboxes[pe].reverse = (fields.reverse == "true")
 		end
 		if fields.save then
-			if fields.stn and stdata.stn ~= fields.stn then
-				if fields.stn ~= "" then
-					local stn = advtrains.lines.stations[fields.stn]
-					if stn then
-						if (stn.owner == pname or minetest.check_player_privs(pname, "train_admin")) then
-							stdata.stn = fields.stn
-						else
-							minetest.chat_send_player(pname, "Station code '"..fields.stn.."' does already exist and is owned by "..stn.owner)
-						end
-					else
-						advtrains.lines.stations[fields.stn] = {name = fields.stnname, owner = pname}
+			if fields.stn and stdata.stn ~= fields.stn and fields.stn ~= "" then
+				local stn = advtrains.lines.stations[fields.stn]
+				if stn then
+					if (stn.owner == pname or minetest.check_player_privs(pname, "train_admin")) then
 						stdata.stn = fields.stn
+					else
+						minetest.chat_send_player(pname, "Station code '"..fields.stn.."' does already exist and is owned by "..stn.owner)
+						show_stoprailform(pos,player)
+						return
 					end
+				else
+					advtrains.lines.stations[fields.stn] = {name = fields.stnname, owner = pname}
+					stdata.stn = fields.stn
 				end
-				updatemeta(pos)
-				show_stoprailform(pos, player)
-				return
 			end
 			local stn = advtrains.lines.stations[stdata.stn]
 			if stn and fields.stnname and fields.stnname ~= stn.name then
