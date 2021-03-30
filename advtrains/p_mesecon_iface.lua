@@ -1,7 +1,7 @@
 -- p_mesecon_iface.lua
 -- Mesecons interface by overriding the switch
 
-if not mesecon then return end
+if minetest.get_modpath("mesecons_switch") == nil then return end
 
 minetest.override_item("mesecons_switch:mesecon_switch_off", {
 	groups = {
