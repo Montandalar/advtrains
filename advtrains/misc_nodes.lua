@@ -16,7 +16,7 @@ function advtrains.register_platform(modprefix, preset)
 		description = attrans("@1 Platform (low)", desc),
 		tiles = {btex.."^advtrains_platform.png", btex, btex, btex, btex, btex},
 		groups = {cracky = 1, not_blocking_trains = 1, platform=1},
-		sounds = default.node_sound_stone_defaults(),
+		sounds = ndef.sounds,
 		drawtype = "nodebox",
 		node_box = {
 			type = "fixed",
@@ -33,7 +33,7 @@ function advtrains.register_platform(modprefix, preset)
 		description = attrans("@1 Platform (high)", desc),
 		tiles = {btex.."^advtrains_platform.png", btex, btex, btex, btex, btex},
 		groups = {cracky = 1, not_blocking_trains = 1, platform=2},
-		sounds = default.node_sound_stone_defaults(),
+		sounds = ndef.sounds,
 		drawtype = "nodebox",
 		node_box = {
 			type = "fixed",
@@ -58,7 +58,7 @@ function advtrains.register_platform(modprefix, preset)
 	minetest.register_node(modprefix..":platform_45_"..nodename, {
 		description = attrans("@1 Platform (45 degree)", desc),
 		groups = {cracky = 1, not_blocking_trains = 1, platform=2},
-		sounds = default.node_sound_stone_defaults(),
+		sounds = ndef.sounds,
 		drawtype = "mesh",
 		mesh = "advtrains_platform_diag.b3d",
 		selection_box = diagonalbox,
@@ -80,7 +80,7 @@ function advtrains.register_platform(modprefix, preset)
 	minetest.register_node(modprefix..":platform_45_low_"..nodename, {
 		description = attrans("@1 Platform (low, 45 degree)", desc),
 		groups = {cracky = 1, not_blocking_trains = 1, platform=2},
-		sounds = default.node_sound_stone_defaults(),
+		sounds = ndef.sounds,
 		drawtype = "mesh",
 		mesh = "advtrains_platform_diag_low.b3d",
 		selection_box = diagonalbox_low,

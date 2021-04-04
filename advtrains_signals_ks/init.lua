@@ -105,7 +105,6 @@ for _, rtab in ipairs({
 			},
 			drop = "advtrains_signals_ks:hs_danger_0",
 			inventory_image = "advtrains_signals_ks_hs_inv.png",
-			sounds = default.node_sound_stone_defaults(),
 			advtrains = {
 				set_aspect = setaspectf(rot),
 				supported_aspects = suppasp,
@@ -151,7 +150,6 @@ for _, rtab in ipairs({
 			},
 			drop = "advtrains_signals_ks:ra_danger_0",
 			inventory_image = "advtrains_signals_ks_ra_inv.png",
-			sounds = default.node_sound_stone_defaults(),
 			advtrains = {
 				set_aspect = setaspectf_ra(rot),
 				supported_aspects = suppasp_ra,
@@ -203,7 +201,6 @@ for _, rtab in ipairs({
 			},
 			drop = "advtrains_signals_ks:sign_8_0",
 			inventory_image = "advtrains_signals_ks_sign_8.png",
-			sounds = default.node_sound_stone_defaults(),
 			advtrains = {
 				-- This is a static signal! No set_aspect
 				get_aspect = function(pos, node)
@@ -239,7 +236,6 @@ for _, rtab in ipairs({
 			not_in_creative_inventory = (rtab.ici) and 0 or 1,
 		},
 		drop = "advtrains_signals_ks:mast_mast_0",
-		sounds = default.node_sound_stone_defaults(),
 	})
 	advtrains.trackplacer.add_worked("advtrains_signals_ks:mast","mast", "_"..rot)
 end
