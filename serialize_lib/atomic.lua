@@ -65,7 +65,7 @@ local function save_atomic_move_file(filename)
 end
 
 local function open_file_and_save_callback(callback, filename)
-	local file, err = io.open(filename, "w")
+	local file, err = io.open(filename, "wb")
 	if not file then
 		error("Failed opening file '"..filename.."' for write:\n"..err)
 	end
@@ -75,7 +75,7 @@ local function open_file_and_save_callback(callback, filename)
 end
 
 local function open_file_and_load_callback(filename, callback)
-	local file, err = io.open(filename, "r")
+	local file, err = io.open(filename, "rb")
 	if not file then
 		error("Failed opening file '"..filename.."' for read:\n"..err)
 	end
@@ -97,7 +97,7 @@ function serialize_lib.load_atomic(filename, callback)
 	local cbfunc = callback or ser.read_from_fd
 	
 	-- try <filename>
-	local file, ret = io.open(filename, "r")
+	local file, ret = io.open(filename, "rb")
 	if file then
 		-- read the file using the callback
 		local success
@@ -117,7 +117,7 @@ function serialize_lib.load_atomic(filename, callback)
 	serialize_lib.log_warn(ret)
 	
 	-- try <filename>.new
-	file, ret = io.open(filename..".new", "r")
+	file, ret = io.open(filename..".new", "rb")
 	if file then
 		-- read the file using the callback
 		local success
@@ -151,7 +151,7 @@ function serialize_lib.save_atomic(data, filename, callback, config)
 	
 	local cbfunc = callback or ser.write_to_fd
 
-	local file, ret = io.open(filename..".new", "w")
+	local file, ret = io.open(filename..".new", "wb")
 	if file then
 		-- save the file using the callback
 		local success
@@ -189,7 +189,7 @@ function serialize_lib.save_atomic_multiple(parts_table, filename_prefix, callba
 		end
 		
 		local success = false
-		local file, ret = io.open(filename..".new", "w")
+		local file, ret = io.open(filename..".new", "wb")
 		if file then
 			-- save the file using the callback
 			success, ret = pcall(cbfunc, data, file, config)

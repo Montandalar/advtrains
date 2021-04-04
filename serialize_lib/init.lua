@@ -57,6 +57,7 @@ function serialize_lib.read_table_from_file(filename)
 	local succ, ret = pcall(ser.read_from_file, filename)
 	if not succ then
 		serialize_lib.log_error(ret)
+		return false,ret
 	end
 	return ret
 end
@@ -67,8 +68,9 @@ function serialize_lib.write_table_to_file(root_table, filename)
 	local succ, ret = pcall(ser.write_to_file, root_table, filename)
 	if not succ then
 		serialize_lib.log_error(ret)
+		return false,ret
 	end
-	return ret
+	return true
 end
 
 

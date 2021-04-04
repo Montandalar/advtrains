@@ -3,6 +3,9 @@
 -- Contains the serialization and deserialization routines
 
 --[[
+Version history:
+1 - initial
+2 - also escaping CR character as &r
 
 Structure of entry:
 [keytype][key]:[valuetype][val]
@@ -19,7 +22,7 @@ Table:
 E
 
 example:
-LUA_SER v=1		{
+LUA_SER v=2		{
 Skey:Svalue			key = "value",
 N1:Seins			[1] = "eins",
 B1:T				[true] = {
@@ -32,7 +35,7 @@ String representations:
 In strings the following characters are escaped by &
 '&' -> '&&'
 (line break) -> '&n'
-(CR) -> '&r'			--> required?
+(CR) -> '&r'
 ':' -> '&:'
 All other characters are unchanged as they bear no special meaning.
 ]]
@@ -97,6 +100,7 @@ end
 function escape_chars(str)
 	local rstr = string.gsub(str, "&", "&&")
 	rstr = string.gsub(rstr, ":", "&:")
+	rstr = string.gsub(rstr, "\r", "&r")
 	rstr = string.gsub(rstr, "\n", "&n")
 	return rstr
 end
@@ -172,6 +176,7 @@ end
 function unescape_chars(str) --TODO
 	local rstr = string.gsub(str, "&:", ":")
 	rstr = string.gsub(rstr, "&n", "\n")
+	rstr = string.gsub(rstr, "&r", "\r")
 	rstr = string.gsub(rstr, "&&", "&")
 	return rstr
 end
@@ -187,7 +192,7 @@ config = {
 
 -- Writes the passed table into the passed file descriptor, and closes the file
 local function write_to_fd(root_table, file, config)
-	file:write("LUA_SER v=1\n")
+	file:write("LUA_SER v=2\n")
 	write_table(root_table, file, config)
 	file:write("E\nEND_SER\n")
 	file:close()
@@ -197,14 +202,14 @@ end
 -- Throws errors when something is wrong. Closes the file.
 -- config: see above
 local function read_from_fd(file)
-	local first_line = file:read("*l")
-	if first_line ~= "LUA_SER v=1" then
+	local first_line = file:read("*line")
+	if not string.match(first_line, "LUA_SER v=[12]") then
 		file:close()
 		error("Expected header, got '"..first_line.."' instead!")
 	end
 	local t = {}
 	read_table(t, file)
-	local last_line = file:read("*l")
+	local last_line = file:read("*line")
 	file:close()
 	if last_line ~= "END_SER" then
 		error("Missing END_SER, got '"..last_line.."' instead!")
@@ -216,7 +221,7 @@ end
 -- config: see above
 function write_to_file(root_table, filename, config)
 	-- try opening the file
-	local file, err = io.open(filename, "w")
+	local file, err = io.open(filename, "wb")
 	if not file then
 		error("Failed opening file '"..filename.."' for write:\n"..err)
 	end
@@ -228,7 +233,7 @@ end
 -- Opens the passed filename, and returns its deserialized contents
 function read_from_file(filename)
 	-- try opening the file
-	local file, err = io.open(filename, "r")
+	local file, err = io.open(filename, "rb")
 	if not file then
 		error("Failed opening file '"..filename.."' for read:\n"..err)
 	end
