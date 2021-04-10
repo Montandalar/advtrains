@@ -706,6 +706,20 @@ minetest.register_chatcommand("at_reroute",
         end,
 })
 
+minetest.register_chatcommand("at_whereis",
+	{
+		params = "<train id>",
+		description = "Returns the position of the train with the given id",
+		privs = {train_operator = true},
+		func = function(name,param)
+			local train = advtrains.trains[param] 
+			if not train or not train.last_pos then
+				return false, "Train "..param.." does not exist or is invalid"
+			else
+				return true, "Train "..param.." is at "..minetest.pos_to_string(train.last_pos)
+			end
+		end,
+})
 minetest.register_chatcommand("at_disable_step",
 	{
         params = "<yes/no>", 
