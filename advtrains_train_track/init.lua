@@ -226,25 +226,25 @@ local function train_load(pos, train_id, unload)
    local inv = minetest.get_inventory({type="node", pos={x=pos.x, y=pos.y-1, z=pos.z}})
    if inv and train.velocity < 2 then
       for k, v in ipairs(train.trainparts) do
-	 
-	 local i=minetest.get_inventory({type="detached", name="advtrains_wgn_"..v})
-	 if i then
-	    if not unload then
-	       for _, item in ipairs(inv:get_list("main")) do
-		  if i:get_list("box") and i:room_for_item("box", item)  then
-		     i:add_item("box", item)
-		     inv:remove_item("main", item)
-		  end
-	    end
-	    else
-	       for _, item in ipairs(i:get_list("box")) do
-		  if inv:get_list("main") and inv:room_for_item("main", item)  then
-		     i:remove_item("box", item)
-		     inv:add_item("main", item)
-		  end
-	       end
-	    end
-	 end
+			
+			local i=minetest.get_inventory({type="detached", name="advtrains_wgn_"..v})
+			if i and i:get_list("box") then
+				if not unload then
+					for _, item in ipairs(inv:get_list("main")) do
+						if i:get_list("box") and i:room_for_item("box", item)  then
+							i:add_item("box", item)
+							inv:remove_item("main", item)
+						end
+					end
+				else
+					for _, item in ipairs(i:get_list("box")) do
+						if inv:get_list("main") and inv:room_for_item("main", item)  then
+							i:remove_item("box", item)
+							inv:add_item("main", item)
+						end
+					end
+				end
+			end
       end
    end
 end
