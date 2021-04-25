@@ -163,6 +163,8 @@ minetest.register_on_dieplayer(function(player)
 					wagon:get_off_plr(pname)
 				end
 			end
+			-- just in case no wagon felt responsible for this player: clear train mapping
+			advtrains.player_to_train_mapping[pname] = nil
 		end
 end)
 
