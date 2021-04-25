@@ -201,7 +201,10 @@ advtrains.register_tracks("default", {
 				--set arrowconn (for ATC)
 				local ph=minetest.pos_to_string(pos)
 				local _, conns=advtrains.get_rail_info_at(pos, advtrains.all_tracktypes)
-				atlatc.active.nodes[ph].arrowconn=conns[1].c
+				local nodeent = atlatc.active.nodes[ph]
+				if nodeent then
+					nodeent.arrowconn=conns[1].c
+				end
 			end,
 
 			advtrains = {
