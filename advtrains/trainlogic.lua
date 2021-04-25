@@ -1079,6 +1079,12 @@ function advtrains.split_train_at_index(train, index)
 		atwarn("Train",train_id,"is not initialized! Operation aborted!")
 		return
 	end
+	
+	-- make sure that the train is fully on track before splitting. May cause problems otherwise
+	if train.index > train.path_trk_f or train.end_index < train.path_trk_b then
+		atwarn("Train",train_id,": cannot split train because it is off track!")
+		return
+	end
 
 	local p_index=advtrains.path_get_index_by_offset(train, train.index, - data.pos_in_train + wagon.wagon_span)
 	local pos, connid, frac = advtrains.path_getrestore(train, p_index)
