@@ -286,6 +286,7 @@ function tp.register_track_placer(nnprefix, imgprefix, dispname, def)
 						return itemstack, false
 					end
 					if minetest.registered_nodes[minetest.get_node(pos).name] and minetest.registered_nodes[minetest.get_node(pos).name].buildable_to then
+						local s
 						if def.suitable_substrate then
 							s = def.suitable_substrate(upos)
 						else

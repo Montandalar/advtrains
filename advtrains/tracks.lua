@@ -524,7 +524,7 @@ function advtrains.register_tracks(tracktype, def, preset)
 					end
 					ndef.on_rightclick = function(pos, node, player)
 						if advtrains.check_turnout_signal_protection(pos, player:get_player_name()) then
-							advtrains.setstate(pos, newstate, node)
+							advtrains.setstate(pos, nil, node)
 							advtrains.log("Switch", player:get_player_name(), pos)
 						end
 					end
@@ -667,7 +667,7 @@ function sl.create_slopeplacer_on_place(def, preset)
 		local yaw=player.get_look_horizontal and player:get_look_horizontal() or (player:get_look_yaw() - math.pi/2)
 		
 		--rounding unit vectors is a nice way for selecting 1 of 8 directions since sin(30°) is 0.5.
-		dirvec={x=math.floor(math.sin(-yaw)+0.5), y=0, z=math.floor(math.cos(-yaw)+0.5)}
+		local dirvec={x=math.floor(math.sin(-yaw)+0.5), y=0, z=math.floor(math.cos(-yaw)+0.5)}
 		--translate to direction to look up inside the preset table
 		local param2, rot45=({
 			[-1]={

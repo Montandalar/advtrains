@@ -934,6 +934,7 @@ function wagon:show_bordcom(pname)
 	if not self:train() then return end
 	local train = self:train()
 	local data = advtrains.wagons[self.id]
+	local linhei
 	
 	local form = "size[11,9]label[0.5,0;AdvTrains Boardcom v0.1]"
 	form=form.."textarea[0.5,1.5;7,1;text_outside;"..attrans("Text displayed outside on train")..";"..(minetest.formspec_escape(train.text_outside or "")).."]"

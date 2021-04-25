@@ -149,7 +149,6 @@ minetest.register_entity("advtrains:couple", {
 				end
 				self.position_set=true
 			end
-			atprintbm("couple step", t)
 			advtrains.atprint_context_tid=nil
 	end,
 })
