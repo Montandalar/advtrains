@@ -107,7 +107,7 @@ function serialize_lib.load_atomic(filename, callback)
 		end
 	end
 	
-	if minetest.settings:get_bool("serialize_lib_strict_loading") then
+	if minetest.settings:get_bool("serialize_lib_strict_loading", true) then
 		serialize_lib.save_lock = true
 		error("Loading data from file '"..filename.."' failed:\n"
 				..ret.."\nDisable Strict Loading to ignore.")
