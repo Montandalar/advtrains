@@ -117,6 +117,8 @@ function read_table(t, file)
 			file:close()
 			error("Unexpected EOF or read error!")
 		end
+		-- possibly windows fix: strip trailing \r's from line
+		line = string.gsub(line, "\r$", "")
 		
 		if line=="E" then
 			-- done with this table
@@ -203,6 +205,8 @@ end
 -- config: see above
 local function read_from_fd(file)
 	local first_line = file:read("*line")
+	-- possibly windows fix: strip trailing \r's from line
+	first_line = string.gsub(first_line, "\r$", "")
 	if not string.match(first_line, "LUA_SER v=[12]") then
 		file:close()
 		error("Expected header, got '"..first_line.."' instead!")
@@ -210,6 +214,8 @@ local function read_from_fd(file)
 	local t = {}
 	read_table(t, file)
 	local last_line = file:read("*line")
+	-- possibly windows fix: strip trailing \r's from line
+	last_line = string.gsub(last_line, "\r$", "")
 	file:close()
 	if last_line ~= "END_SER" then
 		error("Missing END_SER, got '"..last_line.."' instead!")
