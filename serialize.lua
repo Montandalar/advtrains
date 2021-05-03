@@ -117,6 +117,8 @@ function read_table(t, file)
 			file:close()
 			error("Unexpected EOF or read error!")
 		end
+		-- possibly windows fix: strip trailing \r's from line
+		line = string.gsub(line, "\r$", "")
 		
 		if line=="E" then
 			-- done with this table
