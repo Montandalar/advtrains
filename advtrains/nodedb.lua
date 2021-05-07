@@ -116,6 +116,8 @@ function ndb.load_callback(file)
 		local stid_byte = file:read(2)
 		local stid = bytes_to_int(stid_byte)
 		local stna = file:read("*l")
+		-- possibly windows fix: strip trailing \r's from line
+		stna = string.gsub(stna, "\r$", "")
 		--atdebug("content id:", stid, "->", stna)
 		ndb_nodeids[stid] = stna
 	end
