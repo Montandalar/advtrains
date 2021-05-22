@@ -1106,6 +1106,17 @@ function advtrains.split_train_at_index(train, index)
 	local newtrain=advtrains.trains[newtrain_id]
 	
 	newtrain.velocity=train.velocity
+	-- copy various properties from the old to the new train
+	newtrain.door_open = train.door_open
+	newtrain.text_outside = train.text_outside
+	newtrain.text_inside = train.text_inside
+	newtrain.line = train.line
+	newtrain.routingcode = train.routingcode
+	newtrain.speed_restriction = train.speed_restriction
+	newtrain.is_shunt = train.is_shunt
+	newtrain.points_split = advtrains.merge_tables(train.points_split)
+	newtrain.autocouple = train.autocouple
+
 	return newtrain_id -- return new train ID, so new train can be manipulated
 
 end
