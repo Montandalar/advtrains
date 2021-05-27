@@ -177,11 +177,12 @@ for _, rtab in ipairs({
 			["hfs"] = {asp = { main = false, shunt = false }, n = "pam"},
 			["pam"] = {asp = { main = -1, shunt = false, proceed_as_main = true}, n = "8"},
 		}) do
+		local tile = "advtrains_signals_ks_sign_"..typ..".png"
 		minetest.register_node("advtrains_signals_ks:sign_"..typ.."_"..rot, {
 			description = "Signal Sign",
 			drawtype = "mesh",
-			mesh = "advtrains_signals_ks_sign_smr"..rot..".obj",
-			tiles = {"advtrains_signals_ks_signpost.png", "advtrains_signals_ks_sign_"..typ..".png"},
+			mesh = "advtrains_signals_ks_sign"..(typ == "hfs" and "_hfs" or "").."_smr"..rot..".obj",
+			tiles = typ == "hfs" and {tile} or {"advtrains_signals_ks_signpost.png", tile},
 			
 			paramtype="light",
 			sunlight_propagates=true,
