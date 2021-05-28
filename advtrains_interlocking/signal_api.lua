@@ -428,7 +428,7 @@ function advtrains.interlocking.show_signal_aspect_selector(pname, p_suppasp, p_
 	}
 	local purpose = p_purpose or ""
 	
-	local form = "size[7,5]label[0.5,0.5;Select Signal Aspect:]"
+	local form = "size[7,7]label[0.5,0.5;Select Signal Aspect:]"
 	form = form.."label[0.5,1;"..purpose.."]"
 	
 	form = form.."label[0.5,1.5;== Main Signal ==]"
@@ -460,8 +460,29 @@ function advtrains.interlocking.show_signal_aspect_selector(pname, p_suppasp, p_
 		if isasp and isasp.shunt then st=2 end
 		form = form.."dropdown[0.5,3.5;6;shunt_free;---,allowed;"..st.."]"
 	end
-		
-	form = form.."button_exit[0.5,4.5;  5,1;save;OK]"
+
+	form = form.."label[0.5,4.5;== Distant Signal ==]"
+	local selid = 1
+	local entries = {}
+	for idx, spv in ipairs(suppasp.dst) do
+		local entry
+		if spv == 0 then
+			entry = "Expect to stop at the next signal"
+		elseif spv == -1 then
+			entry = "Expect to pass the next signal at maximum speed"
+		elseif not spv then
+			entry = "No distant signal information"
+		else
+			entry = string.format("Expect to pass the next signal with speed limit %d", spv)
+		end
+		entries[idx] = idx.."| "..entry
+		if isasp and spv == (isasp.dst or false) then
+			selid = idx
+		end
+	end
+	form = form.."dropdown[0.5,5;6;dst;"..table.concat(entries, ",")..";"..selid.."]"
+
+	form = form.."button_exit[0.5,6;5,1;save;Save signal aspect]"
 	
 	local token = advtrains.random_id()
 	
@@ -499,9 +520,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			if fields.save then
 				local maini = ddindex(fields.main)
 				if not maini then return end
+				local dsti = ddindex(fields.dst)
+				if not dsti then return end
 				local asp = {
 					main = psl.suppasp.main[maini],
-					dst = false,
+					dst = psl.suppasp.dst[dsti],
 					shunt = usebool(psl.suppasp.shunt, fields.shunt_free, "allowed"),
 					info = {}
 				}
