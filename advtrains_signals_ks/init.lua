@@ -198,7 +198,7 @@ for _, rtab in ipairs({
 			after_dig_node = advtrains.interlocking.signal_after_dig,
 		})
 		-- rotatable by trackworker
-		advtrains.trackplacer.add_worked("advtrains_signals_ks:hs", typ, "_"..rot, prts.n)
+		advtrains.trackplacer.add_worked("advtrains_signals_ks:hs", typ, "_"..rot)
 	end
 	
 	
@@ -243,7 +243,7 @@ for _, rtab in ipairs({
 			after_dig_node = advtrains.interlocking.signal_after_dig,
 		})
 		-- rotatable by trackworker
-		advtrains.trackplacer.add_worked("advtrains_signals_ks:ra", typ, "_"..rot, prts.n)
+		advtrains.trackplacer.add_worked("advtrains_signals_ks:ra", typ, "_"..rot)
 	end
 	
 	--Schilder:
@@ -332,7 +332,7 @@ for _, rtab in ipairs({
 		t.drop = "advtrains_signals_ks:zs3_off_0"
 		t.selection_box.fixed[1][5] = 0
 		minetest.register_node("advtrains_signals_ks:zs3_"..typ.."_"..rot, t)
-		advtrains.trackplacer.add_worked("advtrains_signals_ks:zs3", typ, "_"..rot, prts.n)
+		advtrains.trackplacer.add_worked("advtrains_signals_ks:zs3", typ, "_"..rot)
 
 		-- Zs 3v
 		local t = table.copy(def)
@@ -341,7 +341,7 @@ for _, rtab in ipairs({
 		t.drop = "advtrains_signals_ks:zs3v_off_0"
 		t.tiles[3] = t.tiles[3] .. "^[multiply:yellow"
 		minetest.register_node("advtrains_signals_ks:zs3v_"..typ.."_"..rot, t)
-		advtrains.trackplacer.add_worked("advtrains_signals_ks:zs3v", typ, "_"..rot, prts.n)
+		advtrains.trackplacer.add_worked("advtrains_signals_ks:zs3v", typ, "_"..rot)
 	end
 	
 	minetest.register_node("advtrains_signals_ks:mast_mast_"..rot, {
