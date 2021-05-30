@@ -4,15 +4,17 @@
 -- Note that the group value of advtrains_signal is 2, which means "step 2 of signal capabilities"
 -- advtrains_signal=1 is meant for signals that do not implement set_aspect.
 
-local supported_speed_limits = {
-	[4] = true, [6] = true, [8] = true, [12] = true, [16] = true
-}
+local function asp_to_zs3type(asp)
+	local n = tonumber(asp)
+	if not n or n < 4 then return "off" end
+	if n < 8 then return 2*math.floor(n/2) end
+	return math.min(16,4*math.floor(n/4))
+end
 
 local function setzs3(msp, lim, rot)
 	local pos = {x = msp.x, y = msp.y+1, z = msp.z}
 	local node = advtrains.ndb.get_node(pos)
-	local asp = lim
-	if not asp or not supported_speed_limits[lim] then asp = "off" end
+	local asp = asp_to_zs3type(lim)
 	if node.name:find("^advtrains_signals_ks:zs3_") then
 		advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:zs3_"..asp.."_"..rot, param2 = node.param2})
 	end
@@ -31,8 +33,7 @@ end
 local function setzs3v(msp, lim, rot)
 	local pos = {x = msp.x, y = msp.y-1, z = msp.z}
 	local node = advtrains.ndb.get_node(pos)
-	local asp = lim
-	if not asp or not supported_speed_limits[lim] then asp = "off" end
+	local asp = asp_to_zs3type(lim)
 	if node.name:find("^advtrains_signals_ks:zs3v_") then
 		advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:zs3v_"..asp.."_"..rot, param2 = node.param2})
 	end
