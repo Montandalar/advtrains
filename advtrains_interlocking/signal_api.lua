@@ -471,9 +471,9 @@ function advtrains.interlocking.show_signal_aspect_selector(pname, p_suppasp, p_
 		elseif spv == -1 then
 			entry = "Expect to pass the next signal at maximum speed"
 		elseif not spv then
-			entry = "No distant signal information"
+			entry = "No info"
 		else
-			entry = string.format("Expect to pass the next signal with speed limit %d", spv)
+			entry = string.format("Expect to pass the next signal at speed of %d", spv)
 		end
 		entries[idx] = idx.."| "..entry
 		if isasp and spv == (isasp.dst or false) then
