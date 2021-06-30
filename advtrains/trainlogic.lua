@@ -1368,17 +1368,61 @@ function advtrains.invalidate_path(id)
 end
 
 --not blocking trains group
-function advtrains.train_collides(node)
-	if node and minetest.registered_nodes[node.name] then
-		local ndef = minetest.registered_nodes[node.name]
-		-- if the node is drawtype normal (that is a full cube) then it does collide
-		if ndef.drawtype == "normal" then
-			-- except if it is not_blocking_trains
-			if ndef.groups.not_blocking_trains and ndef.groups.not_blocking_trains ~= 0 then
-				return false
+
+if minetest.settings:get_bool("advtrains_forgiving_collision") then
+	function advtrains.train_collides(node)
+		if node and minetest.registered_nodes[node.name] then
+			local ndef = minetest.registered_nodes[node.name]
+			-- if the node is drawtype normal (that is a full cube) then it does collide
+			if ndef.drawtype == "normal" then
+				-- except if it is not_blocking_trains
+				if ndef.groups.not_blocking_trains and ndef.groups.not_blocking_trains ~= 0 then
+					return false
+				end
+				return true
 			end
+		end
+		return false
+	end
+else
+	function advtrains.train_collides(node)
+		if node and minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].walkable then
+		if not minetest.registered_nodes[node.name].groups.not_blocking_trains then
 			return true
 		end
+		end
+		return false
 	end
-	return false
+	
+	local nonblocknodes={
+		"default:fence_wood",
+		"default:fence_acacia_wood",
+		"default:fence_aspen_wood",
+		"default:fence_pine_wood",
+		"default:fence_junglewood",
+		"default:torch",
+		"bones:bones",
+		
+		"default:sign_wall",
+		"signs:sign_wall",
+		"signs:sign_wall_blue",
+		"signs:sign_wall_brown",
+		"signs:sign_wall_orange",
+		"signs:sign_wall_green",
+		"signs:sign_yard",
+		"signs:sign_wall_white_black",
+		"signs:sign_wall_red",
+		"signs:sign_wall_white_red",
+		"signs:sign_wall_yellow",
+		"signs:sign_post",
+		"signs:sign_hanging",
+		
+	}
+	minetest.after(0, function()
+							for _,name in ipairs(nonblocknodes) do
+								if minetest.registered_nodes[name] then
+									minetest.registered_nodes[name].groups.not_blocking_trains=1
+								end
+							end
+	end)
 end
