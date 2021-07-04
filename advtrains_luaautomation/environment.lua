@@ -223,6 +223,18 @@ if advtrains.interlocking then
 		local pos = atlatc.pcnaming.resolve_pos(signal)
 		return advtrains.interlocking.signal_set_aspect(pos)
 	end
+	
+	--section_occupancy()
+	static_env.section_occupancy = function(ts_id)
+		if not ts_id then return nil end
+		ts_id = tostring(ts_id)
+		local response = advtrains.interlocking.db.get_ts(ts_id)
+		if response == nil then
+			return false
+		else
+			return response.trains
+		end
+	end
 end
 
 -- Lines-specific:

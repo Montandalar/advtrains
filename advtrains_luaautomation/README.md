@@ -314,13 +314,16 @@ Deprecated:
 
 
 #### Interlocking
-This additional function is available when advtrains_interlocking is enabled:
+These additional functions are available when advtrains_interlocking is enabled:
 
  - `atc_set_ars_disable(boolean)`
 	Disables (true) or enables (false) the use of ARS for this train. The train will not trigger ARS (automatic route setting) on signals then.
 	
 	Note: If you want to disable ARS from an approach callback, the call to `atc_set_ars_disable(true)` *must* happen during the approach callback, and may not be deferred to an interrupt(). Else the train might trigger an ARS before the interrupt fires.
 
+ - `section_occupancy(section_id)`
+	Returns a table of train ids for the specified section, nil if no section id is provided, false if the section id is invalid, an empty table if the section id is valid but empty of trains.
+	
 #### Approach callbacks
 The LuaATC interface provides a way to hook into the approach callback system, which is for example used in the TSR rails (provided by advtrains_interlocking) or the station tracks (provided by advtrains_lines). However, for compatibility reasons, this behavior needs to be explicitly enabled.
 
