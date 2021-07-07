@@ -569,11 +569,13 @@ advtrains.mainloop_runcnt=0
 advtrains.global_slowdown = 1
 
 local t = 0
+local within_mainstep = false
 minetest.register_globalstep(function(dtime_mt)
 		if no_action then
 			-- the advtrains globalstep is skipped by command. Return immediately
 			return
 		end
+		within_mainstep = true
 
 		advtrains.mainloop_runcnt=advtrains.mainloop_runcnt+1
 		--atprint("Running the main loop, runcnt",advtrains.mainloop_runcnt)
@@ -586,6 +588,7 @@ minetest.register_globalstep(function(dtime_mt)
 		if GENERATE_ATRICIFIAL_LAG then
 			dtime = HOW_MANY_LAG
 			if os.clock()<t then
+				within_mainstep = false
 				return
 			end
 			
@@ -616,7 +619,7 @@ minetest.register_globalstep(function(dtime_mt)
 		if advtrains.lines then
 			advtrains.lines.step(dtime)
 		end
-		
+
 		--trigger a save when necessary
 		save_timer=save_timer-dtime
 		if save_timer<=0 then
@@ -626,6 +629,9 @@ minetest.register_globalstep(function(dtime_mt)
 			save_timer = advtrains.SAVE_INTERVAL
 			atprintbm("saving", t)
 		end
+
+		within_mainstep = false
+
 end)
 
 --if something goes wrong in these functions, there is no help. no pcall here.
@@ -678,7 +684,13 @@ function advtrains.save(remove_players_from_wagons)
 	--TODO very simple yet hacky workaround for the "green signals" bug
 	advtrains.invalidate_all_paths()
 end
-minetest.register_on_shutdown(advtrains.save)
+minetest.register_on_shutdown(function()
+	if within_mainstep then
+		atwarn("Crash during advtrains main step - skipping the shutdown save operation to not save inconsistent data!")
+	else
+		advtrains.save()
+	end
+end)
 
 -- This chat command provides a solution to the problem known on the LinuxWorks server
 -- There are many players that joined a single time, got on a train and then left forever
