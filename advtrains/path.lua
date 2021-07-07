@@ -417,3 +417,42 @@ function advtrains.path_lookup(train, pos)
 	end
 	return nil
 end
+
+-- Projects the path of "train" onto the path of "onto_train_id", and returns the index on onto_train's path
+-- that corresponds to "index" on "train"'s path, as well as whether both trains face each other
+-- index may be fractional
+-- returns: res_index, trains_facing
+-- returns nil when path can not be projected, either because trains are on different tracks or
+-- node at "index" happens to be on a turnout and it's the wrong direction
+-- Note - duplicate with similar functionality is in train_step_b() - that code combines train detection with projecting
+function advtrains.path_project(train, index, onto_train_id)
+	local base_idx = atfloor(index)
+	local frac_part = index - base_idx
+	local base_pos = advtrains.path_get(train, base_idx)
+	local base_cn =  train.path_cn[base_idx]
+	local otrn = advtrains.trains[onto_train_id]
+	-- query occupation
+	local occ = advtrains.occ.get_trains_over(base_pos)
+	-- is wanted train id contained?
+	local ob_idx = occ[onto_train_id]
+	if not ob_idx then
+		return nil
+	end
+
+	-- retrieve other train's cn and cp
+	local ocn = otrn.path_cn[ob_idx]
+	local ocp = otrn.path_cp[ob_idx]
+
+	if base_cn == ocn then
+		-- same direction
+		return ob_idx + frac_part, false
+	elseif base_cn == ocp then
+		-- facing trains - subtract index frac
+		return ob_idx - frac_part, true
+	else
+		-- same path item but no common connections - deny
+		return nil
+	end
+end
+
+
