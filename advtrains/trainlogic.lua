@@ -705,6 +705,7 @@ function advtrains.train_step_c(id, train, dtime)
 	end
 
 	local train_moves=(train.velocity~=0)
+	local very_short_train = train.trainlen < 3
 
 	--- On-track collision handling - detected in train_step_b, but handled here so all other train movements have already happened.
 	if train.ontrack_collision_info then
@@ -726,7 +727,9 @@ function advtrains.train_step_c(id, train, dtime)
 	if train_moves then
 		train.couples_up_to_date = nil
 	elseif not train.couples_up_to_date then
-		advtrains.train_check_couples(train) -- no guarantee for train order here
+		if not very_short_train then -- old coupling system is buggy for short trains
+			advtrains.train_check_couples(train) -- no guarantee for train order here
+		end
 		train.couples_up_to_date = true
 	end
 
@@ -746,13 +749,14 @@ function advtrains.train_step_c(id, train, dtime)
 					local testpos=vector.add(rcollpos, {x=x, y=0, z=z})
 					--- 8a Check collision ---
 					if not collided then
-
-						local col_tr = advtrains.occ.check_collision(testpos, id)
-						if col_tr then
-							train.velocity = 0
-							train.acceleration = 0
-							advtrains.atc.train_reset_command(train)
-							collided = true
+						if not very_short_train then -- position collision system is buggy for short trains
+							local col_tr = advtrains.occ.check_collision(testpos, id)
+							if col_tr then
+								train.velocity = 0
+								train.acceleration = 0
+								advtrains.atc.train_reset_command(train)
+								collided = true
+							end
 						end
 
 						--- 8b damage players ---
