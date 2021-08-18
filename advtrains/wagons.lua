@@ -1316,14 +1316,23 @@ function advtrains.register_wagon(sysname_p, prototype, desc, inv_img, nincreati
 	minetest.register_entity(":"..sysname,prototype)
 	advtrains.wagon_prototypes[sysname] = prototype
 	
+	--group classification to make recipe searching easier
+	local wagon_groups = { not_in_creative_inventory = nincreative and 1 or 0}
+	if prototype.is_locomotive then wagon_groups['at_loco'] = 1 end
+	if prototype.seat_groups then
+		if prototype.seat_groups.dstand then wagon_groups['at_control'] = 1 end
+		if prototype.seat_groups.pass then wagon_groups['at_pax'] = 1 end
+	end
+	if prototype.has_inventory then wagon_groups['at_freight'] = 1 end
+
 	minetest.register_craftitem(":"..sysname, {
 		description = desc,
 		inventory_image = inv_img,
 		wield_image = inv_img,
 		stack_max = 1,
 		
-		groups = { not_in_creative_inventory = nincreative and 1 or 0},
-		
+		groups = wagon_groups,
+
 		on_place = function(itemstack, placer, pointed_thing)
 				if not pointed_thing.type == "node" then
 					return
