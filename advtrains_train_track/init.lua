@@ -216,39 +216,95 @@ local function get_far_node(pos)
 	return node
 end
 
+
+local function show_fc_formspec(pos,player)
+	local pname = player:get_player_name()
+	if minetest.is_protected(pos,pname) then
+		minetest.chat_send_player(pname, "Position is protected!")
+		return
+	end
+	
+	local meta = minetest.get_meta(pos)
+	local fc = meta:get_string("fc") or ""
+	
+	local form = 'formspec_version[4]'..
+		'size[10,5]'..
+		'label[0.5,0.4;Advtrains Loading/Unloading Track]'..
+		'label[0.5,1.1;Set the code to match against the wagon\'s freight code]'..
+		'label[0.5,1.6;A blank field matches all wagons (default)]'..
+		'label[0.5,2.1;Use code # to disable the track section]'..
+		'field[0.5,3;5.5,1;fc;FC;'..minetest.formspec_escape(fc)..']'..
+		'button[6.5,3;3,1;save;Submit]'
+	minetest.show_formspec(pname, "at_load_unload_"..advtrains.encode_pos(pos), form)
+end
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	local pname = player:get_player_name()
+	local pe = string.match(formname, "^at_load_unload_(............)$")
+	local pos = advtrains.decode_pos(pe)
+	if pos then
+		if minetest.is_protected(pos, pname) then
+			minetest.chat_send_player(pname, "Position is protected!")
+			return
+		end
+		
+		if fields.save then
+			minetest.get_meta(pos):set_string("fc",tostring(fields.fc))
+			minetest.chat_send_player(pname,"Freight code set: "..tostring(fields.fc))
+			show_fc_formspec(pos,player)
+		end
+	end
+end)
+
+
 local function train_load(pos, train_id, unload)
-   local train=advtrains.trains[train_id]
-   local below = get_far_node({x=pos.x, y=pos.y-1, z=pos.z})
-   if not string.match(below.name, "chest") then
-      atprint("this is not a chest! at "..minetest.pos_to_string(pos))
-      return
-   end
-   local inv = minetest.get_inventory({type="node", pos={x=pos.x, y=pos.y-1, z=pos.z}})
-   if inv and train.velocity < 2 then
-      for k, v in ipairs(train.trainparts) do
-			
+	local train=advtrains.trains[train_id]
+	local below = get_far_node({x=pos.x, y=pos.y-1, z=pos.z})
+	if not string.match(below.name, "chest") then
+		atprint("this is not a chest! at "..minetest.pos_to_string(pos))
+		return
+	end
+	
+	local node_fc = minetest.get_meta(pos):get_string("fc") or ""
+	if node_fc == "#" then
+		--track section is disabled
+		return
+	end
+	
+	local inv = minetest.get_inventory({type="node", pos={x=pos.x, y=pos.y-1, z=pos.z}})
+	if inv and train.velocity < 2 then
+		for k, v in ipairs(train.trainparts) do
 			local i=minetest.get_inventory({type="detached", name="advtrains_wgn_"..v})
 			if i and i:get_list("box") then
-				if not unload then
-					for _, item in ipairs(inv:get_list("main")) do
-						if i:get_list("box") and i:room_for_item("box", item)  then
-							i:add_item("box", item)
-							inv:remove_item("main", item)
+			
+				local wagon_data = advtrains.wagons[v]
+				local wagon_fc
+				if wagon_data.fc then
+					if not wagon_data.fcind then wagon_data.fcind = 1 end
+					wagon_fc = tostring(wagon_data.fc[wagon_data.fcind]) or ""
+				end
+				
+				if node_fc == "" or wagon_fc == node_fc then
+					if not unload then
+						for _, item in ipairs(inv:get_list("main")) do
+							if i:get_list("box") and i:room_for_item("box", item)  then
+								i:add_item("box", item)
+								inv:remove_item("main", item)
+							end
 						end
-					end
-				else
-					for _, item in ipairs(i:get_list("box")) do
-						if inv:get_list("main") and inv:room_for_item("main", item)  then
-							i:remove_item("box", item)
-							inv:add_item("main", item)
+					else
+						for _, item in ipairs(i:get_list("box")) do
+							if inv:get_list("main") and inv:room_for_item("main", item)  then
+								i:remove_item("box", item)
+								inv:add_item("main", item)
+							end
 						end
 					end
 				end
 			end
-      end
-   end
+		end
+	end
 end
-			 
 
 
 
@@ -262,15 +318,18 @@ advtrains.register_tracks("default", {
 	formats={},
 	get_additional_definiton = function(def, preset, suffix, rotation)
 		return {
-		   after_dig_node=function(pos)
-		      advtrains.invalidate_all_paths()
-		      advtrains.ndb.clear(pos)
-		   end,
-		   advtrains = {
-		      on_train_enter = function(pos, train_id)
-			 train_load(pos, train_id, true)
-		      end,
-		   },
+			after_dig_node=function(pos)
+				advtrains.invalidate_all_paths()
+				advtrains.ndb.clear(pos)
+			end,
+			on_rightclick = function(pos, node, player)
+				show_fc_formspec(pos, player)
+			end,
+			advtrains = {
+				on_train_enter = function(pos, train_id)
+					train_load(pos, train_id, true)
+				end,
+			},
 		}
 	end
 				     }, advtrains.trackpresets.t_30deg_straightonly)
@@ -284,16 +343,18 @@ advtrains.register_tracks("default", {
 	formats={},
 	get_additional_definiton = function(def, preset, suffix, rotation)
 		return {
-		   after_dig_node=function(pos)
-		      advtrains.invalidate_all_paths()
-		      advtrains.ndb.clear(pos)
-		   end,
-
-		   advtrains = {
-		      on_train_enter = function(pos, train_id)
-			 train_load(pos, train_id, false)
-		      end,
-		   },
+			after_dig_node=function(pos)
+				advtrains.invalidate_all_paths()
+				advtrains.ndb.clear(pos)
+			end,
+			on_rightclick = function(pos, node, player)
+				show_fc_formspec(pos, player)
+			end,
+			advtrains = {
+				on_train_enter = function(pos, train_id)
+					train_load(pos, train_id, false)
+				end,
+			},
 		}
 	end
 				     }, advtrains.trackpresets.t_30deg_straightonly)
