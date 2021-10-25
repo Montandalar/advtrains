@@ -17,6 +17,18 @@
 
 -- train.couple_* contain references to ObjectRefs of couple objects, which contain all relevant information
 -- These objectRefs will delete themselves once the couples no longer match (see below)
+
+advtrains.coupler_types = {}
+
+function advtrains.register_coupler_type(code, name)
+	advtrains.coupler_types[code] = name
+end
+
+-- Register some default couplers
+advtrains.register_coupler_type("chain", attrans("Buffer and Chain Coupler"))
+advtrains.register_coupler_type("scharfenberg", attrans("Scharfenberg Coupler"))
+
+
 local function create_couple_entity(pos, train1, t1_is_front, train2, t2_is_front)
 	local id1 = train1.id
 	local id2 = train2.id
@@ -139,16 +151,20 @@ end
 function advtrains.couple_initiate_with(init_train, stat_train, stat_is_front)
 	--atdebug("Couple init autocouple=",init_train.autocouple,"atc_w_acpl=",init_train.atc_wait_autocouple)
 	if init_train.autocouple or init_train.atc_wait_autocouple then
-		advtrains.couple_trains(init_train, false, stat_train, stat_is_front)
-		-- clear atc couple waiting blocker
-		init_train.atc_wait_autocouple = nil
-	else
-		local pos = advtrains.path_get_interpolated(init_train, init_train.index)
-		create_couple_entity(pos, init_train, true, stat_train, stat_is_front)
-		-- clear ATC command on collision
-		advtrains.atc.train_reset_command(init_train)
+		local cplmatch, msg = advtrains.check_matching_coupler_types(init_train, true, stat_train, stat_is_front)
+		if cplmatch then
+			advtrains.couple_trains(init_train, false, stat_train, stat_is_front)
+			-- clear atc couple waiting blocker
+			init_train.atc_wait_autocouple = nil
+			return
+		end
 	end
-	
+	-- get here if either autocouple is not on or couples dont match
+	local pos = advtrains.path_get_interpolated(init_train, init_train.index)
+	create_couple_entity(pos, init_train, true, stat_train, stat_is_front)
+	-- clear ATC command on collision
+	advtrains.atc.train_reset_command(init_train)
+
 end
 
 -- check if the player has permission for the first/last wagon of the train
@@ -176,7 +192,13 @@ function advtrains.safe_couple_trains(train1, t1_is_front, train2, t2_is_front, 
 		   wck_t2 = check_twagon_owner(train2, t2_is_front, pname)
 	end
 	if (wck_t1 or wck_t2) or not pname then
-		advtrains.couple_trains(train1, not t1_is_front, train2, t2_is_front)
+
+		local cplmatch, msg = advtrains.check_matching_coupler_types(train1, t1_is_front, train2, t2_is_front)
+		if cplmatch then
+			advtrains.couple_trains(train1, not t1_is_front, train2, t2_is_front)
+		else
+			minetest.chat_send_player(pname, msg)
+		end
 	end
 end
 
@@ -234,7 +256,79 @@ function advtrains.couple_trains(init_train, invert_init_train, stat_train, stat
 	return true
 end
 
+-- Couple types matching check
+-- returns: true, nil if OK
+--			false, errmsg if there is an error
+function advtrains.check_matching_coupler_types(t1, t1_front, t2, t2_front)
+	-- 1. get wagons
+	local t1_wid
+	if t1_front then
+		t1_wid = t1.trainparts[1]
+	else
+		t1_wid = t1.trainparts[#t1.trainparts]
+	end
+	local t2_wid
+	if t2_front then
+		t2_wid = t2.trainparts[1]
+	else
+		t2_wid = t2.trainparts[#t2.trainparts]
+	end
 
+	--atdebug("CMCT: t1_wid",t1_wid,"t2_wid",t2_wid,"")
+
+	if not t1_wid or not t2_wid then
+		return false, "Unable to retrieve wagons from train"--note: no translation needed, case should not occur
+	end
+
+	local t1_wagon = advtrains.wagons[t1_wid]
+	local t2_wagon = advtrains.wagons[t2_wid]
+
+	if not t1_wagon or not t2_wagon then
+		return false, "At least one of wagons "..t1_wagon.." or "..t2_wagon.." does not exist"--note: no translation needed, case should not occur
+	end
+
+	-- these calls do not fail, they may return placeholder - doesn't matter
+	local _,t1_wpro = advtrains.get_wagon_prototype(t1_wagon)
+	local _,t2_wpro = advtrains.get_wagon_prototype(t2_wagon)
+
+	-- get correct couplers table (front/back)
+	local t1_cplt
+	if not t1_front == not t1_wagon.wagon_flipped then --fancy XOR
+		t1_cplt = t1_wpro.coupler_types_back
+	else
+		t1_cplt = t1_wpro.coupler_types_front
+	end
+	local t2_cplt
+	if not t2_front == not t2_wagon.wagon_flipped then --fancy XOR
+		t2_cplt = t2_wpro.coupler_types_back
+	else
+		t2_cplt = t2_wpro.coupler_types_front
+	end
+
+	--atdebug("CMCT: t1",t1_cplt,"t2",t2_cplt,"")
+
+	-- if at least one of the trains has no couplers table, it always couples (fallback behavior and mode for universal shunters)
+	if not t1_cplt or not t2_cplt then
+		return true
+	end
+
+	-- have common coupler?
+	for typ,_ in pairs(t1_cplt) do
+		if t2_cplt[typ] then
+			--atdebug("CMCT: Matching type",typ)
+			return true
+		end
+	end
+	--no match, give user an info
+	local t1_cplhr, t2_cplhr = {},{}
+	for typ,_ in pairs(t1_cplt) do
+		table.insert(t1_cplhr, advtrains.coupler_types[typ] or typ)
+	end
+	for typ,_ in pairs(t2_cplt) do
+		table.insert(t2_cplhr, advtrains.coupler_types[typ] or typ)
+	end
+	return false, attrans("Can not couple: The couplers of the trains do not match (@1 and @2).", table.concat(t1_cplhr, ","), table.concat(t2_cplhr, ","))
+end
 
 -- DECOUPLING --
 function advtrains.split_train_at_fc(train, count_empty, length_limit)

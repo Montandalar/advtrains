@@ -75,6 +75,13 @@ advtrains.register_wagon(name, prototype, description, inventory_image)
 	^- Getting on by walking in then takes effect.
 	^- Positive values mean front, negative ones back. Resulting position is automatically shifted to the right side.
 
+	coupler_types_front = {scharfenberg=true},
+	coupler_types_back = {chain=true},
+	^- Defines the available coupler types on this wagon on the front and back side. Wagon will only couple to wagons that have a matching coupler. (this property does not have any visual impact)
+	^- Default: not given (nil) - causes the wagon to couple to any other wagon regardless of coupler type.
+	^- Empty table ({}): This wagon does not couple to any other wagon (e.g. for Linetrack vehicles)
+	^- Register coupler types using ''advtrains.register_coupler_type(type, name)''. advtrains defines the default types "chain" (Buffer and Chain) and "scharfenberg" (Scharfenberg coupler).
+
 	wagon_span=2,
 	^- How far this wagon extends from its base position. Is the half of the wagon length.
 	^- Used to determine in which distance the other wagons have to be positioned. Will require tweaking.
