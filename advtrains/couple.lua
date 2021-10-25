@@ -11,14 +11,9 @@
 -- When the initiating train has autocouple set, trains are immediately coupled
 -- When not, a couple entity is spawned and coupling commences on click
 -- Coupling MUST preserve the train ID of the initiating train, so it is done like this:
-	-- initiating train is reversed
-	-- stationary train is reversed if required, so that it points towards the initiating train
-	-- do_connect_trains(initiating, stationary)
--- As a result, the coupled train is reversed in direction. Alternative way of doing things (might be considered later):
-	-- stationary train is reversed if required, so that it points away from the initiating train
 	-- index of initiating train is set so that it matches the front pos of stationary train
-	-- wagons of stationary train are inserted at the beginning of initiating train
 	-- remove stationary train
+	-- wagons of stationary train are inserted at the beginning of initiating train (considers direction of stat_train and inserts reverse if required)
 
 -- train.couple_* contain references to ObjectRefs of couple objects, which contain all relevant information
 -- These objectRefs will delete themselves once the couples no longer match (see below)
@@ -142,12 +137,16 @@ end
 -- Called from train_step_b() when the current train (init_train) just stopped at one of the end indices of another train (stat_train)
 -- Depending on autocouple, either couples immediately or spawns a couple entity
 function advtrains.couple_initiate_with(init_train, stat_train, stat_is_front)
-	--atdebug("Initiating couplign between init=",init_train.id,"stat=",stat_train.id,"backside=",stat_is_backside)
-	if init_train.autocouple then
-		advtrains.couple_trains(init_train, true, stat_train, stat_is_front)
+	--atdebug("Couple init autocouple=",init_train.autocouple,"atc_w_acpl=",init_train.atc_wait_autocouple)
+	if init_train.autocouple or init_train.atc_wait_autocouple then
+		advtrains.couple_trains(init_train, false, stat_train, stat_is_front)
+		-- clear atc couple waiting blocker
+		init_train.atc_wait_autocouple = nil
 	else
 		local pos = advtrains.path_get_interpolated(init_train, init_train.index)
 		create_couple_entity(pos, init_train, true, stat_train, stat_is_front)
+		-- clear ATC command on collision
+		advtrains.atc.train_reset_command(init_train)
 	end
 	
 end
@@ -177,50 +176,61 @@ function advtrains.safe_couple_trains(train1, t1_is_front, train2, t2_is_front, 
 		   wck_t2 = check_twagon_owner(train2, t2_is_front, pname)
 	end
 	if (wck_t1 or wck_t2) or not pname then
-		advtrains.couple_trains(train1, t1_is_front, train2, t2_is_front)
+		advtrains.couple_trains(train1, not t1_is_front, train2, t2_is_front)
 	end
 end
 
 -- Actually performs the train coupling. Always retains train ID of train1
-function advtrains.couple_trains(train1, t1_is_front, train2, t2_is_front)
-	--atdebug("Couple trains init=",init_train.id,"stat=",stat_train.id,"statreverse=",stat_must_reverse)
-	-- see comment on top of file
-	if t1_is_front then
-		advtrains.invert_train(train1.id)
-	end
-	if not t2_is_front then
-		advtrains.invert_train(train2.id)
-	end
+function advtrains.couple_trains(init_train, invert_init_train, stat_train, stat_train_opposite)
+	--atdebug("Couple trains init=",init_train.id,"initinv=",invert_init_train,"stat=",stat_train.id,"statreverse=",stat_train_opposite)
 
-	advtrains.do_connect_trains(train1, train2)
-end
-
--- Adds the wagons of first to second and deletes second_id afterwards
--- Assumes that second_id stands right behind first_id and both trains point to the same direction
-function advtrains.do_connect_trains(first, second)
-	
-	if not advtrains.train_ensure_init(first.id, first) then
-		atwarn("Coupling: first train",first.id,"is not initialized! Operation aborted!")
+	if not advtrains.train_ensure_init(init_train.id, init_train) then
+		atwarn("Coupling: initiating train",init_train.id,"is not initialized! Operation aborted!")
 		return
 	end
-	if not advtrains.train_ensure_init(second.id, second) then
-		atwarn("Coupling: second train",second.id,"is not initialized! Operation aborted!")
+	if not advtrains.train_ensure_init(stat_train.id, stat_train) then
+		atwarn("Coupling: stationary train",stat_train.id,"is not initialized! Operation aborted!")
 		return
 	end
-	
-	local first_wagoncnt=#first.trainparts
-	local second_wagoncnt=#second.trainparts
-	
-	for _,v in ipairs(second.trainparts) do
-		table.insert(first.trainparts, v)
-	end
-	
-	advtrains.remove_train(second.id)
 
-	first.velocity = 0
+	-- only used with the couple entity
+	if invert_init_train then
+		advtrains.invert_train(init_train.id)
+	end
+
+	local itp = init_train.trainparts
+	local init_wagoncnt = #itp
+	local stp = stat_train.trainparts
+	local stat_wagoncnt = #stp
+	local stat_trainlen = stat_train.trainlen -- save the train length of stat train, to be added to index
+
+	if stat_train_opposite then
+		-- insert wagons in inverse order and set their wagon_flipped state
+		for i=1,stat_wagoncnt do
+			table.insert(itp, 1, stp[i])
+			local wdata = advtrains.wagons[stp[i]]
+			if wdata then
+				wdata.wagon_flipped = not wdata.wagon_flipped
+			else
+				atwarn("While coupling, wagon",stp[i],"of stationary train",stat_train.id,"not found!")
+			end
+		end
+	else
+		--insert wagons in normal order
+		for i=stat_wagoncnt,1,-1 do
+			table.insert(itp, 1, stp[i])
+		end
+	end
+
+	-- TODO: migrate some of the properties from stat_train to init_train?
 	
-	advtrains.update_trainpart_properties(first.id)
-	advtrains.couple_invalidate(first)
+	advtrains.remove_train(stat_train.id)
+
+	-- Set train index forward
+	init_train.index = advtrains.path_get_index_by_offset(init_train, init_train.index, stat_trainlen)
+
+	advtrains.update_trainpart_properties(init_train.id)
+	advtrains.couple_invalidate(init_train)
 	return true
 end
 

@@ -418,9 +418,11 @@ function advtrains.train_step_b(id, train, dtime)
 		ctrl_lever = userc
 	else
 		if train.atc_command then
-			if (not train.atc_delay or train.atc_delay<=0) and not train.atc_wait_finish then
+			if (not train.atc_delay or train.atc_delay<=0)
+					and not train.atc_wait_finish
+					and not train.atc_wait_autocouple then
 				advtrains.atc.execute_atc_command(id, train)
-			else
+			elseif train.atc_delay and train.atc_delay > 0 then
 				train.atc_delay=train.atc_delay-dtime
 			end
 		elseif train.atc_delay then
@@ -711,12 +713,15 @@ function advtrains.train_step_c(id, train, dtime)
 	if train.ontrack_collision_info then
 		train.velocity = 0
 		train.acceleration = 0
-		advtrains.atc.train_reset_command(train)
+		--advtrains.atc.train_reset_command(train) will occur in couple_initiate_with if required
 
 		local otrn = advtrains.trains[train.ontrack_collision_info.otid]
 
 		if otrn.velocity == 0 then -- other train must be standing, else don't initiate coupling
 			advtrains.couple_initiate_with(train, otrn, not train.ontrack_collision_info.same_dir)
+		else
+			-- other collision - stop any ATC control
+			advtrains.atc.train_reset_command(train)
 		end
 
 		train.ontrack_collision_info = nil

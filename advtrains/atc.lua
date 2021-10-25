@@ -199,10 +199,16 @@ local matchptn={
 		return #match+1
 	end,
 	["B([0-9]+)"]=function(id, train, match)
-		if train.velocity>tonumber(match) then
-			train.atc_brake_target=tonumber(match)
-			if not train.tarvelocity or train.tarvelocity>train.atc_brake_target then
-				train.tarvelocity=train.atc_brake_target
+		local btar = tonumber(match)
+		if train.velocity>btar then
+			train.atc_brake_target=btar
+			if not train.tarvelocity or train.tarvelocity>btar then
+				train.tarvelocity=btar
+			end
+		else
+			-- independent of brake target, must make sure that tarvelocity is not greater than it
+			if train.tarvelocity and train.tarvelocity>btar then
+				train.tarvelocity=btar
 			end
 		end
 		return #match+1
@@ -266,6 +272,10 @@ local matchptn={
 		if not advtrains.interlocking then return 2 end
 		advtrains.interlocking.ars_set_disable(train, match=="0")
 		return 2
+	end,
+	["Cpl"]=function(id, train)
+		train.atc_wait_autocouple=true
+		return 3
 	end,
 }
 
@@ -358,11 +368,13 @@ function atc.execute_atc_command(id, train)
 		local match=string.match(command, "^"..pattern)
 		if match then
 			local patlen=func(id, train, match)
-			
-			atprint("Executing: "..string.sub(command, 1, patlen))
-			
+			--atdebug("Executing: "..string.sub(command, 1, patlen))
+			--atdebug("Train ATC State: tvel=",train.tarvelocity,"brktar=",train.atc_brake_target,"delay=",train.atc_delay,"wfinish=",train.atc_wait_finish,"wacpl=",train.atc_wait_autocouple)
+
 			train.atc_command=string.sub(command, patlen+1)
-			if train.atc_delay<=0 and not train.atc_wait_finish then
+			if train.atc_delay<=0
+				and not train.atc_wait_finish
+				and not train.atc_wait_autocouple then
 				--continue (recursive, cmds shouldn't get too long, and it's a end-recursion.)
 				atc.execute_atc_command(id, train)
 			end

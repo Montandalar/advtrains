@@ -51,6 +51,10 @@ Kick all passengers out of the trains
 This command kicks all passengers (non-driving players) off the train. This command works only
 if the train is stopped and its doors are open.
 
+Cpl
+Temporarily switch the train to "Autocouple" mode and wait for coupling.
+This command makes the train continue at its current speed until it hits another standing wagon or train. Then, it couples to this train and ATC command execution continues.
+
 # conditional statements:
 
 I<condition><code>;
