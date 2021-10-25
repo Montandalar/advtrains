@@ -324,9 +324,11 @@ function advtrains.check_matching_coupler_types(t1, t1_front, t2, t2_front)
 	for typ,_ in pairs(t1_cplt) do
 		table.insert(t1_cplhr, advtrains.coupler_types[typ] or typ)
 	end
+	if #t1_cplhr==0 then t1_cplhr[1]=attrans("<none>") end
 	for typ,_ in pairs(t2_cplt) do
 		table.insert(t2_cplhr, advtrains.coupler_types[typ] or typ)
 	end
+	if #t2_cplhr==0 then t2_cplhr[1]=attrans("<none>") end
 	return false, attrans("Can not couple: The couplers of the trains do not match (@1 and @2).", table.concat(t1_cplhr, ","), table.concat(t2_cplhr, ","))
 end
 
