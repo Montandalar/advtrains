@@ -1,6 +1,6 @@
 
-local function on_punch(pos, player)
-	atlatc.interrupt.add(0, pos, {type="punch", punch=true})
+local function on_punch(pos,node,player)
+	atlatc.interrupt.add(0, pos, {type="punch", punch=true, name=player:get_player_name()})
 end
 
 
