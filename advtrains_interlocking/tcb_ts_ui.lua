@@ -723,11 +723,17 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		connid = tonumber(connids)
 		if not connid or connid<1 or connid>2 then return end
 	end
-	if pos and connid and not fields.quit then
+	if pos and connid then
 		local sigd = {p=pos, s=connid}
 		local tcbs = ildb.get_tcbs(sigd)
 		if not tcbs then return end
-		
+
+		if fields.quit then
+			-- form quit: disable temporary ARS ignore
+			tcbs.ars_ignore_next = nil
+			return
+		end
+
 		local sel_rte
 		if fields.rtelist then
 			local tev = minetest.explode_textlist_event(fields.rtelist)
@@ -740,7 +746,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		if tcbs.routeset and fields.cancelroute then
 			if tcbs.routes[tcbs.routeset] and tcbs.routes[tcbs.routeset].ars then
-				tcbs.ars_disabled = true
+				tcbs.ars_ignore_next = true
 			end
 			-- if route committed, cancel route ts info
 			ilrs.update_route(sigd, tcbs, nil, true)
@@ -749,6 +755,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			if fields.newroute and hasprivs then
 				advtrains.interlocking.init_route_prog(pname, sigd)
 				minetest.close_formspec(pname, formname)
+				tcbs.ars_ignore_next = nil
 				return
 			end
 			if sel_rte and tcbs.routes[sel_rte] then

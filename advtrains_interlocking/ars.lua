@@ -133,9 +133,11 @@ function advtrains.interlocking.ars_check(sigd, train)
 	local tcbs = il.db.get_tcbs(sigd)
 	if not tcbs or not tcbs.routes then return end
 	
-	if tcbs.ars_disabled then
+	if tcbs.ars_disabled or tcbs.ars_ignore_next then
 		-- No-ARS mode of signal.
 		-- ignore...
+		-- Note: ars_ignore_next is set by signalling formspec when route is cancelled
+		tcbs.ars_ignore_next = nil
 		return
 	end
 	
