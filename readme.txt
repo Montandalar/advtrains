@@ -28,6 +28,7 @@ Steam engine / wagon texture: mbb
 Detailed Steam engine       : mbb / Krokoschlange(animation)
 Industrial engine/wagons    : mbb
 Inventory images            : mbb
+Node texture for LuaATC controller: Jeija (from Mesecons)
 Mod Description             : hajo
 Sounds:
 advtrains_crossing_bell     : Codesound

@@ -302,7 +302,7 @@ ndb.run_lbm = function(pos, node)
 					minetest.swap_node(pos, newnode)
 					local ndef=minetest.registered_nodes[nodeid]
 					if ndef and ndef.advtrains and ndef.advtrains.on_updated_from_nodedb then
-						ndef.advtrains.on_updated_from_nodedb(pos, newnode)
+						ndef.advtrains.on_updated_from_nodedb(pos, newnode, node)
 					end
 					return true
 				end

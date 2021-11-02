@@ -97,7 +97,7 @@ function ac.on_receive_fields(pos, formname, fields, player)
 	end
 end
 
-function ac.run_in_env(pos, evtdata, customfct_p)
+function ac.run_in_env(pos, evtdata, customfct_p, ignore_no_code)
 	local ph=minetest.pos_to_string(pos)
 	local nodetbl = ac.nodes[ph]
 	if not nodetbl then
@@ -116,7 +116,9 @@ function ac.run_in_env(pos, evtdata, customfct_p)
 	end
 	local env = atlatc.envs[nodetbl.env]
 	if not nodetbl.code or nodetbl.code=="" then
-		env:log("warning", "LuaAutomation component at",ph,": No code to run! (insert -- to suppress warning)")
+		if not ignore_no_code then
+			env:log("warning", "LuaAutomation component at",ph,": No code to run! (insert -- to suppress warning)")
+		end
 		return false
 	end
 	
