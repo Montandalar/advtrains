@@ -44,7 +44,12 @@ minetest.register_craftitem("advtrains_luaautomation:pcnaming",{
 				return
 			end
 			local node = advtrains.ndb.get_node(pos)
-			if node.name and (minetest.get_item_group(node.name, "advtrains_signal")>0 or advtrains.is_passive(pos)) then
+			local ndef = minetest.registered_nodes[node.name]
+			if node.name and (
+					minetest.get_item_group(node.name, "advtrains_signal")>0 --is IL signal
+					or advtrains.is_passive(pos) -- is passive component
+					or (ndef and ndef.luaautomation) -- is active component
+					) then
 				--look if this one already has a name
 				local pn=""
 				for name, npos in pairs(atlatc.pcnaming.name_map) do

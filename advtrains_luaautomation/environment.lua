@@ -150,7 +150,7 @@ local static_env = {
 	--interrupts are handled per node, position unknown. (same goes for digilines)
 	--however external interrupts can be set here.
 	interrupt_pos = function(parpos, imesg)
-		local pos=atlatc.pcnaming.resolve_pos(parpos)
+		local pos=atlatc.pcnaming.resolve_pos(parpos, "interrupt_pos")
 		atlatc.interrupt.add(0, pos, {type="ext_int", ext_int=true, message=imesg})
 	end,
 	-- sends an atc command to train regardless of where it is in the world
