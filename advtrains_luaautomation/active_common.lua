@@ -14,7 +14,7 @@ end
 function ac.after_place_node(pos, player)
 	local meta=minetest.get_meta(pos)
 	meta:set_string("formspec", ac.getform(pos, meta))
-	meta:set_string("infotext", "LuaAutomation component, unconfigured.")
+	meta:set_string("infotext", "LuaATC component, unconfigured.")
 	local ph=minetest.pos_to_string(pos)
 	--just get first available key!
 	for en,_ in pairs(atlatc.envs) do
@@ -48,7 +48,7 @@ function ac.getform(pos, meta_p)
 		.."button[5,0.2;2,1;save;Save]"
 		.."button[7,0.2;3,1;cle;Clear Local Env.]"
 		.."textarea[0.3,1.5;"..atlatc.CODE_FORM_SIZE..";code;Code;"..minetest.formspec_escape(code).."]"
-		.."label[0,9.7;"..err.."]"
+		.."label["..atlatc.CODE_FORM_ERRLABELPOS..";"..err.."]"
 	return form
 end
 
@@ -91,9 +91,9 @@ function ac.on_receive_fields(pos, formname, fields, player)
 	
 	meta:set_string("formspec", ac.getform(pos, meta))
 	if nodetbl.env then
-		meta:set_string("infotext", "LuaAutomation component, assigned to environment '"..nodetbl.env.."'")
+		meta:set_string("infotext", "LuaATC component, assigned to environment '"..nodetbl.env.."'")
 	else
-		meta:set_string("infotext", "LuaAutomation component, invalid enviroment set!")
+		meta:set_string("infotext", "LuaATC component, invalid enviroment set!")
 	end
 end
 
@@ -101,7 +101,7 @@ function ac.run_in_env(pos, evtdata, customfct_p, ignore_no_code)
 	local ph=minetest.pos_to_string(pos)
 	local nodetbl = ac.nodes[ph]
 	if not nodetbl then
-		atwarn("LuaAutomation component at",ph,": Data not in memory! Please visit component and click 'Save'!")
+		atwarn("LuaATC component at",ph,": Data not in memory! Please visit component and click 'Save'!")
 		return
 	end
 	
@@ -111,13 +111,13 @@ function ac.run_in_env(pos, evtdata, customfct_p, ignore_no_code)
 	end
 	
 	if not nodetbl.env or not atlatc.envs[nodetbl.env] then
-		atwarn("LuaAutomation component at",ph,": Not an existing environment: "..(nodetbl.env or "<nil>"))
+		atwarn("LuaATC component at",ph,": Not an existing environment: "..(nodetbl.env or "<nil>"))
 		return false
 	end
 	local env = atlatc.envs[nodetbl.env]
 	if not nodetbl.code or nodetbl.code=="" then
 		if not ignore_no_code then
-			env:log("warning", "LuaAutomation component at",ph,": No code to run! (insert -- to suppress warning)")
+			env:log("warning", "LuaATC component at",ph,": No code to run! (insert -- to suppress warning)")
 		end
 		return false
 	end

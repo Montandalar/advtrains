@@ -14,6 +14,8 @@ minetest.register_privilege("atlatc", { description = "Player can place and modi
 
 --Size of code input forms in X,Y notation. Must be at least 10x10
 atlatc.CODE_FORM_SIZE = "15,12"
+--Position of Error Label in Code Form
+atlatc.CODE_FORM_ERRLABELPOS = "0,12"
 
 --assertt helper. error if a variable is not of a type
 function assertt(var, typ)

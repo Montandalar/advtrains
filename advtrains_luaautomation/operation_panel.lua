@@ -7,7 +7,7 @@ end
 minetest.register_node("advtrains_luaautomation:oppanel", {
 	drawtype = "normal",
 	tiles={"atlatc_oppanel.png"},
-	description = "LuaAutomation operation panel",
+	description = "LuaATC operation panel",
 	groups = {
 		cracky = 1,
 		save_in_at_nodedb=1,

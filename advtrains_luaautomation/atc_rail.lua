@@ -14,7 +14,7 @@ function r.fire_event(pos, evtdata, appr_internal)
 	local railtbl = atlatc.active.nodes[ph]
 	
 	if not railtbl then
-		atwarn("LuaAutomation ATC interface rail at",ph,": Data not in memory! Please visit position and click 'Save'!")
+		atwarn("LuaATC interface rail at",ph,": Data not in memory! Please visit position and click 'Save'!")
 		return
 	end
 	
@@ -188,7 +188,7 @@ advtrains.register_tracks("default", {
 	models_prefix="advtrains_dtrack",
 	models_suffix=".b3d",
 	shared_texture="advtrains_dtrack_shared_atc.png",
-	description=atltrans("LuaAutomation ATC Rail"),
+	description=atltrans("LuaATC Rail"),
 	formats={},
 	get_additional_definiton = function(def, preset, suffix, rotation)
 		return {
