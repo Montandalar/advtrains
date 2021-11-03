@@ -1168,6 +1168,7 @@ function advtrains.split_train_at_index(train, index)
 	newtrain.line = train.line
 	newtrain.routingcode = train.routingcode
 	newtrain.speed_restriction = train.speed_restriction
+	newtrain.speed_restrictions_t = table.copy(train.speed_restrictions_t)
 	newtrain.is_shunt = train.is_shunt
 	newtrain.points_split = advtrains.merge_tables(train.points_split)
 	newtrain.autocouple = train.autocouple
@@ -1210,10 +1211,10 @@ function advtrains.invert_train(train_id)
 	-- If interlocking present, check whether this train is in a section and then set as shunt move after reversion
 	if advtrains.interlocking and train.il_sections and #train.il_sections > 0 then
 		train.is_shunt = true
-		train.speed_restriction = advtrains.SHUNT_SPEED_MAX
+		advtrains.speed.set_restriction(train, "main", advtrains.SHUNT_SPEED_MAX)
 	else
 		train.is_shunt = false
-		train.speed_restriction = nil
+		advtrains.speed.set_restriction(train, "main", -1)
 	end
 end
 

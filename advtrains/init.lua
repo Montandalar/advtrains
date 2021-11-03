@@ -198,6 +198,8 @@ advtrains.meseconrules =
 
 advtrains.fpath=minetest.get_worldpath().."/advtrains"
 
+advtrains.speed = dofile(advtrains.modpath.."/speed.lua")
+
 dofile(advtrains.modpath.."/path.lua")
 dofile(advtrains.modpath.."/trainlogic.lua")
 dofile(advtrains.modpath.."/trainhud.lua")
@@ -467,7 +469,7 @@ advtrains.avt_save = function(remove_players_from_wagons)
 				"trainparts", "recently_collided_with_env",
 				"atc_brake_target", "atc_wait_finish", "atc_command", "atc_delay", "door_open",
 				"text_outside", "text_inside", "line", "routingcode",
-				"il_sections", "speed_restriction", "is_shunt",
+				"il_sections", "speed_restriction", "speed_restrictions_t", "is_shunt",
 				"points_split", "autocouple", "atc_wait_autocouple", "ars_disable",
 			})
 			--then save it

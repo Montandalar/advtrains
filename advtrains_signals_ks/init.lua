@@ -116,6 +116,7 @@ local suppasp_ra = {
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:hs")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:ra")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:sign")
+advtrains.trackplacer.register_tracktype("advtrains_signals_ks:sign_lf")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:zs3")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:zs3v")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:mast")
@@ -295,6 +296,47 @@ for _, rtab in ipairs({
 		})
 		-- rotatable by trackworker
 		advtrains.trackplacer.add_worked("advtrains_signals_ks:sign", typ, "_"..rot, prts.n)
+	end
+
+	for typ, prts in pairs {
+		[8]   = {main =  8, n = "12", ici = true},
+		[12]  = {main = 12, n = "16"},
+		[16]  = {main = 16, n = "e"},
+		["e"] = {main = -1, n = "8"}
+	} do
+		minetest.register_node("advtrains_signals_ks:sign_lf_"..typ.."_"..rot, {
+				description = "Temporary local speed restriction sign",
+				drawtype = "mesh",
+				mesh = "advtrains_signals_ks_sign_smr"..rot..".obj",
+				tiles = {"advtrains_signals_ks_signpost.png", "advtrains_signals_ks_sign_"..typ..".png^[multiply:orange"},
+				paramtype = "light",
+				sunlight_propagates = true,
+				light_source = 4,
+				paramtype2 = "facedir",
+				selection_box = {
+					type = "fixed",
+					fixed = {rtab.sbox, {-1/4, -1/2, -1/4, 1/4, -7/16, 1/4}}
+				},
+				groups = {
+					cracky = 2,
+					advtrains_signal = 2,
+					not_blocking_trains = 1,
+					save_in_at_nodedb = 1,
+					not_in_creative_inventory = (rtab.ici and prts.ici) and 0 or 1,
+				},
+				drop = "advtrains_signals_ks:sign_lf_8_0",
+				inventory_image = "advtrains_signals_ks_sign_8.png^[multiply:orange",
+				advtrains = {
+					-- This is a static signal! No set_aspect
+					get_aspect = function(pos, node)
+						return {main = prts.main, type = "temp"}
+					end,
+				},
+				on_rightclick = advtrains.interlocking.signal_rc_handler,
+				can_dig = advtrains.interlocking.signal_can_dig,
+				after_dig_node = advtrains.interlocking.signal_after_dig
+		})
+		advtrains.trackplacer.add_worked("advtrains_signals_ks:sign_lf", tostring(typ), "_"..rot, prts.n)
 	end
 	
 	-- Geschwindigkeits(vor)anzeiger für Ks-Signale

@@ -14,19 +14,19 @@ local SHUNT_SPEED_MAX = advtrains.SHUNT_SPEED_MAX
 
 local il = advtrains.interlocking
 
-local function get_over_function(speed, shunt)
+local function get_over_function(speed, shunt, asptype)
 	return function(pos, id, train, index, speed, lzbdata)
 		if speed == 0 and minetest.settings:get_bool("at_il_force_lzb_halt") then
 			atwarn(id,"overrun LZB 0 restriction (red signal) ",pos)
 			-- Set train 1 index backward. Hope this does not lead to bugs...
 			--train.index = index - 0.5
-			train.speed_restriction = 0
+			advtrains.speed.set_restriction(train, "main", 0)
 			
 			--TODO temporary
 			--advtrains.drb_dump(id)
 			--error("Debug: "..id.." triggered LZB-0")
 		else
-			train.speed_restriction = speed
+			advtrains.speed.set_restriction(train, asptype, speed or -1)
 			train.is_shunt = shunt
 		end
 		--atdebug("train drove over IP: speed=",speed,"shunt=",shunt)
@@ -94,6 +94,7 @@ advtrains.tnc_register_on_approach(function(pos, id, train, index, has_entered, 
 		end
 		-- nspd can now be: 1. !=0: new speed restriction, 2. =0: stop here or 3. nil: keep travspd
 		if nspd then
+			travspd = nspd
 			if nspd == -1 then
 				travspd = nil
 			else
@@ -106,7 +107,7 @@ advtrains.tnc_register_on_approach(function(pos, id, train, index, has_entered, 
 		lspd = travspd
 		
 		local udata = {signal_pos = spos}
-		local callback = get_over_function(lspd, travsht)
+		local callback = get_over_function(lspd, travsht, asp.type)
 		lzbdata.il_shunt = travsht
 		lzbdata.il_speed = travspd
 		--atdebug("new lzbdata",lzbdata)
