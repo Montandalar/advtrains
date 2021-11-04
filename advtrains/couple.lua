@@ -252,6 +252,8 @@ function advtrains.couple_trains(init_train, invert_init_train, stat_train, stat
 	init_train.index = advtrains.path_get_index_by_offset(init_train, init_train.index, stat_trainlen)
 
 	advtrains.update_trainpart_properties(init_train.id)
+	advtrains.update_train_start_and_end(init_train)
+
 	advtrains.couple_invalidate(init_train)
 	return true
 end

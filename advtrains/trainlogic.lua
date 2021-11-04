@@ -251,6 +251,11 @@ local callbacks_update, run_callbacks_update = mkcallback("update")
 local callbacks_create, run_callbacks_create = mkcallback("create")
 local callbacks_remove, run_callbacks_remove = mkcallback("remove")
 
+-- required to call from couple.lua
+function advtrains.update_train_start_and_end(train)
+	recalc_end_index(train)
+	run_callbacks_update(train.id, train)
+end
 
 -- train_ensure_init: responsible for creating a state that we can work on, after one of the following events has happened:
 -- - the train's path got cleared
@@ -643,7 +648,8 @@ function advtrains.train_step_b(id, train, dtime)
 				if target_is_inside then
 					local our_index = advtrains.path_project(otrn, ref_index, id)
 					--atdebug("Backprojected our_index",our_index)
-					if our_index and our_index <= new_index_curr_tv then
+					if our_index and our_index <= new_index_curr_tv
+							and our_index >= train.index then --FIX: If train was already past the collision point in the previous step, there is no collision! Fixes bug with split_at_index
 						-- ON_TRACK COLLISION IS HAPPENING
 						-- the actual collision is handled in train_step_c, so set appropriate signal variables
 						train.ontrack_collision_info = {
@@ -1113,6 +1119,7 @@ end
 
 function advtrains.split_train_at_index(train, index)
 	-- this function splits a train at index, creating a new train from the back part of the train.
+	--atdebug("split_train_at_index invoked on",train.id,"index",index)
 
 	local train_id=train.id
 	if index > #train.trainparts then
@@ -1135,6 +1142,7 @@ function advtrains.split_train_at_index(train, index)
 
 	local p_index=advtrains.path_get_index_by_offset(train, train.index, - data.pos_in_train + wagon.wagon_span)
 	local pos, connid, frac = advtrains.path_getrestore(train, p_index)
+	--atdebug("new train position p_index",p_index,"pos",pos,"connid",connid,"frac",frac)
 	local tp = {}
 	for k,v in ipairs(train.trainparts) do
 		if k >= index then
@@ -1144,12 +1152,14 @@ function advtrains.split_train_at_index(train, index)
 	end
 	advtrains.update_trainpart_properties(train_id)
 	recalc_end_index(train)
+	--atdebug("old train index",train.index,"end_index",train.end_index)
 	run_callbacks_update(train_id, train)
 	
 	--create subtrain
 	local newtrain_id=advtrains.create_new_train_at(pos, connid, frac, tp)
 	local newtrain=advtrains.trains[newtrain_id]
-	
+	--atdebug("new train created with ID",newtrain_id,"index",newtrain.index,"end_index",newtrain.end_index)
+
 	newtrain.velocity=train.velocity
 	-- copy various properties from the old to the new train
 	newtrain.door_open = train.door_open
