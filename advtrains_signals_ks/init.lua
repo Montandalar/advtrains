@@ -117,6 +117,7 @@ advtrains.trackplacer.register_tracktype("advtrains_signals_ks:hs")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:ra")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:sign")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:sign_lf")
+advtrains.trackplacer.register_tracktype("advtrains_signals_ks:sign_lf7")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:zs3")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:zs3v")
 advtrains.trackplacer.register_tracktype("advtrains_signals_ks:mast")
@@ -247,24 +248,14 @@ for _, rtab in ipairs({
 		-- rotatable by trackworker
 		advtrains.trackplacer.add_worked("advtrains_signals_ks:ra", typ, "_"..rot)
 	end
-	
-	--Schilder:
-	for typ, prts in pairs({
-			-- Speed restrictions:
-			["8"] = {asp = { main = 8, shunt = true }, n = "12", ici=true},
-			["12"] = {asp = { main = 12, shunt = true }, n = "16"},
-			["16"] = {asp = { main = 16, shunt = true }, n = "e"},
-			-- Speed restriction lifted
-			["e"] = {asp = { main = -1, shunt = true }, n = "hfs"},
-			-- Halt for shunt moves:
-			["hfs"] = {asp = { main = false, shunt = false }, n = "pam"},
-			["pam"] = {asp = { main = -1, shunt = false, proceed_as_main = true}, n = "8"},
-		}) do
-		minetest.register_node("advtrains_signals_ks:sign_"..typ.."_"..rot, {
-			description = "Signal Sign",
+
+	-- Schilder:
+	local function register_sign(prefix, typ, nxt, description, mesh, tile2, dtyp, inv, asp)
+		minetest.register_node("advtrains_signals_ks:"..prefix.."_"..typ.."_"..rot, {
+			description = description,
 			drawtype = "mesh",
-			mesh = "advtrains_signals_ks_sign"..(typ == "hfs" and "_hfs" or "").."_smr"..rot..".obj",
-			tiles = {"advtrains_signals_ks_signpost.png", "advtrains_signals_ks_sign_"..typ..".png"},
+			mesh = "advtrains_signals_ks_"..mesh.."_smr"..rot..".obj",
+			tiles = {"advtrains_signals_ks_signpost.png", tile2},
 			
 			paramtype="light",
 			sunlight_propagates=true,
@@ -280,63 +271,74 @@ for _, rtab in ipairs({
 				advtrains_signal = 2,
 				not_blocking_trains = 1,
 				save_in_at_nodedb = 1,
-				not_in_creative_inventory = (rtab.ici and prts.ici) and 0 or 1,
+				not_in_creative_inventory = (rtab.ici and typ == dtyp) and 0 or 1,
 			},
-			drop = "advtrains_signals_ks:sign_8_0",
-			inventory_image = "advtrains_signals_ks_sign_8.png",
+			drop = "advtrains_signals_ks:"..prefix.."_"..dtyp.."_0",
+			inventory_image = inv,
 			advtrains = {
-				-- This is a static signal! No set_aspect
-				get_aspect = function(pos, node)
-					return prts.asp
-				end,
+				get_aspect = function() return asp end
 			},
 			on_rightclick = advtrains.interlocking.signal_rc_handler,
 			can_dig = advtrains.interlocking.signal_can_dig,
 			after_dig_node = advtrains.interlocking.signal_after_dig,
 		})
 		-- rotatable by trackworker
-		advtrains.trackplacer.add_worked("advtrains_signals_ks:sign", typ, "_"..rot, prts.n)
+		advtrains.trackplacer.add_worked("advtrains_signals_ks:"..prefix, typ, "_"..rot, nxt)
 	end
 
 	for typ, prts in pairs {
-		[8]   = {main =  8, n = "12", ici = true},
-		[12]  = {main = 12, n = "16"},
-		[16]  = {main = 16, n = "e"},
-		["e"] = {main = -1, n = "8"}
+		["hfs"] = {asp = {main = false, shunt = false}, n = "pam", mesh = "_hfs"},
+		["pam"] = {asp = {main = -1, shunt = false, proceed_as_main = true}, n = "hfs"}
 	} do
-		minetest.register_node("advtrains_signals_ks:sign_lf_"..typ.."_"..rot, {
-				description = "Temporary local speed restriction sign",
-				drawtype = "mesh",
-				mesh = "advtrains_signals_ks_sign_smr"..rot..".obj",
-				tiles = {"advtrains_signals_ks_signpost.png", "advtrains_signals_ks_sign_"..typ..".png^[multiply:orange"},
-				paramtype = "light",
-				sunlight_propagates = true,
-				light_source = 4,
-				paramtype2 = "facedir",
-				selection_box = {
-					type = "fixed",
-					fixed = {rtab.sbox, {-1/4, -1/2, -1/4, 1/4, -7/16, 1/4}}
-				},
-				groups = {
-					cracky = 2,
-					advtrains_signal = 2,
-					not_blocking_trains = 1,
-					save_in_at_nodedb = 1,
-					not_in_creative_inventory = (rtab.ici and prts.ici) and 0 or 1,
-				},
-				drop = "advtrains_signals_ks:sign_lf_8_0",
-				inventory_image = "advtrains_signals_ks_sign_8.png^[multiply:orange",
-				advtrains = {
-					-- This is a static signal! No set_aspect
-					get_aspect = function(pos, node)
-						return {main = prts.main, type = "temp"}
-					end,
-				},
-				on_rightclick = advtrains.interlocking.signal_rc_handler,
-				can_dig = advtrains.interlocking.signal_can_dig,
-				after_dig_node = advtrains.interlocking.signal_after_dig
-		})
-		advtrains.trackplacer.add_worked("advtrains_signals_ks:sign_lf", tostring(typ), "_"..rot, prts.n)
+		local mesh = prts.mesh or ""
+		local tile2 = "advtrains_signals_ks_sign_lf7.png^(advtrains_signals_ks_sign_"..typ..".png^[makealpha:255,255,255)"
+		if typ == "hfs" then
+			tile2 = "advtrains_signals_ks_sign_hfs.png"
+		end
+		register_sign("sign", typ, prts.n, "Signal Sign", "sign"..mesh, tile2, "hfs", "advtrains_signals_ks_sign_lf7.png", prts.asp)
+	end
+	
+	for typ, prts in pairs {
+		-- Speed restrictions:
+		["4"] = {asp = { main = 4, shunt = true }, n = "6"},
+		["6"] = {asp = { main = 6, shunt = true }, n = "8"},
+		["8"] = {asp = { main = 8, shunt = true }, n = "12"},
+		["12"] = {asp = { main = 12, shunt = true }, n = "16"},
+		["16"] = {asp = { main = 16, shunt = true }, n = "e"},
+		-- Speed restriction lifted
+		["e"] = {asp = { main = -1, shunt = true }, n = "4", mesh = "_zs10"},
+	} do
+		local mesh = tonumber(typ) and "_zs3" or prts.mesh or ""
+		local tile2 = "[combine:40x40:0,0=\\(advtrains_signals_ks_sign_off.png\\^[resize\\:40x40\\):3,-2=advtrains_signals_ks_sign_"..typ..".png^[invert:rgb"
+		if typ == "e" then
+			tile2 = "advtrains_signals_ks_sign_zs10.png"
+		end
+		register_sign("sign", typ, prts.n, "Permanent local speed restriction sign", "sign"..mesh, tile2, "8", "advtrains_signals_ks_sign_8.png^[invert:rgb", prts.asp)
+	end
+
+	for typ, prts in pairs {
+		["4"]   = {main =  4, n = "6"},
+		["6"]   = {main =  6, n = "8"},
+		["8"]   = {main =  8, n = "12"},
+		["12"]  = {main = 12, n = "16"},
+		["16"]  = {main = 16, n = "e"},
+		["e"] = {main = -1, n = "4"},
+	} do
+		local tile2 = "advtrains_signals_ks_sign_lf7.png^(advtrains_signals_ks_sign_"..typ..".png^[makealpha:255,255,255)"..(typ == "e" and "" or "^[multiply:orange")
+		local inv = "advtrains_signals_ks_sign_lf7.png^(advtrains_signals_ks_sign_8.png^[makealpha:255,255,255)^[multiply:orange"
+		register_sign("sign_lf", typ, prts.n, "Temporary local speed restriction sign", "sign", tile2, "8", inv, {main = prts.main, shunt = true, type = "temp"})
+	end
+
+	for typ, prts in pairs {
+		["4"]   = {main =  4, n = "6"},
+		["6"]   = {main =  6, n = "8"},
+		["8"]   = {main =  8, n = "12"},
+		["12"]  = {main = 12, n = "16"},
+		["16"]  = {main = 16, n = "4"},
+	} do
+		local tile2 = "advtrains_signals_ks_sign_lf7.png^(advtrains_signals_ks_sign_"..typ..".png^[makealpha:255,255,255)"
+		local inv = "advtrains_signals_ks_sign_lf7.png^(advtrains_signals_ks_sign_8.png^[makealpha:255,255,255)"
+		register_sign("sign_lf7", typ, prts.n, "Line speed restriction sign", "sign", tile2, "8", inv, {main = prts.main, shunt = true, type = "line"})
 	end
 	
 	-- Geschwindigkeits(vor)anzeiger für Ks-Signale
@@ -350,7 +352,7 @@ for _, rtab in ipairs({
 		}) do
 		local def = {
 			drawtype = "mesh",
-			tiles = {"advtrains_signals_ks_mast.png","advtrains_signals_ks_head.png","[combine:128x128:0,4=advtrains_signals_ks_zs3_"..typ..".png^[noalpha"},
+			tiles = {"advtrains_signals_ks_mast.png","advtrains_signals_ks_head.png","advtrains_signals_ks_sign_"..typ..".png^[invert:rgb^[noalpha"},
 			paramtype = "light",
 			sunlight_propagates = true,
 			light_source = 4,
@@ -456,3 +458,23 @@ minetest.register_craft({
 	},
 })
 sign_material = nil
+
+minetest.register_craft{
+	output = "advtrains_signals_ks:sign_8_0 1",
+	recipe = {{"advtrains_signals_ks:sign_lf7_8_0"}}
+}
+
+minetest.register_craft{
+	output = "advtrains_signals_ks:sign_hfs_0 1",
+	recipe = {{"advtrains_signals_ks:sign_8_0"}}
+}
+
+minetest.register_craft{
+	output = "advtrains_signals_ks:sign_lf_8_0 1",
+	recipe = {{"advtrains_signals_ks:sign_hfs_0"}}
+}
+
+minetest.register_craft{
+	output = "advtrains_signals_ks:sign_lf7_8_0 1",
+	recipe = {{"advtrains_signals_ks:sign_lf_8_0"}}
+}
