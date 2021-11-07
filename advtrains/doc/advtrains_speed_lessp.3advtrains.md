@@ -1,4 +1,4 @@
-% advtrains.speed.lessp(3advtrains) | Advtrains Developer's Manual
+% advtrains_speed_lessp(3advtrains) | Advtrains Developer's Manual
 
 # NAME
 `advtrains.speed.lessp`, `advtrains.speed.greaterp`, `advtrains.speed.not_lessp`, `advtrains.speed_not_greaterp`, `advtrains.speed.equalp`, `advtrains.speed.not_equalp`, `advtrains.speed.max`, `advtrains.speed.min` - speed restriction comparison functions

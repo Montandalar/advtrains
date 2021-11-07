@@ -1,4 +1,4 @@
-% advtrains.speed.set_restriction(3advtrains) | Advtrains Developer's Manual
+% advtrains_speed_set_restriction(3advtrains) | Advtrains Developer's Manual
 
 # NAME
 `advtrains.speed.set_restriction`, `advtrains.speed.merge_aspect` - modify speed restriction
