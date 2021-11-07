@@ -281,6 +281,8 @@ function advtrains.hud_train_format(train, flip)
 		local oc = lzb.checkpoints
 		for i = 1, #oc do
 			local spd = oc[i].speed
+			spd = advtrains.speed.min(spd, train.speed_restriction)
+			if spd == -1 then spd = nil end
 			local c = not spd and "lime" or (type(spd) == "number" and (spd == 0) and "red" or "orange") or nil
 			if c then
 				ht[#ht+1] = sformat("130,10=(advtrains_hud_bg.png^[resize\\:30x5^[colorize\\:%s)",c)
