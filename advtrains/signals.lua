@@ -18,7 +18,7 @@ end
 
 local function aspect(b)
 return {
-	main = (not b) and 0, -- b ? false : 0
+	main = b and -1 or 0,
 	shunt = false,
 	proceed_as_main = true,
 	dst = false,
@@ -27,7 +27,7 @@ return {
 end
 
 local suppasp = {
-		main = {0, false},
+		main = {0, -1},
 		dst = {false},
 		shunt = nil,
 		proceed_as_main = true,

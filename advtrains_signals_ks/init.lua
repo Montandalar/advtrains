@@ -60,9 +60,9 @@ local setaspectf = function(rot)
 		end
 		setzs3v(pos, nil, rot)
 	else
-		if asp.dst == -1 then
+		if not asp.dst or asp.dst == -1 then
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_free_"..rot, param2 = node.param2})
-		elseif not asp.dst or asp.dst == 0 then
+		elseif asp.dst == 0 then
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_slow_"..rot, param2 = node.param2})
 		else
 			advtrains.ndb.swap_node(pos, {name="advtrains_signals_ks:hs_nextslow_"..rot, param2 = node.param2})
@@ -334,7 +334,8 @@ for _, rtab in ipairs({
 		["6"]   = {main =  6, n = "8"},
 		["8"]   = {main =  8, n = "12"},
 		["12"]  = {main = 12, n = "16"},
-		["16"]  = {main = 16, n = "4"},
+		["16"]  = {main = 16, n = "20"},
+		["20"]  = {main = 20, n = "4"},
 	} do
 		local tile2 = "advtrains_signals_ks_sign_lf7.png^(advtrains_signals_ks_sign_"..typ..".png^[makealpha:255,255,255)"
 		local inv = "advtrains_signals_ks_sign_lf7.png^(advtrains_signals_ks_sign_8.png^[makealpha:255,255,255)"
