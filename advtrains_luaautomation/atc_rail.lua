@@ -56,7 +56,7 @@ function r.fire_event(pos, evtdata, appr_internal)
 		split_at_index = function(index, cmd)
 			if not train_id then return false end
 			assertt(cmd, "string")
-			if type(index) ~= "number" then
+			if type(index) ~= "number" or index < 2 then
 				return false
 			end
 			local new_id = advtrains.split_train_at_index(train, index)

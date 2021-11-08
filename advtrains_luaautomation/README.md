@@ -260,6 +260,8 @@ There are several functions available especially for shunting operations. Some o
  - `split_at_index(index, atc_command)`
 	Splits the train at the specified index, into a train with index-1 wagons and a second train starting with the index-th wagon. The `atc_command` specified is sent to the second train after decoupling. `"S0"` or `"B0"` is common to ensure any locomotives in the remaining train don't continue to move.
 	
+	`index` must be more than 1 to avoid trying to decouple the very front of a train.
+	
 	Example: train has wagons `"foo","foo","foo","bar","bar","bar"`  
 	Command: `split_at_index(4,"S0")`  
 	Result: first train (continues at previous speed): `"foo","foo","foo"`, second train (slows at S0): `"bar","bar","bar"`
