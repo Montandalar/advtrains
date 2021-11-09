@@ -31,6 +31,8 @@ tasks:
 - run_unit_tests : |
     cd advtrains/advtrains
     busted
+    cd ../advtrains_interlocking
+    busted
 - activate_test_env: |
     cd advtrains
     git merge --no-commit origin/luaatcdebug
