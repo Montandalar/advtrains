@@ -1,0 +1,39 @@
+image: debian/stable
+packages: 
+- git
+- curl
+- minetest-server
+- unzip
+- wget
+sources :
+- https://git.sr.ht/~gpcf/advtrains
+
+tasks: 
+- activate_test_env: |
+    cd advtrains
+    git merge --no-commit origin/luaatcdebug
+- download_mt_server: |
+    mkdir bin
+    wget https://lifomaps.de/advtrains-test/builtin.tar.gz
+    tar xf builtin.tar.gz
+    curl https://lifomaps.de/advtrains-test/minetestserver -o ~/bin/minetestserver
+    chmod +x ~/bin/minetestserver
+- install_mt_game : |
+    curl -L https://github.com/minetest/minetest_game/archive/master.zip -o master.zip
+    mkdir -p .minetest/games/
+    cd .minetest/games
+    unzip ../../master.zip
+    mv minetest_game-master minetest_game
+- install_test_world: |
+    mkdir -p .minetest/worlds/
+    curl https://lifomaps.de/advtrains-test/testworld.tar.gz -o ~/testworld.tar.gz
+    cd .minetest/worlds/
+    tar xf ../../testworld.tar.gz
+- install_advtrains : |
+    mkdir .minetest/mods
+    cp -r advtrains .minetest/mods
+    cd .minetest/mods
+    git clone https://git.bananach.space/basic_trains.git/
+- run_test_world: | 
+    echo "bind_address = 127.0.0.1" > minetest.conf
+    ~/bin/minetestserver --port 31111 --gameid minetest_game --config ~/minetest.conf --world ~/.minetest/worlds/advtrains_testworld
