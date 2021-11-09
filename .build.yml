@@ -5,13 +5,12 @@ packages:
 - minetest-server
 - unzip
 - wget
+- lua-busted
 sources :
 - https://git.sr.ht/~gpcf/advtrains
 
-tasks: 
-- activate_test_env: |
-    cd advtrains
-    git merge --no-commit origin/luaatcdebug
+tasks:
+
 - download_mt_server: |
     mkdir bin
     wget https://lifomaps.de/advtrains-test/builtin.tar.gz
@@ -29,6 +28,12 @@ tasks:
     curl https://lifomaps.de/advtrains-test/testworld.tar.gz -o ~/testworld.tar.gz
     cd .minetest/worlds/
     tar xf ../../testworld.tar.gz
+- run_unit_tests : |
+    cd advtrains/advtrains
+    busted
+- activate_test_env: |
+    cd advtrains
+    git merge --no-commit origin/luaatcdebug
 - install_advtrains : |
     mkdir .minetest/mods
     cp -r advtrains .minetest/mods
