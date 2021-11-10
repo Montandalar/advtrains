@@ -93,9 +93,6 @@ END_SER
 ]]
 
 describe("write_to_fd", function()
-				it("serializes a table correctly", function()
-				assert.equals(check_write(testtable), testser)
-				end)
 				it("does not skip empty tables", function()
 						assert.equals(check_write({{}}),noskip)
 				end)
