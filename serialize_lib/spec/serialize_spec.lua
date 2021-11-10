@@ -10,7 +10,7 @@ ser = require("serialize")
 local mock_file = {}
 _G.mock_file = mock_file
 function mock_file:read(arg)
-	if arg == "*l" then
+	if arg == "*l" or arg== "*line" then
 		local l = self.lines[self.pointer or 1]
 		self.pointer = (self.pointer or 1) + 1
 		return l
@@ -49,7 +49,7 @@ local testtable = {
 	["es&&ca&\npe3"] = "baz&&bam&\nbim",
 	["es&:cape4"] = "foo\n:bar"
 }
-local testser = [[LUA_SER v=1
+local testser = [[LUA_SER v=2
 B1:T
 Sa:Sb
 Sc:B0
@@ -81,13 +81,13 @@ local function check_read(text)
 	return ser.read_from_fd(f)
 end
 	
-local noskip = [[LUA_SER v=1
+local noskip = [[LUA_SER v=2
 N1:T
 E
 E
 END_SER
 ]]
-local skip = [[LUA_SER v=1
+local skip = [[LUA_SER v=2
 E
 END_SER
 ]]

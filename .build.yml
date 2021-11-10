@@ -33,6 +33,8 @@ tasks:
     busted
     cd ../advtrains_interlocking
     busted
+    cd ../serialize_lib
+    busted
 - activate_test_env: |
     cd advtrains
     git merge --no-commit origin/luaatcdebug
