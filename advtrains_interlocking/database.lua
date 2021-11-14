@@ -634,6 +634,28 @@ function ildb.get_ip_by_signalpos(spos)
 		end
 	end
 end
+function ildb.check_for_duplicate_ip(spos)
+	local main_ip_found = false
+	-- first pass: check for duplicates
+	for pts,tab in pairs(influence_points) do
+		for connid,pos in pairs(tab) do
+			if vector.equals(pos, spos) then
+				if main_ip_found then
+					atwarn("Signal at",spos,": Deleting duplicate signal influence point at",pts,"/",connid)
+					tab[connid] = nil
+				end
+				main_ip_found = true
+			end
+		end
+	end
+	-- second pass: delete empty tables
+	for pts,tab in pairs(influence_points) do
+		if not tab[1] and not tab[2] then -- only those two connids may exist
+			influence_points[pts] = nil
+		end
+	end
+end
+
 -- clear signal assignment given the signal position
 function ildb.clear_ip_by_signalpos(spos)
 	local pts, connid = ildb.get_ip_by_signalpos(spos)

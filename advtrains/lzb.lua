@@ -90,7 +90,7 @@ local function look_ahead(id, train)
 	--local brake_i = advtrains.path_get_index_by_offset(train, train.index, brakedst + params.BRAKE_SPACE)
 	-- worst case (don't use index_by_offset)
 	local brake_i = atfloor(train.index + brakedst + params.BRAKE_SPACE)
-	atprint("LZB: looking ahead up to ", brake_i)
+	--atprint("LZB: looking ahead up to ", brake_i)
 	
 	--local aware_i = advtrains.path_get_index_by_offset(train, brake_i, AWARE_ZONE)
 	
@@ -134,7 +134,7 @@ local function call_runover_callbacks(id, train)
 	local ckp = train.lzb.checkpoints
 	while ckp[i] do
 		if ckp[i].index <= idx then
-			atprint("LZB: checkpoint run over: i=",ckp[i].index,"s=",ckp[i].speed)
+			--atprint("LZB: checkpoint run over: i=",ckp[i].index,"s=",ckp[i].speed,"p=",ckp[i].pos)
 			-- call callback
 			local it = ckp[i]
 			if it.callback then
@@ -153,7 +153,7 @@ local function apply_checkpoint_to_path(train, checkpoint)
 	if not checkpoint.speed then
 		return
 	end
-	atprint("LZB: applying checkpoint: i=",checkpoint.index,"s=",checkpoint.speed)
+	--atprint("LZB: applying checkpoint: i=",checkpoint.index,"s=",checkpoint.speed,"p=",checkpoint.pos)
 	
 	if checkpoint.speed == 0 then
 		train.lzb.zero_checkpoint = true
@@ -196,6 +196,9 @@ s = v0 * -------  +  - * | ------- |    =  -----------
 
 -- Removes all LZB checkpoints and restarts the traverser at the current train index
 function advtrains.lzb_invalidate(train)
+	--advtrains.atprint_context_tid = train.id
+	--atprint("LZB: invalidate")
+	--advtrains.atprint_context_tid = nil
 	train.lzb = {
 		trav_index = atfloor(train.index) + 1,
 		checkpoints = {},
@@ -205,8 +208,11 @@ end
 -- LZB part of path_invalidate_ahead. Clears all checkpoints that are ahead of start_idx
 -- in contrast to path_inv_ahead, doesn't complain if start_idx is behind train.index, clears everything then
 function advtrains.lzb_invalidate_ahead(train, start_idx)
+	--advtrains.atprint_context_tid = train.id
+	--atprint("LZB: invalidate ahead i=",start_idx)
 	if train.lzb then
 		local idx = atfloor(start_idx)
+		--atprint("LZB: invalidate ahead p=",train.path[start_idx])
 		local i = 1
 		while train.lzb.checkpoints[i] do
 			if train.lzb.checkpoints[i].index >= idx then
@@ -225,6 +231,7 @@ function advtrains.lzb_invalidate_ahead(train, start_idx)
 			apply_checkpoint_to_path(train, ckp)
 		end
 	end
+	--advtrains.atprint_context_tid = nil
 end
 
 -- Add LZB control point

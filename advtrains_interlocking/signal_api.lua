@@ -326,6 +326,7 @@ function advtrains.interlocking.show_ip_form(pos, pname, only_notset)
 		return
 	end
 	local form = "size[7,5]label[0.5,0.5;Signal at "..minetest.pos_to_string(pos).."]"
+	advtrains.interlocking.db.check_for_duplicate_ip(pos)
 	local pts, connid = advtrains.interlocking.db.get_ip_by_signalpos(pos)
 	if pts then
 		form = form.."label[0.5,1.5;Influence point is set at "..pts.."/"..connid.."]"
