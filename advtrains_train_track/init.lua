@@ -1,6 +1,182 @@
 -- Default tracks for advtrains
 -- (c) orwell96 and contributors
 
+local default_boxen = {
+    ["st"] = {
+        [""] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {-1/2-1/16, -1/2, -1/2, 1/2+1/16, -1/2+2/16, 1/2},
+            }
+        },
+        ["_30"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.5000, -0.5000, -1.000, 0.5000, -0.3750, 1.000},
+                    {-0.8750, -0.5000, -1.000, -0.5000, -0.3750, 0.2500},
+                    {0.5000, -0.5000, -0.2500, 0.8750, -0.3750, 1.000},
+                    {-0.1250, -0.5000, -1.375, 0.1875, -0.3750, -1.000}
+                }
+            }
+        },
+        ["_45"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.5000, -0.5000, -0.8750, 0.5000, -0.3750, 0.8750},
+                    {0.5000, -0.5000, -0.5000, 0.8750, -0.3750, 0.5000},
+                    {-0.8750, -0.5000, -0.5000, -0.5000, -0.3750, 0.5000}
+                }
+            }
+        },
+        ["_60"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-1.000, -0.5000, -0.5000, 1.000, -0.3750, 0.5000},
+                    {-1.000, -0.5000, -0.8750, 0.2500, -0.3750, -0.5000},
+                    {-0.2500, -0.5000, 0.5000, 1.000, -0.3750, 0.8750},
+                    {-1.375, -0.5000, -0.1250, -1.000, -0.3750, 0.1875}
+                }
+            }
+        },
+    },
+
+    ["cr"] = {
+        [""] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.5000, -0.5000, -0.5000, 0.6875, -0.3750, 0.5000},
+                    {-0.3750, -0.5000, -1.000, 1.000, -0.3750, 0.000}
+                }
+            }
+        },
+        ["_30"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.5000, -0.5000, -0.5000, 0.7500, -0.3750, 0.8750},
+                    {-0.3750, -0.5000, 0.8750, 0.2500, -0.3750, 1.188},
+                    {0.7500, -0.5000, 0.2500, 1.063, -0.3750, 0.8750}
+                }
+            }
+        },
+        ["_45"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.5000, -0.5000, -1.125, 0.5000, -0.3750, 0.6875},
+                    {-0.8750, -0.5000, -0.9375, -0.5000, -0.3750, 0.06250},
+                    {0.5000, -0.5000, -0.5000, 0.8750, -0.3750, 0.5000}
+                }
+            }
+        },
+        ["_60"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.8125, -0.5000, -0.5000, 1.188, -0.3750, 0.5000},
+                    {-0.1875, -0.5000, 0.5000, 0.8750, -0.3125, 0.8750},
+                    {-0.2500, -0.5000, -0.9375, 0.3125, -0.3125, -0.5000}
+                }
+            }
+        },
+    },
+
+    ["swlst"] = {
+        [""] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.5000, -0.5000, -0.5000, 0.6250, -0.3750, 0.5000},
+                    {-0.3125, -0.5000, -1.000, 0.9375, -0.3125, -0.06250}
+                }
+            }
+        },
+        ["_30"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.5000, -0.5000, -1.000, 0.5000, -0.3750, 1.000},
+                    {-0.8750, -0.5000, -1.000, -0.5000, -0.3750, 0.2500},
+                    {0.5000, -0.5000, -0.2500, 0.8750, -0.3750, 1.000},
+                    {-0.1250, -0.5000, -1.375, 0.1875, -0.3750, -1.000}
+                }
+            }
+        },
+        ["_45"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.5000, -0.5000, -1.1875, 0.5000, -0.3750, 0.8750},
+                    {0.5000, -0.5000, -0.5000, 0.8750, -0.3750, 0.5000},
+                    {-0.8750, -0.5000, -0.8125, -0.5000, -0.3750, 0.5000}
+                }
+            }
+        },
+        ["_60"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-1.000, -0.5000, -0.5000, 1.000, -0.3750, 0.5000},
+                    {-1.000, -0.5000, -0.8750, 0.2500, -0.3750, -0.5000},
+                    {-0.2500, -0.5000, 0.5000, 1.000, -0.3750, 0.8750},
+                    {-1.375, -0.5000, -0.1250, -1.000, -0.3750, 0.1875}
+                }
+            }
+        },
+    },
+
+    ["swrst"] = {
+        [""] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.5000, -0.5000, -0.5000, 0.6250, -0.3750, 0.5000},
+                    {-0.8125, -0.5000, -1.000, 0.4375, -0.3125, -0.06250}
+                }
+            }
+        },
+        ["_30"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-0.5000, -0.5000, -1.000, 0.5000, -0.3750, 1.000},
+                    {-0.8750, -0.5000, -1.000, -0.5000, -0.3750, 0.2500},
+                    {0.5000, -0.5000, -0.2500, 0.8750, -0.3750, 1.000},
+                    {-0.1250, -0.5000, -1.375, 0.1875, -0.3750, -1.000}
+                }
+            }
+        },
+        ["_45"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-1.1875, -0.5000, -0.5000, 0.8750, -0.3750, 0.5000},
+                    {-0.5000, -0.5000, 0.5000, 0.5000, -0.3750, 0.8750},
+                    {-0.8125, -0.5000, -0.8750, 0.5000, -0.3750, -0.5000}
+                }
+            }
+        },
+        ["_60"] = {
+            selection_box = {
+                type = "fixed",
+                fixed = {
+                    {-1.000, -0.5000, -0.5000, 1.000, -0.3750, 0.5000},
+                    {-1.000, -0.5000, -0.8750, 0.2500, -0.3750, -0.5000},
+                    {-0.2500, -0.5000, 0.5000, 1.000, -0.3750, 0.8750},
+                    {-1.375, -0.5000, -0.1250, -1.000, -0.3750, 0.1875}
+                }
+            }
+        },
+    },
+}
+
+default_boxen["swlcr"] = default_boxen["swlst"]
+default_boxen["swrcr"] = default_boxen["swrst"]
+
 --flat
 advtrains.register_tracks("default", {
 	nodename_prefix="advtrains:dtrack",
@@ -10,6 +186,14 @@ advtrains.register_tracks("default", {
 	shared_texture="advtrains_dtrack_shared.png",
 	description=attrans("Track"),
 	formats={},
+
+    get_additional_definiton = function(def, preset, suffix, rotation)
+        if default_boxen[suffix] ~= nil and default_boxen[suffix][rotation] ~= nil then
+            return default_boxen[suffix][rotation]
+        else
+            return {}
+        end
+    end,
 }, advtrains.ap.t_30deg_flat)
 
 minetest.register_craft({
@@ -21,6 +205,59 @@ minetest.register_craft({
 	},
 })
 
+local y3_boxen = {
+    [""] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-0.8750, -0.5000, -1.125, 0.8750, -0.3750, 0.4375}
+            }
+        }
+    },
+
+    ["_30"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-0.5000, -0.5000, -0.875, 0.5000, -0.3750, 1.000},
+                {-0.8750, -0.5000, -0.4375, -0.5000, -0.3750, 0.5625},
+                {0.5000, -0.5000, -0.2500, 0.8125, -0.3750, 1.000},
+            }
+        }
+    },
+
+    --UX FIXME: - 3way - have to place straight route before l and r or the 
+    --nodebox overlaps too much and can't place the straight track node.
+    ["_45"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-0.5000, -0.5000, -1.1250, 0.5000, -0.3750, 0.8750},
+                {0.5000, -0.5000, -0.5000, 0.8750, -0.3750, 0.5000},
+                {-1.1250, -0.5000, -0.9375, -0.5000, -0.3750, 0.5000}
+            }
+        }
+    },
+
+    ["_60"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                --{-0.5000, -0.5000, -0.875, 0.5000, -0.3750, 1.000},
+                {-0.875, -0.5000, -0.5, 1.0, -0.3750, 0.5},
+                --{-0.8750, -0.5000, -0.4375, -0.5000, -0.3750, 0.5625},
+                {-0.4375, -0.5000, -0.8750, 0.5625, -0.3750, -0.5000},
+                --{0.5000, -0.5000, -0.2500, 0.8125, -0.3750, 1.000},
+                {-0.2500, -0.5000, -0.2500, 1.0000, -0.3750, 0.8125},
+            }
+        }
+    },
+}
+
+
+local function y3_turnouts_addef(def, preset, suffix, rotation)
+    return y3_boxen[rotation] or {}
+end
 -- y-turnout
 advtrains.register_tracks("default", {
 	nodename_prefix="advtrains:dtrack_sy",
@@ -30,6 +267,7 @@ advtrains.register_tracks("default", {
 	shared_texture="advtrains_dtrack_shared.png",
 	description=attrans("Y-turnout"),
 	formats = {},
+    get_additional_definiton = y3_turnouts_addef,
 }, advtrains.ap.t_yturnout)
 minetest.register_craft({
 	output = 'advtrains:dtrack_sy_placer 2',
@@ -48,6 +286,7 @@ advtrains.register_tracks("default", {
 	shared_texture="advtrains_dtrack_shared.png",
 	description=attrans("3-way turnout"),
 	formats = {},
+    get_additional_definiton = y3_turnouts_addef,
 }, advtrains.ap.t_s3way)
 minetest.register_craft({
 	output = 'advtrains:dtrack_s3_placer 1',
@@ -59,6 +298,35 @@ minetest.register_craft({
 })
 
 -- Diamond Crossings
+
+local perp_boxen = {
+    [""] = {}, --default size
+    ["_30"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-1.000, -0.5000, -1.000, 1.000, -0.3750, 1.000}
+            }
+        }
+    },
+    ["_45"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-0.8125, -0.5000, -0.8125, 0.8125, -0.3750, 0.8125}
+            }
+        }
+    },
+    ["_60"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-1.000, -0.5000, -1.000, 1.000, -0.3750, 1.000}
+            }
+        }
+    },
+}
+
 -- perpendicular
 advtrains.register_tracks("default", {
 	nodename_prefix="advtrains:dtrack_xing",
@@ -67,7 +335,10 @@ advtrains.register_tracks("default", {
 	models_suffix=".obj",
 	shared_texture="advtrains_dtrack_shared.png",
 	description=attrans("Perpendicular Diamond Crossing Track"),
-	formats = {}
+	formats = {},
+    get_additional_definiton = function(def, preset, suffix, rotation)
+        return perp_boxen[rotation] or {}
+    end
 }, advtrains.ap.t_perpcrossing)
 
 minetest.register_craft({
@@ -79,6 +350,73 @@ minetest.register_craft({
 	}
 })
 
+local ninety_plus_boxen = {
+    ["30l"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-0.5000, -0.5000, -1.000, 0.5000, -0.3750, 1.000},
+                {-0.8750, -0.5000, -1.000, -0.5000, -0.3750, 0.2500},
+                {0.5000, -0.5000, -0.2500, 0.8750, -0.3750, 1.000},
+                {-0.1250, -0.5000, -1.375, 0.1875, -0.3750, -1.000}
+            }
+        }
+    },
+    ["30r"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {0.5000, -0.5000, -1.000, -0.5000, -0.3750, 1.000},
+                {0.8750, -0.5000, -1.000, 0.5000, -0.3750, 0.2500},
+                {-0.5000, -0.5000, -0.2500, -0.8750, -0.3750, 1.000},
+                {0.1250, -0.5000, -1.375, -0.1875, -0.3750, -1.000}
+            }
+        }
+    },
+    ["45l"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-0.5000, -0.5000, -0.8750, 0.5000, -0.3750, 0.8750},
+                {0.5000, -0.5000, -0.5000, 0.8750, -0.3750, 0.5000},
+                {-0.8750, -0.5000, -0.5000, -0.5000, -0.3750, 0.5000}
+            }
+        }
+    },
+    ["45r"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-0.5000, -0.5000, -0.8750, 0.5000, -0.3750, 0.8750},
+                {0.5000, -0.5000, -0.5000, 0.8750, -0.3750, 0.5000},
+                {-0.8750, -0.5000, -0.5000, -0.5000, -0.3750, 0.5000}
+            }
+        }
+    },
+    ["60l"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-1.000, -0.5000, -0.5000, 1.000, -0.3750, 0.5000},
+                {-1.000, -0.5000, -0.8750, 0.2500, -0.3750, -0.5000},
+                {-0.2500, -0.5000, 0.5000, 1.000, -0.3750, 0.8750},
+                {-1.375, -0.5000, -0.1250, -1.000, -0.3750, 0.1875}
+            }
+        }
+    },
+    ["60r"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {1.000, -0.5000, -0.5000, -1.000, -0.3750, 0.5000},
+                {1.000, -0.5000, -0.8750, -0.2500, -0.3750, -0.5000},
+                {0.2500, -0.5000, 0.5000, -1.000, -0.3750, 0.8750},
+                {1.375, -0.5000, -0.1250, 1.000, -0.3750, 0.1875}
+            }
+        }
+    },
+}
+
 -- 90plusx
 -- When you face east and param2=0, then this set of rails has a rail at 90
 -- degrees to the viewer, plus another rail crossing at 30, 45 or 60 degrees.
@@ -89,7 +427,10 @@ advtrains.register_tracks("default", {
 	models_suffix=".obj",
 	shared_texture="advtrains_dtrack_shared.png",
 	description=attrans("90+Angle Diamond Crossing Track"),
-	formats = {}
+	formats = {},
+    get_additional_definiton = function(def, preset, suffix, rotation)
+        return ninety_plus_boxen[suffix] or {}
+    end,
 }, advtrains.ap.t_90plusx_crossing)
 minetest.register_craft({
 	output = 'advtrains:dtrack_xing90plusx_placer 2',
@@ -99,6 +440,7 @@ minetest.register_craft({
 		{'', '', 'advtrains:dtrack_placer'}
 	}
 })
+
 -- Deprecate any rails using the old name scheme
 minetest.register_lbm({
 	label = "Upgrade legacy 4590 rails",
@@ -119,6 +461,83 @@ minetest.register_lbm({
 -- This will replace any items left in the inventory
 minetest.register_alias("advtrains:dtrack_xing4590_placer", "advtrains:dtrack_xing90plusx_placer")
 
+local diagonal_boxen = {
+    ["30r45l"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {0.5000, -0.5000, -1.000, -0.5000, -0.3750, 1.000},
+                {0.8750, -0.5000, -1.000, 0.5000, -0.3750, 0.2500},
+                {-0.5000, -0.5000, -0.2500, -0.8750, -0.3750, 1.000},
+                {0.1250, -0.5000, -1.375, -0.1875, -0.3750, -1.000}
+            }
+        }
+    },
+    ["60l30l"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-1.000, -0.5000, -0.5000, 1.000, -0.3750, 0.5000},
+                {-1.000, -0.5000, -0.8750, 0.2500, -0.3750, -0.5000},
+                {-0.2500, -0.5000, 0.5000, 1.000, -0.3750, 0.8750},
+                {-1.375, -0.5000, -0.1250, -1.000, -0.3750, 0.1875}
+            }
+        }
+    },
+    ["60l60r"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-1.000, -0.5000, -1.000, 1.000, -0.3750, 1.000}
+            }
+        }
+    },
+    ["60r30r"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {1.000, -0.5000, -0.5000, -1.000, -0.3750, 0.5000},
+                {1.000, -0.5000, -0.8750, -0.2500, -0.3750, -0.5000},
+                {0.2500, -0.5000, 0.5000, -1.000, -0.3750, 0.8750},
+                {1.375, -0.5000, -0.1250, 1.000, -0.3750, 0.1875}
+            }
+        }
+    },
+    ["30l45r"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-0.5000, -0.5000, -1.000, 0.5000, -0.3750, 1.000},
+                {-0.8750, -0.5000, -1.000, -0.5000, -0.3750, 0.2500},
+                {0.5000, -0.5000, -0.2500, 0.8750, -0.3750, 1.000},
+                {-0.1250, -0.5000, -1.375, 0.1875, -0.3750, -1.000}
+            }
+        }
+    },
+    ["60l45r"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {-1.000, -0.5000, -0.5000, 1.000, -0.3750, 0.5000},
+                {-1.000, -0.5000, -0.8750, 0.2500, -0.3750, -0.5000},
+                {-0.2500, -0.5000, 0.5000, 1.000, -0.3750, 0.8750},
+                {-1.375, -0.5000, -0.1250, -1.000, -0.3750, 0.1875}
+            }
+        }
+    },
+    ["60r45l"] = {
+        selection_box = {
+            type = "fixed",
+            fixed = {
+                {1.000, -0.5000, -0.5000, -1.000, -0.3750, 0.5000},
+                {1.000, -0.5000, -0.8750, -0.2500, -0.3750, -0.5000},
+                {0.2500, -0.5000, 0.5000, -1.000, -0.3750, 0.8750},
+                {1.375, -0.5000, -0.1250, 1.000, -0.3750, 0.1875}
+            }
+        }
+    },
+}
+
 -- Diagonal
 -- This set of rail crossings is named based on the angle of each intersecting
 -- direction when facing east and param2=0. Rails with l/r swapped are mirror
@@ -131,6 +550,9 @@ advtrains.register_tracks("default", {
 	shared_texture="advtrains_dtrack_shared.png",
 	description=attrans("Diagonal Diamond Crossing Track"),
 	formats = {},
+    get_additional_definiton = function(def, preset, suffix, rotation)
+        return diagonal_boxen[suffix] or {}
+    end,
 }, advtrains.ap.t_diagonalcrossing)
 minetest.register_craft({
 	output = 'advtrains:dtrack_xingdiag_placer 2',
