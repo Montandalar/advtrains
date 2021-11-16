@@ -471,7 +471,7 @@ function advtrains.register_tracks(tracktype, def, preset)
 					walkable = false,
 					selection_box = {
 						type = "fixed",
-						fixed = {-1/2, -1/2, -1/2, 1/2, -1/2+1/16, 1/2},
+						fixed = {-1/2-1/16, -1/2, -1/2, 1/2+1/16, -1/2+2/16, 1/2},
 					},
 					
 					mesh = def.shared_model or (def.models_prefix.."_"..img_suffix..def.models_suffix),
