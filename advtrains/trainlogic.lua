@@ -1168,7 +1168,7 @@ function advtrains.split_train_at_index(train, index)
 	newtrain.line = train.line
 	newtrain.routingcode = train.routingcode
 	newtrain.speed_restriction = train.speed_restriction
-	newtrain.speed_restrictions_t = table.copy(train.speed_restrictions_t)
+	newtrain.speed_restrictions_t = table.copy(train.speed_restrictions_t or {main=train.speed_restriction})
 	newtrain.is_shunt = train.is_shunt
 	newtrain.points_split = advtrains.merge_tables(train.points_split)
 	newtrain.autocouple = train.autocouple
