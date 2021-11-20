@@ -444,6 +444,23 @@ minetest.register_craft({
 	},
 })
 
+minetest.register_craft({
+	output = "advtrains_signals_ks:zs3_off_0 2",
+	recipe = {
+		{"","default:steel_ingot",""},
+		{"default:steel_ingot","dye:white","default:steel_ingot"},
+		{"","advtrains_signals_ks:mast_mast_0",""}
+	},
+})
+minetest.register_craft({
+	output = "advtrains_signals_ks:zs3v_off_0 2",
+	recipe = {
+		{"","default:steel_ingot",""},
+		{"default:steel_ingot","dye:yellow","default:steel_ingot"},
+		{"","advtrains_signals_ks:mast_mast_0",""}
+	},
+})
+
 local sign_material = "default:sign_wall_steel" --fallback
 if minetest.get_modpath("basic_materials") then
 	sign_material = "basic_materials:plastic_sheet"
