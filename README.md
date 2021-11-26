@@ -97,6 +97,7 @@ Small code contributions:
 
 * gpcf (Linuxforks server)
 * imcasper (tss Branch)
+* Cato (C&C Servers)
 
 
 If I forgot someone please punish me for that. Also see the Git commit
