@@ -392,7 +392,7 @@ function advtrains.train_step_b(id, train, dtime)
 	-- interlocking speed restriction
 	elseif train.speed_restriction then
 		--atprint("in train_step_b: applying interlocking speed restriction",train.speed_restriction)
-		sit_v_cap = train.speed_restriction
+		sit_v_cap = math.min(sit_v_cap or math.huge, train.speed_restriction)
 	end
 	
 	--apply off-track handling:
