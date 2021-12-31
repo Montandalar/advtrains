@@ -130,9 +130,8 @@ function r.fire_event(pos, evtdata, appr_internal)
 		get_rc = function()
 			return train.routingcode
 		end,
-		atc_reset = function(cmd)
+		atc_reset = function()
 			if not train_id then return false end
-			assertt(cmd, "string")
 			advtrains.atc.train_reset_command(train)
 			return true
 		end,

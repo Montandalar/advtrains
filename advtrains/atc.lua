@@ -93,6 +93,7 @@ function atc.train_reset_command(train, keep_tarvel)
 	train.atc_delay=nil
 	train.atc_brake_target=nil
 	train.atc_wait_finish=nil
+	train.atc_wait_autocouple=nil
 	train.atc_arrow=nil
 	if not keep_tarvel then
 		train.tarvelocity=nil
