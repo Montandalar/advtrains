@@ -85,6 +85,13 @@ advtrains.register_wagon(name, prototype, description, inventory_image)
 	wagon_span=2,
 	^- How far this wagon extends from its base position. Is the half of the wagon length.
 	^- Used to determine in which distance the other wagons have to be positioned. Will require tweaking.
+	wheel_positions = {1.5, -1.5},
+	^- Optional: if defined, the wagon will be placed so that these 2 wheel positions are on the track
+	^- This parameter is recommended for long wagons (wagon_span >= 2).
+	^- The position is a distance relative to the center of the wagon.
+	^- Must have exactly 2 entries, corresponding to the front (1) and rear (2) wheel of the wagon object. 1st must be greater than 2nd.
+	^- If not provided, the simple 1-position positioning logic will be used (wagon is positioned with the center on the track)
+
 	extent_h = 1,
 	^- Determines the collision box extent in x/z direction. Defaults to 1 (=3x3)
 	^- The actual bounding box size is (extent_h*2)+1, so 0 means 1x1, 1 means 3x3 and 2 means 5x5

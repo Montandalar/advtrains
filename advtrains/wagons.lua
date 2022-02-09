@@ -413,13 +413,36 @@ function wagon:on_step(dtime)
 		end
 		
 		-- Calculate new position, yaw and direction vector
+		-- note: "index" is needed to be the center index, required by door code
 		local index = advtrains.path_get_index_by_offset(train, train.index, -data.pos_in_train)
-		local pos, yaw, npos, npos2 = advtrains.path_get_interpolated(train, index)
-		local vdir = vector.normalize(vector.subtract(npos2, npos))
+		local pos, yaw, npos, npos2, vdir
+
+		-- use new position logic?
+		if self.wheel_positions then
+			-- request two positions, calculate difference and yaw from this
+			-- depending on flipstate, need to invert wheel pos indices -> wheelpos * fct
+			local index1 = advtrains.path_get_index_by_offset(train, index, self.wheel_positions[1] * fct)
+			local index2 = advtrains.path_get_index_by_offset(train, index, self.wheel_positions[2] * fct)
+			local pos1 = advtrains.path_get_interpolated(train, index1)
+			local pos2 = advtrains.path_get_interpolated(train, index2)
+			npos = advtrains.path_get(train, atfloor(index)) -- need npos just for node loaded check
+			-- calculate center of 2 positions and vdir vector
+			pos = advtrains.pos_median(pos1, pos2)
+			if data.wagon_flipped then
+				vdir = vector.normalize(vector.subtract(pos2, pos1))
+			else
+				vdir = vector.normalize(vector.subtract(pos1, pos2))
+			end
+			yaw = math.atan2(-vdir.x, vdir.z)
+		else
+			--old position logic (for small wagons): use center index and just get position
+			pos, yaw, npos, npos2 = advtrains.path_get_interpolated(train, index)
+			vdir = vector.normalize(vector.subtract(npos2, npos))
+		end
 		
 		--automatic get_on
 		--needs to know index and path
-		if self.door_entry and train.door_open and train.door_open~=0 and train.velocity==0 then
+		if train.velocity==0 and self.door_entry and train.door_open and train.door_open~=0 then
 			--using the mapping created by the trainlogic globalstep
 			for i, ino in ipairs(self.door_entry) do
 				--fct is the flipstate flag from door animation above
@@ -470,39 +493,40 @@ function wagon:on_step(dtime)
 			end
 		end
 		
-		--DisCouple
+		-- Spawn discouple object when train stands, in all other cases remove it.
 		-- FIX: Need to do this after the yaw calculation
-		if is_in_loaded_area and data.pos_in_trainparts and data.pos_in_trainparts>1 then
-			if train.velocity==0 then
-				if not self.discouple or not self.discouple.object:get_yaw() then
-					atprint(self.id,"trying to spawn discouple")
-					local dcpl_pos = vector.add(pos, {y=0, x=-math.sin(yaw)*self.wagon_span, z=math.cos(yaw)*self.wagon_span})
-					local object=minetest.add_entity(dcpl_pos, "advtrains:discouple")
-					if object then
-						local le=object:get_luaentity()
-						le.wagon=self
-						--box is hidden when attached, so unuseful.
-						--object:set_attach(self.object, "", {x=0, y=0, z=self.wagon_span*10}, {x=0, y=0, z=0})
-						self.discouple=le
-					end
-				end
-			else
-				if self.discouple and self.discouple.object:get_yaw() then
-					self.discouple.object:remove()
-					atprint(self.id," removing discouple")
+		if train.velocity==0 and is_in_loaded_area and data.pos_in_trainparts and data.pos_in_trainparts>1 then
+			if not self.discouple or not self.discouple.object:get_yaw() then
+				atprint(self.id,"trying to spawn discouple")
+				local dcpl_pos = vector.add(pos, {y=0, x=-math.sin(yaw)*self.wagon_span, z=math.cos(yaw)*self.wagon_span})
+				local object=minetest.add_entity(dcpl_pos, "advtrains:discouple")
+				if object then
+					local le=object:get_luaentity()
+					le.wagon=self
+					--box is hidden when attached, so unuseful.
+					--object:set_attach(self.object, "", {x=0, y=0, z=self.wagon_span*10}, {x=0, y=0, z=0})
+					self.discouple=le
 				end
 			end
+		else
+			if self.discouple and self.discouple.object:get_yaw() then
+				self.discouple.object:remove()
+				atprint(self.id," removing discouple")
+			end
 		end
+
+		-- object yaw (corrected by flipstate)
+		local oyaw = yaw
+		if data.wagon_flipped then
+			oyaw = yaw + math.pi
+		end
+		train.debug = "yaw "..yaw.." oyaw "..oyaw.." flip "..(data.wagon_flipped and "yes" or "no")
 		
 		--FIX: use index of the wagon, not of the train.
 		local velocity = train.velocity * advtrains.global_slowdown
 		local acceleration = (train.acceleration or 0) * (advtrains.global_slowdown*advtrains.global_slowdown)
 		local velocityvec = vector.multiply(vdir, velocity)
 		local accelerationvec = vector.multiply(vdir, acceleration)
-		
-		if data.wagon_flipped then
-			yaw=yaw+math.pi
-		end
 		
 		-- this timer runs off every 2 seconds.
 		self.updatepct_timer=(self.updatepct_timer or 0)-dtime
@@ -540,19 +564,19 @@ function wagon:on_step(dtime)
 				or not vector.equals(velocityvec, self.old_velocity_vector)
 				or not self.old_acceleration_vector 
 				or not vector.equals(accelerationvec, self.old_acceleration_vector)
-				or self.old_yaw~=yaw
+				or self.old_yaw~=oyaw
 				or updatepct_timer_elapsed then--only send update packet if something changed
 			
 			self.object:set_pos(pos)
 			self.object:set_velocity(velocityvec)
 			self.object:set_acceleration(accelerationvec)
 			
-			if #self.seats > 0 and self.old_yaw ~= yaw then
+			if #self.seats > 0 and self.old_yaw ~= oyaw then
 				if not self.player_yaw then
 					self.player_yaw = {}
 				end
 				if not self.old_yaw then
-					self.old_yaw=yaw
+					self.old_yaw=oyaw
 				end
 				for _,name in pairs(data.seatp) do
 					local p = minetest.get_player_by_name(name)
@@ -562,11 +586,11 @@ function wagon:on_step(dtime)
 							self.player_yaw[name] = p:get_look_horizontal()-self.old_yaw
 						end
 						-- set player looking direction using calculated offset
-						p:set_look_horizontal((self.player_yaw[name] or 0)+yaw)
+						p:set_look_horizontal((self.player_yaw[name] or 0)+oyaw)
 					end
 				end
 				self.turning = true							 
-			elseif self.old_yaw == yaw then
+			elseif self.old_yaw == oyaw then
 				-- train is no longer turning
 				self.turning = false
 			end
@@ -576,9 +600,9 @@ function wagon:on_step(dtime)
                 if data.wagon_flipped then
                     pitch = -pitch
                 end
-                self.object:set_rotation({x=pitch, y=yaw, z=0})
+                self.object:set_rotation({x=pitch, y=oyaw, z=0})
             else
-                self.object:set_yaw(yaw)
+                self.object:set_yaw(oyaw)
             end
 			
 			if self.update_animation then
@@ -597,7 +621,7 @@ function wagon:on_step(dtime)
 		self.old_velocity_vector=velocityvec
 		self.old_velocity = train.velocity
 		self.old_acceleration_vector=accelerationvec
-		self.old_yaw=yaw
+		self.old_yaw=oyaw
 		atprintbm("wagon step", t)
 end
 
