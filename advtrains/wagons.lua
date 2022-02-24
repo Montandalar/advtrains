@@ -427,7 +427,9 @@ function wagon:on_step(dtime)
 			local pos2 = advtrains.path_get_interpolated(train, index2)
 			npos = advtrains.path_get(train, atfloor(index)) -- need npos just for node loaded check
 			-- calculate center of 2 positions and vdir vector
-			pos = advtrains.pos_median(pos1, pos2)
+			-- if wheel positions are asymmetric, needs to weight by the difference!
+			local fact = self.wheel_positions[1] / (self.wheel_positions[1]-self.wheel_positions[2])
+			pos = {x=pos1.x-(pos1.x-pos2.x)*fact, y=pos1.y-(pos1.y-pos2.y)*fact, z=pos1.z-(pos1.z-pos2.z)*fact}
 			if data.wagon_flipped then
 				vdir = vector.normalize(vector.subtract(pos2, pos1))
 			else
@@ -520,7 +522,6 @@ function wagon:on_step(dtime)
 		if data.wagon_flipped then
 			oyaw = yaw + math.pi
 		end
-		train.debug = "yaw "..yaw.." oyaw "..oyaw.." flip "..(data.wagon_flipped and "yes" or "no")
 		
 		--FIX: use index of the wagon, not of the train.
 		local velocity = train.velocity * advtrains.global_slowdown
