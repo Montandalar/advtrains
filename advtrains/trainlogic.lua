@@ -1,7 +1,8 @@
 --trainlogic.lua
 --controls train entities stuff about connecting/disconnecting/colliding trains and other things
 
-local setting_overrun_mode = minetest.settings:get("advtrains_overrun_mode")
+local setting_overrun_mode = minetest.settings:get("advtrains_overrun_mode") or "normal"
+local setting_kill_velocity = tonumber(minetest.settings:get("advtrains_kill_velocity")) or 3
 
 local benchmark=false
 local bm={}
@@ -771,7 +772,9 @@ function advtrains.train_step_c(id, train, dtime)
 						end
 
 						--- 8b damage players ---
-						if is_loaded_area and train.velocity > 3 and (setting_overrun_mode=="drop" or setting_overrun_mode=="normal") then
+                        if is_loaded_area and train.velocity > setting_kill_velocity
+                            and (setting_overrun_mode=="drop" or setting_overrun_mode=="normal")
+                        then
 							local testpts = minetest.pos_to_string(testpos)
 							local player=advtrains.playersbypts[testpts]
 							if player and player:get_hp()>0 and advtrains.is_damage_enabled(player:get_player_name()) then

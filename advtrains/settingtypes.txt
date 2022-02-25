@@ -40,6 +40,9 @@ advtrains_prot_range_down (Track protection range [down]) int 1 0 10
 #    normal: Player is killed, game-defined behavior is applied as if the player died by other means.
 advtrains_overrun_mode (Overrun mode) enum drop none,drop,normal
 
+#    Kill the player when a train hits them going above this velocity.
+advtrains_kill_velocity (Train velocity to kill players and entities) int 3 1 30
+
 #    Wagon entity loading/unloading range, in nodes
 #    When a wagon is within this range to a player, it is loaded
 #    When a wagon leaves this range + 32 nodes, it is unloaded
@@ -61,3 +64,4 @@ advtrains_save_interval (Save Interval) int 60 20 3600
 #    If enabled, trains only collide with nodes with "normal" drawtype.
 advtrains_forgiving_collision (Forgiving Collision mode) bool false
 
+#
