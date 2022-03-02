@@ -83,6 +83,7 @@ Small code contributions:
 * Inventory images            : mbb
 * Node texture for LuaATC controller: Jeija (from Mesecons)
 * Mod Description             : hajo
+* 45 degree platforms design  : Och_Noe
 
 #### Sounds:
 
@@ -91,7 +92,7 @@ Small code contributions:
 * advtrains\_steam\_whistle     : googol 
 * advtrains\_subway\_horn       : https://freesound.org/people/Mullumbimby/sounds/385283/
 * advtrains\_subway\_\*          : Gabriel (gbl08ma)
-* 45 degree platforms design  : Och_Noe
+
 
 ### Testers:
 
