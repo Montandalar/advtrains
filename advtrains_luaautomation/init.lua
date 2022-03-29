@@ -39,7 +39,7 @@ end
 dofile(mp.."/pcnaming.lua")
 
 dofile(mp.."/chatcmds.lua")
-
+dofile(mp.."/recipes.lua")
 
 local filename=minetest.get_worldpath().."/advtrains_luaautomation"
 

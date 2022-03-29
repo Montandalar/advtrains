@@ -1,0 +1,2 @@
+# Enable or disable craft recipes for LuaATC components
+advtrains_luaautomation_enable_atlac_recipes (Enable LuaATC component craft recipes) bool true

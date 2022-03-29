@@ -203,6 +203,14 @@ advtrains.register_tracks("default", {
 	get_additional_definiton = advtrains.atc_function
 }, advtrains.trackpresets.t_30deg_straightonly)
 
+minetest.register_craft({
+	output = "advtrains:dtrack_atc_placer",
+	recipe = {
+		{"","mesecons_microcontroller:microcontroller0000",""},
+		{"","advtrains:dtrack_placer",""},
+		{"","",""}
+	}
+})
 
 -- Tracks for loading and unloading trains
 -- Copyright (C) 2017 Gabriel Pérez-Cerezo <gabriel@gpcf.eu>
