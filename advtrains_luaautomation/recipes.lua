@@ -122,3 +122,7 @@ end
 -- Forbid crafting atlatc items except to players with atlatc priv.
 minetest.register_craft_predict(craft_fn)
 minetest.register_on_craft(craft_fn)
+
+return {
+    craft_fn = craft_fn
+}
