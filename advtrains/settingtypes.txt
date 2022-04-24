@@ -64,4 +64,6 @@ advtrains_save_interval (Save Interval) int 60 20 3600
 #    If enabled, trains only collide with nodes with "normal" drawtype.
 advtrains_forgiving_collision (Forgiving Collision mode) bool false
 
-#
+#    If a train collides with an automobile from Vehicle Mash, destroy it in a
+#    ball of fire like OpenTTD.
+advtrains_destroy_automobiles (Destroy automobiles from vehicle mash) bool false

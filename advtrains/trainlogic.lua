@@ -3,6 +3,9 @@
 
 local setting_overrun_mode = minetest.settings:get("advtrains_overrun_mode") or "normal"
 local setting_kill_velocity = tonumber(minetest.settings:get("advtrains_kill_velocity")) or 3
+local setting_destroy_cars = minetest.settings:get_bool("advtrains_destroy_automobiles", false) or false
+if setting_destroy_cars then
+end
 
 local benchmark=false
 local bm={}
@@ -806,6 +809,22 @@ function advtrains.train_step_c(id, train, dtime)
 					if not obj:is_player() and obj:get_armor_groups().fleshy and obj:get_armor_groups().fleshy > 0 
 							and obj:get_luaentity() and obj:get_luaentity().name~="signs_lib:text" then
 						obj:punch(obj, 1, { full_punch_interval = 1.0, damage_groups = {fleshy = 1000}, }, nil)
+					end
+
+					if setting_destroy_cars and obj:get_luaentity() and obj:get_luaentity().name:find("vehicle_mash:car") then
+                        local pos = obj:get_pos()
+                        local lob = obj:get_luaentity()
+                        --print("WEWEWEW:" .. dump(obj))
+                        --print("BLBLBLBBLB: " .. dump(obj:get_luaentity()))
+                        for idx, seat in pairs({"driver", "passenger", "passenger2", "passenger3"}) do
+                            local person = lob[seat]
+                            if person then
+                                lib_mount.detach(person, vector.new(0,0,0))
+                            end
+                        end
+						obj:set_armor_groups(({immortal = nil, fleshy = 1}))
+						obj:punch(obj, 1, {full_punch_interval = 1.0, damage_groups = {fleshy = 1000} }, nil)
+                        minetest.add_entity(pos, "advtrains:explosion_fireball")
 					end
 				end
 			end

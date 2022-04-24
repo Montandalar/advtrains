@@ -83,6 +83,8 @@ Small code contributions:
 * Inventory images            : mbb
 * Node texture for LuaATC controller: Jeija (from Mesecons)
 * Mod Description             : hajo
+* advtrains\_vehicle\_explosion.png : Zephyris, from OpenGFX project for
+OpenTTD. License: GNU General Public License version 2.
 
 #### Sounds:
 
@@ -91,6 +93,7 @@ Small code contributions:
 * advtrains\_steam\_whistle     : googol 
 * advtrains\_subway\_horn       : https://freesound.org/people/Mullumbimby/sounds/385283/
 * advtrains\_subway\_\*          : Gabriel (gbl08ma)
+* explosion.ogg                 : "Explosion". By Janis Lukss. License: Creative Commons Attribution 3.0 Unported. As used in OpenSFX project for OpenTTD.
 * 45 degree platforms design  : Och_Noe
 
 ### Testers:

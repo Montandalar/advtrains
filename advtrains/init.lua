@@ -226,6 +226,11 @@ if mesecon then
 	dofile(advtrains.modpath.."/p_mesecon_iface.lua")
 end
 
+if minetest.settings:get_bool("advtrains_destroy_automobiles", false) o
+    or false
+then
+    dofile(advtrains.modpath.."/explosions.lua")
+end
 
 dofile(advtrains.modpath.."/lzb.lua")
 
