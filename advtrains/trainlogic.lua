@@ -143,8 +143,11 @@ minetest.register_on_joinplayer(function(player)
 		local id=advtrains.player_to_train_mapping[pname]
 		if id then
 			for _,wagon in pairs(minetest.luaentities) do
-				if wagon.is_wagon and wagon.initialized and wagon.train_id==id then
-					wagon:reattach_all()
+				if wagon.is_wagon and wagon.initialized and wagon.id then
+					local wdata = advtrains.wagons[wagon.id]
+					if wdata and wdata.train_id == id then
+						wagon:reattach_all()
+					end
 				end
 			end
 		end
