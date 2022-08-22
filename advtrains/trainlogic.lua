@@ -1053,7 +1053,16 @@ function advtrains.update_trainpart_properties(train_id, invert_flipstate)
 		if data then
 			local wagon = advtrains.wagon_prototypes[data.type or data.entity_name]
 			if not wagon then
-				atwarn("Wagon '",data.type,"' couldn't be found. Please check that all required modules are loaded!")
+				local ent = advtrains.wagon_objects[w_id]
+				local pdesc
+				if ent then
+					pdesc = "at " .. minetest.pos_to_string(ent:get_pos())
+				elseif train.last_pos then
+					pdesc = "near " .. minetest.pos_to_string(train.last_pos)
+				else
+					pdesc = "at an unknown location"
+				end
+				atwarn(string.format("Wagon %q %s could not be found. Please check that all required modules are loaded!", data.type, pdesc))
 				wagon = advtrains.wagon_prototypes["advtrains:wagon_placeholder"]
 
 			end
