@@ -255,7 +255,10 @@ In addition to the above environment functions, the following functions are avai
 	The interlocking system uses this property for Automatic Routesetting.
 
 #### Shunting Functions and Variables
-There are several functions available especially for shunting operations. Some of these functions make use of Freight Codes (FC) set in the Wagon Properties of each wagon and/or locomotive:
+There are several functions available especially for shunting operations.
+Some of these functions make use of Freight Codes (FC) set in the Wagon Properties of each wagon and/or locomotive.
+FCs are composed of codes separated by exclamation marks (`!`), for instance `"foo!bar!baz"`.
+Each wagon has a current FC, indicating its next destination.
 
  - `split_at_index(index, atc_command)`
 	Splits the train at the specified index, into a train with index-1 wagons and a second train starting with the index-th wagon. The `atc_command` specified is sent to the second train after decoupling. `"S0"` or `"B0"` is common to ensure any locomotives in the remaining train don't continue to move.
@@ -265,6 +268,18 @@ There are several functions available especially for shunting operations. Some o
 	Example: train has wagons `"foo","foo","foo","bar","bar","bar"`  
 	Command: `split_at_index(4,"S0")`  
 	Result: first train (continues at previous speed): `"foo","foo","foo"`, second train (slows at S0): `"bar","bar","bar"`
+
+ - `get_fc()`
+	Returns a table with the entire FC list for each wagon in the train.  
+	Command: `get_fc()`  
+	Result: `{"", "foo!bar", "testing", "fc_1!fc_2!fc_3!?", "hello_world"}`
+	
+ - `set_fc(fc_list)`
+	Overwrites the FC list according to a table `fc_list`. A false or nil entry will leave the wagon unaffected, however all others will be overwritten.
+	Useful for mass-programming freight trains that use FC-shunting instead of walking to each wagon individually.  
+	Example: train has FC lists: `"", "foo!bar", "testing", "fc_1!fc_2!fc_3!?", "hello_world"`  
+	Command: `set_fc({"", "foo!turtle", nil, "4tehlulz", false})`  
+	Result: `""` `"foo!turtle"` `"testing"` `"4tehlulz"` `"hello_world"`
 
  - `split_at_fc(atc_command, len)`
 	Splits the train in such a way that all cars with non-empty current FC of the first part of the train have the same FC. The
@@ -289,14 +304,10 @@ There are several functions available especially for shunting operations. Some o
 	first part of the train as above.
 
  - `step_fc()`
-	Steps the FCs of all train cars forward. FCs are composed of codes
-	separated by exclamation marks (`!`), for instance
-	`"foo!bar!baz"`. Each wagon has a current FC, indicating its next
-	destination. Stepping the freight code forward, selects the next
-	code after the !. If the end of the string is reached, then the
+	Steps the FCs of all train cars forward, selecting the next
+	code after the `!`. If the end of the string is reached, then the
 	first code is selected, except if the string ends with a question
 	mark (`?`), then the order is reversed.
-
 
  - `train_length()`
 	returns the number of cars the train is composed of.

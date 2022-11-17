@@ -91,6 +91,38 @@ function r.fire_event(pos, evtdata, appr_internal)
 			if not train_id then return false end
 			advtrains.train_step_fc(train)
 		end,
+		get_fc = function()
+			if not train_id then return end
+			local fc_list = {}
+			for index,wagon_id in ipairs(train.trainparts) do
+				fc_list[index] = table.concat(advtrains.wagons[wagon_id].fc,"!") or ""
+			end
+			return fc_list
+		end,
+		set_fc = function(fc_list)
+			assertt(fc_list, "table")
+			if not train_id then return false end
+			-- safety type-check for entered values
+			for _,v in ipairs(fc_list) do
+				if v and type(v) ~= "string" then
+					error("FC entries must be a string")
+					return
+				end
+			end
+			for index,wagon_id in ipairs(train.trainparts) do
+				if fc_list[index] then -- has FC to enter to this wagon
+					local data = advtrains.wagons[wagon_id]
+					if data then -- wagon actually exists
+						for _,wagon in pairs(minetest.luaentities) do -- find wagon entity
+							if wagon.is_wagon and wagon.initialized and wagon.id==wagon_id then
+								wagon.set_fc(data,fc_list[index]) -- overwrite to new FC
+								break -- no point cycling through every other entity. we found our wagon
+							end
+						end
+					end
+				end
+			end
+		end,
 		set_shunt = function()
 			-- enable shunting mode
 			if not train_id then return false end
