@@ -229,11 +229,8 @@ if advtrains.interlocking then
 		if not ts_id then return nil end
 		ts_id = tostring(ts_id)
 		local response = advtrains.interlocking.db.get_ts(ts_id)
-		if response == nil then
-			return false
-		else
-			return response.trains
-		end
+		if not response then return false end
+		return table.copy(response.trains)
 	end
 end
 
