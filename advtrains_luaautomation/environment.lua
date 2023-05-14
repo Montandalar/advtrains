@@ -262,6 +262,11 @@ if advtrains.lines then
 	}
 end
 
+
+atlatc.register_function = function (name, f)
+	static_env[name] = f
+end
+
 for _, name in pairs(safe_globals) do
 	static_env[name] = _G[name]
 end
