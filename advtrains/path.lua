@@ -375,6 +375,19 @@ function advtrains.path_get_index_by_offset(train, index, offset)
 	return c_idx + frac
 end
 
+
+-- The path_dist[] table contains absolute distance values for every whole index.
+-- Use this function to retrieve the correct absolute distance for a fractional index value (interpolate between floor and ceil index)
+-- returns: absolute distance from path item 0
+function advtrains.path_get_path_dist_fractional(train, index)
+	local start_index_f = atfloor(index)
+	local frac = index - start_index_f
+	-- ensure path exists
+	advtrains.path_get_adjacent(train, index)
+	local dist1, dist2 = train.path_dist[start_index_f], train.path_dist[start_index_f+1]
+	return dist1 + (dist2-dist1)*frac
+end
+
 local PATH_CLEAR_KEEP = 4
 
 function advtrains.path_clear_unused(train)

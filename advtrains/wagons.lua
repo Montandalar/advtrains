@@ -1418,3 +1418,64 @@ advtrains.register_wagon("advtrains:wagon_placeholder", {
 	drops={},
 }, "Wagon placeholder", "advtrains_wagon_placeholder.png", true)
 
+
+
+-- Helper function to retrieve the wagon at a certain position in a train, given its train ID and the desired index within that train's path
+--
+-- Returns: wagon_num, wagon_id, wagon_data, offset_from_center
+-- wagon_num: The n'th wagon in the train (index into "trainparts" table)
+-- wagon_id: The wagon ID. Obtain wagon data from advtrains.wagons[wagon_id], and subsequently the wagon prototype via advtrains.get_wagon_prototype(data)
+-- offset_from_center: The offset (an absolute distance value) from the center point of the wagon. Positive is towards the end of the train, negative towards the start. (note that this is inverse to the counting direction of the index!)
+--
+--[[ To get the wagon standing at a certain world position, you first need to retrieve the index via the occupation table, as follows:
+	local trains = advtrains.occ.get_trains_at(pos)
+	for train_id, index in pairs(trains) do
+		local wagon_num, wagon_id, wagon_data, offset_from_center = advtrains.get_wagon_at_index(train_id, index)
+		if wagon_num then
+			...
+		end
+	end
+]]--
+function advtrains.get_wagon_at_index(train_id, w_index)
+	local train = advtrains.trains[train_id]
+	if not train then error("Passed train id "..train_id.." doesnt exist") end
+	-- ensure init - always required
+	advtrains.train_ensure_init(train_id, train)
+	-- Use path dist to determine the offset from the start of the train
+	local dstart = advtrains.path_get_path_dist_fractional(train, train.index)
+	local dtarget = advtrains.path_get_path_dist_fractional(train, w_index)
+	local dist_from_start = dstart - dtarget -- NOTE: dist_from_start is supposed to be positive, but dtarget will be smaller than dstart
+	-- if dist_from_start is <0, we are outside of train
+	if dist_from_start < 0 then
+		return nil
+	end
+	-- scan over wagons to see if dist_from_start falls into its window
+	local start_pos = 0
+	local center_pos
+	local end_pos
+	local i = 1
+	while train.trainparts[i] do
+		local w_id = train.trainparts[i]
+		-- get wagon prototype to retrieve wagon span
+		local wdata = advtrains.wagons[w_id]
+		if wdata then
+			local wtype, wproto = advtrains.get_wagon_prototype(wdata)
+			local wagon_span = wproto.wagon_span
+			-- determine center and end pos
+			center_pos = start_pos + wagon_span
+			end_pos = center_pos + wagon_span
+			if start_pos <= dist_from_start and dist_from_start < end_pos then
+				-- Found the correct wagon in the train!
+				local offset_from_center = dist_from_start - center_pos
+				return i, w_id, wdata, offset_from_center
+			end
+			-- go on
+			start_pos = end_pos
+		else
+			error("Wagon "..w_id.." from train "..train_id.." doesnt exist!")
+		end
+		i = i + 1
+	end
+	-- nothing found, dist must be further back
+	return nil
+end

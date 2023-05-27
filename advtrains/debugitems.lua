@@ -51,3 +51,33 @@ minetest.register_chatcommand("atyaw",
 			end
         end,
 })
+	
+minetest.register_tool("advtrains:wagonpos_tester",
+{
+	description = "Wagon position tester",
+	groups = {cracky=1}, -- key=name, value=rating; rating=1..3.
+	inventory_image = "drwho_screwdriver.png",
+	wield_image = "drwho_screwdriver.png",
+	stack_max = 1,
+	range = 7.0,
+		
+	on_place = function(itemstack, placer, pointed_thing)
+	
+	end,
+	--[[
+	^ Shall place item and return the leftover itemstack
+	^ default: minetest.item_place ]]
+	on_use = function(itemstack, user, pointed_thing)
+		if pointed_thing.type=="node" then
+			local pos = pointed_thing.under
+			local trains = advtrains.occ.get_trains_at(pos)
+			for train_id, index in pairs(trains) do
+				local wagon_num, wagon_id, wagon_data, offset_from_center = advtrains.get_wagon_at_index(train_id, index)
+				if wagon_num then
+					atdebug(wagon_num, wagon_id, offset_from_center)
+				end
+			end
+		end
+	end,
+}
+)
