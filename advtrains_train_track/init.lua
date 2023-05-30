@@ -678,8 +678,45 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	end
 end)
 
+local function load_wagon(wagon_id, node_inv, node_fc, unload)
+	local inv_modified = false
+	local w_inv=minetest.get_inventory({type="detached", name="advtrains_wgn_"..wagon_id})
+	if w_inv and w_inv:get_list("box") then
+	
+		local wagon_data = advtrains.wagons[wagon_id]
+		local wagon_fc
+		if wagon_data.fc then
+			if not wagon_data.fcind then wagon_data.fcind = 1 end
+			wagon_fc = tostring(wagon_data.fc[wagon_data.fcind]) or ""
+		end
+		
+		if node_fc == "" or wagon_fc == node_fc then
+			if not unload then
+				for _, item in ipairs(node_inv:get_list("main")) do
+					if w_inv:get_list("box") and w_inv:room_for_item("box", item)  then
+						w_inv:add_item("box", item)
+						node_inv:remove_item("main", item)
+						if item.name ~= "" then inv_modified = true end
+					end
+				end
+			else
+				for _, item in ipairs(w_inv:get_list("box")) do
+					if node_inv:get_list("main") and node_inv:room_for_item("main", item)  then
+						w_inv:remove_item("box", item)
+						node_inv:add_item("main", item)
+						if item.name ~= "" then inv_modified = true end
+					end
+				end
+			end
+		end
+	end
+	return inv_modified
+end
 
-local function train_load(pos, train_id, unload)
+local function load_entire_train(pos, train_id, unload) -- flood load when not in an active area
+	if advtrains.is_node_loaded(pos) then -- leave the loading to the nodetimer if area is loaded
+		return 
+	end
 	local train=advtrains.trains[train_id]
 	local below = get_far_node({x=pos.x, y=pos.y-1, z=pos.z})
 	if not string.match(below.name, "chest") then
@@ -692,43 +729,60 @@ local function train_load(pos, train_id, unload)
 		--track section is disabled
 		return
 	end
-	
-	local inv = minetest.get_inventory({type="node", pos={x=pos.x, y=pos.y-1, z=pos.z}})
-	if inv and train.velocity < 2 then
-		for k, v in ipairs(train.trainparts) do
-			local i=minetest.get_inventory({type="detached", name="advtrains_wgn_"..v})
-			if i and i:get_list("box") then
-			
-				local wagon_data = advtrains.wagons[v]
-				local wagon_fc
-				if wagon_data.fc then
-					if not wagon_data.fcind then wagon_data.fcind = 1 end
-					wagon_fc = tostring(wagon_data.fc[wagon_data.fcind]) or ""
-				end
-				
-				if node_fc == "" or wagon_fc == node_fc then
-					if not unload then
-						for _, item in ipairs(inv:get_list("main")) do
-							if i:get_list("box") and i:room_for_item("box", item)  then
-								i:add_item("box", item)
-								inv:remove_item("main", item)
-							end
-						end
-					else
-						for _, item in ipairs(i:get_list("box")) do
-							if inv:get_list("main") and inv:room_for_item("main", item)  then
-								i:remove_item("box", item)
-								inv:add_item("main", item)
-							end
+	local node_inv = minetest.get_inventory({type="node", pos={x=pos.x, y=pos.y-1, z=pos.z}})
+	if node_inv and train.velocity <= 2 then
+		for _, wagon_id in ipairs(train.trainparts) do
+			load_wagon(wagon_id, node_inv, node_fc, unload)
+		end
+	end
+end
+
+local function load_wagon_on_timer(pos, unload) -- loading ramp when in an active area
+	if not advtrains.is_node_loaded(pos) then -- leave the loading for the flood load function. we're out of area
+		return true -- reset the nodetimer until the node is loaded again
+	end
+	local tid, tidx = advtrains.get_train_at_pos(pos)
+	if not tid or tid == "" then
+		return true
+	end -- no train to load.
+
+	local train = advtrains.trains[tid]
+	local below = get_far_node({x=pos.x, y=pos.y-1, z=pos.z})
+	if not string.match(below.name, "chest") then
+		atprint("this is not a chest! at "..minetest.pos_to_string(pos))
+		return true
+	end
+	local node_fc = minetest.get_meta(pos):get_string("fc") or ""
+	if node_fc == "#" then
+		--track section is disabled
+		return true
+	end
+	local node_inv = minetest.get_inventory({type="node", pos={x=pos.x, y=pos.y-1, z=pos.z}})
+	if node_inv and train.velocity <= 2 then
+		local _, wagon_id, wagon_data = advtrains.get_wagon_at_index(tid, tidx)
+		if wagon_id then
+			local inv_modified = load_wagon(wagon_id, node_inv, node_fc, unload)
+			if inv_modified then
+				if advtrains.wagon_prototypes[advtrains.get_wagon_prototype(wagon_data)].set_textures then
+					local wagon_object = advtrains.wagon_objects[wagon_id]
+					if wagon_object and wagon_data then
+						local ent = wagon_object:get_luaentity()
+						if ent and ent.set_textures then
+							ent:set_textures(wagon_data)
 						end
 					end
 				end
 			end
 		end
 	end
+	return true
 end
 
-
+local nodetimer_interval = minetest.settings:get("advtrains_loading_track_timer") or 1
+local function start_nodetimer(pos)
+	local timer = minetest.get_node_timer(pos)
+	timer:start(nodetimer_interval)
+end
 
 advtrains.register_tracks("default", {
 	nodename_prefix="advtrains:dtrack_unload",
@@ -747,9 +801,16 @@ advtrains.register_tracks("default", {
 			on_rightclick = function(pos, node, player)
 				show_fc_formspec(pos, player)
 			end,
+			after_place_node = function(pos)
+				advtrains.ndb.update(pos)
+				start_nodetimer(pos)
+			end,
+			on_timer = function(pos)
+				return load_wagon_on_timer(pos, true)
+			end,
 			advtrains = {
 				on_train_enter = function(pos, train_id)
-					train_load(pos, train_id, true)
+					load_entire_train(pos, train_id, true)
 				end,
 			},
 		}
@@ -772,9 +833,16 @@ advtrains.register_tracks("default", {
 			on_rightclick = function(pos, node, player)
 				show_fc_formspec(pos, player)
 			end,
+			after_place_node = function(pos)
+				advtrains.ndb.update(pos)
+				start_nodetimer(pos)
+			end,
+			on_timer = function(pos)
+				return load_wagon_on_timer(pos, false)
+			end,
 			advtrains = {
 				on_train_enter = function(pos, train_id)
-					train_load(pos, train_id, false)
+					load_entire_train(pos, train_id, false)
 				end,
 			},
 		}
@@ -788,7 +856,6 @@ if minetest.get_modpath("basic_materials") then
 elseif minetest.get_modpath("technic") then
 	loader_core = "technic:control_logic_unit"
 end
---print("Loader Core: "..loader_core)
 
 minetest.register_craft({
 	type="shapeless",

@@ -1,0 +1,4 @@
+# Set the nodetimer delay for the loading tracks.
+# A longer delay may cause wagons to be missed if the pass over too fast.
+# A shorter delay may cause lag as wagons are checked multiple times as they pass over.
+advtrains_loading_track_timer (Loading Track Timer) int 1
