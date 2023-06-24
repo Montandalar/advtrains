@@ -619,7 +619,7 @@ function advtrains.train_step_b(id, train, dtime)
 		local base_cn =  train.path_cn[base_idx]
 		--atdebug(id,"Begin Checking for on-track collisions new_idx=",new_index_curr_tv,"base_idx=",base_idx,"base_pos=",base_pos,"base_cn=",base_cn)
 		-- query occupation
-		local occ = advtrains.occ.get_trains_over(base_pos)
+		local occ = advtrains.occ.reverse_lookup_sel(base_pos, "close_proximity")
 		-- iterate other trains
 		for otid, ob_idx in pairs(occ) do
 			if otid ~= id then
@@ -649,7 +649,7 @@ function advtrains.train_step_b(id, train, dtime)
 
 				-- Phase 2 - project ref_index back onto our path and check again (necessary because there might be a turnout on the way and we are driving into the flank
 				if target_is_inside then
-					local our_index = advtrains.path_project(otrn, ref_index, id)
+					local our_index = advtrains.path_project(otrn, ref_index, id, "before_end")
 					--atdebug("Backprojected our_index",our_index)
 					if our_index and our_index <= new_index_curr_tv
 							and our_index >= train.index then --FIX: If train was already past the collision point in the previous step, there is no collision! Fixes bug with split_at_index
@@ -1218,7 +1218,6 @@ function advtrains.invert_train(train_id)
 	advtrains.update_trainpart_properties(train_id, true)
 	
 	-- recalculate path
-	advtrains.train_ensure_init(train_id, train)
 	
 	-- If interlocking present, check whether this train is in a section and then set as shunt move after reversion
 	if advtrains.interlocking and train.il_sections and #train.il_sections > 0 then
@@ -1244,7 +1243,7 @@ function advtrains.invalidate_all_paths(pos)
 	local tab
 	if pos then
 		-- if position given, check occupation system
-		tab = advtrains.occ.get_trains_over(pos)
+		tab = advtrains.occ.reverse_lookup_quick(pos)
 	else
 		tab = advtrains.trains
 	end
@@ -1257,7 +1256,7 @@ end
 -- Calls invalidate_path_ahead on all trains occupying (having paths over) this node
 -- Can be called during train step.
 function advtrains.invalidate_all_paths_ahead(pos)
-	local tab = advtrains.occ.get_trains_over(pos)
+	local tab = advtrains.occ.reverse_lookup_sel(pos, "first_ahead")
 	
 	for id,index in pairs(tab) do
 		local train = advtrains.trains[id]

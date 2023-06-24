@@ -79,8 +79,9 @@ function advtrains.train_check_couples(train)
 	end
 	if not train.cpl_front then
 		-- recheck front couple
-		local front_trains, pos = advtrains.occ.get_occupations(train, atround(train.index) + CPL_CHK_DST)
+		local pos = advtrains.path_get(train, atround(train.index) + CPL_CHK_DST)
 		if advtrains.is_node_loaded(pos) then -- if the position is loaded...
+			local front_trains = advtrains.occ.reverse_lookup_sel(pos, "in_train")
 			for tid, idx in pairs(front_trains) do
 				local other_train = advtrains.trains[tid]
 				if not advtrains.train_ensure_init(tid, other_train) then
@@ -109,8 +110,9 @@ function advtrains.train_check_couples(train)
 	end
 	if not train.cpl_back then
 		-- recheck back couple
-		local back_trains, pos = advtrains.occ.get_occupations(train, atround(train.end_index) - CPL_CHK_DST)
+		local pos = advtrains.path_get(train, atround(train.end_index) - CPL_CHK_DST)
 		if advtrains.is_node_loaded(pos) then -- if the position is loaded...
+			local back_trains = advtrains.occ.reverse_lookup_sel(pos, "in_train")
 			for tid, idx in pairs(back_trains) do
 				local other_train = advtrains.trains[tid]
 				if not advtrains.train_ensure_init(tid, other_train) then

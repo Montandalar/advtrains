@@ -119,7 +119,7 @@ function advtrains.path_invalidate(train, ignore_lock)
 
 	if train.path then
 		for i,p in pairs(train.path) do
-			advtrains.occ.clear_item(train.id, advtrains.round_vector_floor_y(p))
+			advtrains.occ.clear_all_items(train.id, advtrains.round_vector_floor_y(p))
 		end
 	end
 	train.path = nil
@@ -393,7 +393,7 @@ local PATH_CLEAR_KEEP = 4
 function advtrains.path_clear_unused(train)
 	local i
 	for i = train.path_ext_b, train.path_req_b - PATH_CLEAR_KEEP do
-		advtrains.occ.clear_item(train.id, advtrains.round_vector_floor_y(train.path[i]))
+		advtrains.occ.clear_specific_item(train.id, advtrains.round_vector_floor_y(train.path[i]), i)
 		train.path[i] = nil
 		train.path_dist[i-1] = nil
 		train.path_cp[i] = nil
@@ -434,18 +434,19 @@ end
 -- Projects the path of "train" onto the path of "onto_train_id", and returns the index on onto_train's path
 -- that corresponds to "index" on "train"'s path, as well as whether both trains face each other
 -- index may be fractional
+-- heuristic: see advtrains.occ.reverse_lookup_sel()
 -- returns: res_index, trains_facing
 -- returns nil when path can not be projected, either because trains are on different tracks or
 -- node at "index" happens to be on a turnout and it's the wrong direction
 -- Note - duplicate with similar functionality is in train_step_b() - that code combines train detection with projecting
-function advtrains.path_project(train, index, onto_train_id)
+function advtrains.path_project(train, index, onto_train_id, heuristic)
 	local base_idx = atfloor(index)
 	local frac_part = index - base_idx
 	local base_pos = advtrains.path_get(train, base_idx)
 	local base_cn =  train.path_cn[base_idx]
 	local otrn = advtrains.trains[onto_train_id]
 	-- query occupation
-	local occ = advtrains.occ.get_trains_over(base_pos)
+	local occ = advtrains.occ.reverse_lookup_sel(base_pos, heuristic)
 	-- is wanted train id contained?
 	local ob_idx = occ[onto_train_id]
 	if not ob_idx then
