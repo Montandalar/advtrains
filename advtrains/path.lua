@@ -162,7 +162,7 @@ function advtrains.path_invalidate_ahead(train, start_idx, ignore_when_passed)
 	-- leave current node in path, it won't change. What might change is the path onward from here (e.g. switch)
 	local i = idx + 1
 	while train.path[i] do
-		advtrains.occ.clear_item(train.id, advtrains.round_vector_floor_y(train.path[i]))
+		advtrains.occ.clear_specific_item(train.id, advtrains.round_vector_floor_y(train.path[i]), i)
 		i = i+1
 	end
 	train.path_ext_f=idx
