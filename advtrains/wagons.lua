@@ -364,6 +364,15 @@ function wagon:on_step(dtime)
 			outside = outside .."\n!!! Train off track !!!"
 		end
 		
+		-- liquid container: display liquid contents in infotext
+		if self.techage_liquid_capacity then
+			if data.techage_liquid and data.techage_liquid.name then
+				outside = outside .."\nLiquid: "..data.techage_liquid.name..", "..data.techage_liquid.amount.." units"
+			else
+				outside = outside .."\nLiquid: empty"
+			end
+		end
+		
 		if self.infotext_cache~=outside  then
 			self.object:set_properties({infotext=outside})
 			self.infotext_cache=outside
