@@ -227,6 +227,13 @@ function advtrains.couple_trains(init_train, invert_init_train, stat_train, stat
 	local stp = stat_train.trainparts
 	local stat_wagoncnt = #stp
 	local stat_trainlen = stat_train.trainlen -- save the train length of stat train, to be added to index
+	
+	-- sanity check, prevent coupling if train would be longer than 20 after coupling
+	local tot_len = init_wagoncnt + stat_wagoncnt
+	if tot_len > advtrains.TRAIN_MAX_WAGONS then
+		atwarn("Cannot couple",stat_train.id,"and",init_train.id,"- train would have length",tot_len,"which is above the limit of",advtrains.TRAIN_MAX_WAGONS)
+		return
+	end
 
 	if stat_train_opposite then
 		-- insert wagons in inverse order and set their wagon_flipped state

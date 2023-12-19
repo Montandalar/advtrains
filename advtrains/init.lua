@@ -48,6 +48,9 @@ advtrains.IGNORE_WORLD = false
 local NO_SAVE = false
 -- Do not save any data to advtrains save files
 
+advtrains.TRAIN_MAX_WAGONS = 20
+-- Limit on the maximum number of wagons that may be in a train
+
 -- ==========================================================================
 
 -- Use a global slowdown factor to slow down train movements. Now a setting
