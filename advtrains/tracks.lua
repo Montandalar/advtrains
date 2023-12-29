@@ -468,6 +468,7 @@ function advtrains.register_tracks(tracktype, def, preset)
 					drawtype = "mesh",
 					paramtype="light",
 					paramtype2="facedir",
+					use_texture_alpha = "blend",
 					walkable = false,
 					selection_box = {
 						type = "fixed",
