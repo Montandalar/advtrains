@@ -758,6 +758,16 @@ minetest.register_chatcommand("at_disable_step",
         end,
 })
 
+minetest.register_chatcommand("at_status",
+	{
+        params = "", 
+        description = "Print advtrains status info", 
+        privs = {train_operator = true},
+        func = function(name, param)
+			return true, advtrains.print_concat_table({"Advtrains Status: no_action",no_action,"slowdown",advtrains.global_slowdown,"(log",math.log(advtrains.global_slowdown),")"})
+        end,
+})
+
 advtrains.is_no_action = function()
 	return no_action
 end

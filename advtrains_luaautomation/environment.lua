@@ -164,6 +164,9 @@ local static_env = {
 			return false
 		end
 	end,
+	get_slowdown = function()
+		return advtrains.global_slowdown
+	end
 }
 
 -- If interlocking is present, enable route setting functions
